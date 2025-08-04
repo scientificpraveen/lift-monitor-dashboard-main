@@ -1,13 +1,12 @@
 @keyframes bounceFloor {
   0%   { transform: scale(1); }
-  25%  { transform: scale(1.15); }
-  50%  { transform: scale(0.98); }
+  25%  { transform: scale(1.2); }
+  50%  { transform: scale(0.95); }
   100% { transform: scale(1); }
 }
 
 .floor-number.animate {
-  animation: bounceFloor 0.3s ease;
-  will-change: transform; /* GPU hint */
+  animation: bounceFloor 0.4s ease;
 }
 
 .lift-card {
@@ -24,8 +23,7 @@
   justify-content: center;
   box-shadow: 0 0 12px rgba(160, 118, 249, 0.4);
   font-family: 'Segoe UI', sans-serif;
-  transition: transform 0.25s ease, box-shadow 0.25s ease; /* only GPU properties */
-  will-change: transform;
+  transition: all 0.3s ease;
 }
 
 .lift-card.alert {
@@ -52,19 +50,46 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  transition: transform 0.4s ease, opacity 0.4s ease; /* GPU accelerated */
-  will-change: transform, opacity;
+  animation-duration: 0.5s;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
 }
 
 .circle.open {
-  transform: scaleX(1.2); /* simulate door opening */
-  opacity: 0.85;
   border-style: dashed;
+  border-radius: 0 70px 70px 0;
+  border-left: none;
+  animation: doorOpenAnim 0.5s ease forwards;
 }
 
 .circle:not(.open) {
-  transform: scaleX(1);
-  opacity: 1;
+  animation: doorCloseAnim 0.5s ease forwards;
+}
+
+@keyframes doorOpenAnim {
+  0% {
+    border-radius: 50%;
+    border-style: solid;
+    border-left: 5px solid #a076f9;
+  }
+  100% {
+    border-radius: 0 70px 70px 0;
+    border-style: dashed #a076f9;
+    border-left: none;
+  }
+}
+
+@keyframes doorCloseAnim {
+  0% {
+    border-radius: 0 70px 70px 0;
+    border-style: dashed #a076f9;
+    border-left: none;
+  }
+  100% {
+    border-radius: 50%;
+    border-style: solid;
+    border-left: 5px solid #a076f9;
+  }
 }
 
 .floor-number {
