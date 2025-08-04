@@ -28,29 +28,44 @@ const buildings = [
 // Initial Lift Data
 let liftData = {
   "PRESTIGE POLYGON": [
-    { ID: 'P1', Fl: '2', Alarm: '1', Door: '0' },
-    { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' },
-    { ID: 'P3', Fl: '9', Alarm: '0', Door: '0' }
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
   ],
   "PRESTIGE PALLADIUM": [
-    { ID: 'P1', Fl: '3', Alarm: '0', Door: '0' },
-    { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
   ],
   "PRESTIGE METROPOLITAN": [
-    { ID: 'P1', Fl: '8', Alarm: '0', Door: '0' },
-    { ID: 'P2', Fl: '10', Alarm: '1', Door: '0' },
-    { ID: 'P3', Fl: '12', Alarm: '0', Door: '1' }
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
   ],
   "PRESTIGE COSMOPOLITAN": [
-    { ID: 'P1', Fl: '8', Alarm: '0', Door: '0' },
-    { ID: 'P2', Fl: '15', Alarm: '1', Door: '1' },
-    { ID: 'P3', Fl: '3', Alarm: '0', Door: '0' }
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
   ],
   "PRESTIGE CYBER TOWERS": [
-    { ID: 'P1', Fl: '5', Alarm: '0', Door: '0' },
-    { ID: 'P2', Fl: '7', Alarm: '0', Door: '1' },
-    { ID: 'P3', Fl: '12', Alarm: '0', Door: '0' },
-    { ID: 'P4', Fl: '1', Alarm: '1', Door: '0' }
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
   ]
 };
 
