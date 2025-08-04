@@ -1,5 +1,5 @@
 // API base URL - update this to match your backend server
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://143.244.132.186:3001/api';
 
 export const fetchLiftData = async () => {
   try {
@@ -26,22 +26,6 @@ const simulatedLiftData = () => {
   const currentTime = Date.now();
   const variation = Math.floor(currentTime / 5000) % 3; // Changes every 5 seconds
   
-<<<<<<< HEAD
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        "PRESTIGE POLYGON": [
-          { ID: 'P1', Fl: '0', Alarm: '0', Door: '0' }, // Alarm = in service, no movement
-          { ID: 'P2', Fl: '0', Alarm: '0', Door: '0' }, // Door open = stationary
-          { ID: 'P3', Fl: "0", Alarm: '0', Door: '0' }, // Moving down
-          { ID: 'P4', Fl: '0', Alarm: '0', Door: '0' }, // Alarm = in service, no movement
-          { ID: 'P5', Fl: '0', Alarm: '0', Door: '0' }, // Door open = stationary
-          { ID: 'P6', Fl: '0', Alarm: '0', Door: '0' } // Moving down
-        ],
-        "PRESTIGE PALLADIUM": [
-          { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
-        ],
-=======
   return {
     "PRESTIGE POLYGON": [
       { ID: 'P1', Fl: '13', Alarm: '1', Door: '0' }, // Alarm = in service, no movement
@@ -51,7 +35,6 @@ const simulatedLiftData = () => {
     "PRESTIGE PALLADIUM": [
       { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
     ],
->>>>>>> 16401c2 (test with backend)
 
     "PRESTIGE METROPOLITAN": [
       { ID: 'P6', Fl: '12', Alarm: '0', Door: '1' } // Door open = stationary
