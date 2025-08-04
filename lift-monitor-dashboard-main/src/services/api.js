@@ -6,19 +6,19 @@ export const fetchLiftData = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        "Belly 1": [
+        "PRESTIGE POLYGON": [
           { ID: 'P1', Fl: '13', Alarm: '1', Door: '0' }, // Alarm = in service, no movement
           { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
           { ID: 'P3', Fl: String(9 - variation), Alarm: '0', Door: '0' } // Moving down
         ],
-        "Belly 2": [
-          { ID: 'P4', Fl: '1', Alarm: '1', Door: '1' }, // Alarm = in service, no movement
-          { ID: 'P5', Fl: String(6 + variation), Alarm: '0', Door: '0' } // Moving up
+        "PRESTIGE PALLADIUM": [
+          { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
         ],
-        "Belly 3": [
+
+        "PRESTIGE METROPOLITAN": [
           { ID: 'P6', Fl: '12', Alarm: '0', Door: '1' } // Door open = stationary
         ],
-        "Belly 4": [
+        "PRESTIGE COSMOPOLITAN": [
           { ID: 'P1', Fl: String(8 - variation), Alarm: '0', Door: '0' }, // Moving down
           { ID: 'P2', Fl: '15', Alarm: '1', Door: '1' }, // Alarm = in service, no movement
           { ID: 'P3', Fl: String(3 + variation), Alarm: '0', Door: '0' } // Moving up

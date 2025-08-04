@@ -1,8 +1,9 @@
 export const buildings = [
-  "Belly 1",
-  "Belly 2", 
-  "Belly 3",
-  "Belly 4"
+  "PRESTIGE POLYGON",
+  "PRESTIGE PALLADIUM", 
+  "PRESTIGE METROPOLITAN",
+  "PRESTIGE COSMOPOLITAN",
+  "PRESTIGE CYBER TOWERS"
 ];
 
  /*"PRESTIGE POLYGON",
