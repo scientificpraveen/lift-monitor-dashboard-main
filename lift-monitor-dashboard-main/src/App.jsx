@@ -10,7 +10,7 @@ import TopAlert from './components/TopAlert';
 
 
 const App = () => {
-  const [selectedBuilding, setSelectedBuilding] = useState('PRESTIGE POLYGON');
+  const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]); // Default to first building
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({}); // Use ref instead of state
   const [alertVisible, setAlertVisible] = useState(false);
