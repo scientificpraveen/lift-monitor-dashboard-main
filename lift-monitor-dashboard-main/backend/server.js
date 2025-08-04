@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression'; // ✅ Add compression for faster responses
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
@@ -9,6 +10,7 @@ const PORT = 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(compression()); // ✅ Enable gzip compression
 
 // Create HTTP server
 const server = createServer(app);
@@ -69,19 +71,21 @@ let liftData = {
   ]
 };
 
-// Utility: Broadcast updated data to all WebSocket clients
-const broadcastWS = (data) => {
+// ✅ Utility: Broadcast only updated building or changes
+const broadcastWS = (update) => {
+  const message = JSON.stringify({
+    type: 'liftUpdate',
+    data: update
+  });
+
   wss.clients.forEach((client) => {
     if (client.readyState === 1) { // OPEN
-      client.send(JSON.stringify({
-        type: 'liftData',
-        data
-      }));
+      client.send(message);
     }
   });
 };
 
-// GET all lifts
+// ✅ GET all lifts
 app.get('/api/lifts', (req, res) => {
   try {
     res.json(liftData);
@@ -91,12 +95,12 @@ app.get('/api/lifts', (req, res) => {
   }
 });
 
-// GET building list
+// ✅ GET building list
 app.get('/api/buildings', (req, res) => {
   res.json(buildings);
 });
 
-// GET lifts for a specific building
+// ✅ GET lifts for a specific building
 app.get('/api/lifts/:building', (req, res) => {
   try {
     const building = req.params.building.toUpperCase();
@@ -111,38 +115,49 @@ app.get('/api/lifts/:building', (req, res) => {
   }
 });
 
-// ✅ POST update lift data
+// ✅ POST update lift data (supports both formats)
 app.post('/api/lifts', (req, res) => {
   try {
-    const { building, lifts } = req.body;
-    if (!building || !lifts || !Array.isArray(lifts)) {
-      return res.status(400).json({ error: 'Invalid request: building and lifts array are required' });
+    let buildingName = null;
+    let lifts = [];
+
+    if (req.body.building && Array.isArray(req.body.lifts)) {
+      // Format: { "building": "PRESTIGE POLYGON", "lifts": [ ... ] }
+      buildingName = req.body.building.toUpperCase();
+      lifts = req.body.lifts;
+    } else {
+      // Format: { "PRESTIGE POLYGON": { ... } } OR { "PRESTIGE POLYGON": [ ... ] }
+      const keys = Object.keys(req.body);
+      if (keys.length > 0) {
+        buildingName = keys[0].toUpperCase();
+        lifts = Array.isArray(req.body[keys[0]]) ? req.body[keys[0]] : [req.body[keys[0]]];
+      }
     }
 
-    const buildingName = building.toUpperCase();
-    if (!liftData[buildingName]) {
-      return res.status(404).json({ error: 'Building not found' });
+    if (!buildingName || !liftData[buildingName]) {
+      return res.status(400).json({ error: 'Invalid building name or format' });
     }
 
-    // Update lift data
+    // ✅ Update the data
     liftData[buildingName] = lifts;
 
-    // Broadcast to all WebSocket clients
+    // ✅ Broadcast only updated building data
     broadcastWS({ [buildingName]: lifts });
 
-    res.json({ message: 'Lift data updated successfully', data: liftData });
+    // ✅ Send small response
+    res.json({ message: 'Lift data updated', updated: buildingName });
   } catch (error) {
     console.error('Error updating lift data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Health check
+// ✅ Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// WebSocket connections
+// ✅ WebSocket connections
 wss.on('connection', (ws) => {
   console.log('✅ Client connected via WebSocket');
 
@@ -156,14 +171,14 @@ wss.on('connection', (ws) => {
   ws.on('error', (error) => console.error('WebSocket error:', error));
 });
 
-// Start server
+// ✅ Start server
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend running on port ${PORT}`);
   console.log(`📡 API: http://localhost:${PORT}/api/lifts`);
   console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
 });
 
-// Graceful shutdown
+// ✅ Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM, shutting down gracefully');
   server.close(() => process.exit(0));
