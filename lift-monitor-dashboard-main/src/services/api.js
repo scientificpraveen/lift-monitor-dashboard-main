@@ -48,30 +48,41 @@ const simulatedLiftData = () => {
 
 // WebSocket connection for real-time updates
 export const connectWebSocket = (onMessage) => {
-  const ws = new WebSocket('ws://localhost:3001');
-  
-  ws.onopen = () => {
-    console.log('Connected to WebSocket server');
-  };
-  
-  ws.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      if (message.type === 'liftData') {
-        onMessage(message.data);
+  let ws;
+
+  const connect = () => {
+    ws = new WebSocket('ws://143.244.132.186:3001');
+
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'liftData') {
+          // Initial full data load
+          onMessage(message.data, 'full');
+        } else if (message.type === 'liftUpdate') {
+          // Incremental update (only updated building)
+          onMessage(message.data, 'update');
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
-    } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
-    }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed, retrying in 3s...');
+      setTimeout(connect, 3000); // Auto-reconnect
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      ws.close();
+    };
   };
-  
-  ws.onclose = () => {
-    console.log('WebSocket connection closed');
-  };
-  
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-  
-  return ws;
+
+  connect();
+  return () => ws && ws.close(); // Return cleanup function
 };
