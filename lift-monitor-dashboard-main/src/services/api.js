@@ -25,7 +25,6 @@ const simulatedLiftData = () => {
   // Simulate changing floors for testing direction logic
   const currentTime = Date.now();
   const variation = Math.floor(currentTime / 5000) % 3; // Changes every 5 seconds
-  
   return {
     "PRESTIGE POLYGON": [
       { ID: 'P1', Fl: '13', Alarm: '1', Door: '0' }, // Alarm = in service, no movement
