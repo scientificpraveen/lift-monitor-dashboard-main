@@ -7,9 +7,12 @@ export const fetchLiftData = async () => {
     setTimeout(() => {
       resolve({
         "PRESTIGE POLYGON": [
-          { ID: 'P1', Fl: '13', Alarm: '1', Door: '0' }, // Alarm = in service, no movement
-          { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
-          { ID: 'P3', Fl: String(9 - variation), Alarm: '0', Door: '0' } // Moving down
+          { ID: 'P1', Fl: '0', Alarm: '0', Door: '0' }, // Alarm = in service, no movement
+          { ID: 'P2', Fl: '0', Alarm: '0', Door: '0' }, // Door open = stationary
+          { ID: 'P3', Fl: "0", Alarm: '0', Door: '0' }, // Moving down
+          { ID: 'P4', Fl: '0', Alarm: '0', Door: '0' }, // Alarm = in service, no movement
+          { ID: 'P5', Fl: '0', Alarm: '0', Door: '0' }, // Door open = stationary
+          { ID: 'P6', Fl: '0', Alarm: '0', Door: '0' } // Moving down
         ],
         "PRESTIGE PALLADIUM": [
           { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
