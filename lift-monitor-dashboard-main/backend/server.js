@@ -128,7 +128,7 @@ app.post('/api/lifts', (req, res) => {
     liftData[buildingName] = lifts;
 
     // Broadcast to all WebSocket clients
-    broadcastWS(liftData);
+    broadcastWS({ [buildingName]: lifts });
 
     res.json({ message: 'Lift data updated successfully', data: liftData });
   } catch (error) {
