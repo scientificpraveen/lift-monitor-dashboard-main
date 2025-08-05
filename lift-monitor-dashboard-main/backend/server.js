@@ -8,12 +8,7 @@ const app = express();
 const PORT = 3001;
 
 // Middleware
-app.use(cors({
-  origin: ['https://www.atlanwa-prestige.com'], // Allow only your frontend domain
-  methods: ['GET', 'POST'],
-  credentials: false
-}));
-
+app.use(cors());
 app.use(express.json());
 app.use(compression()); // ✅ Enable gzip compression
 
