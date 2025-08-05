@@ -5,7 +5,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -171,11 +171,8 @@ wss.on('connection', (ws) => {
   ws.on('error', (error) => console.error('WebSocket error:', error));
 });
 
-// ✅ Start server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api/lifts`);
-  console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
 
 // ✅ Graceful shutdown
