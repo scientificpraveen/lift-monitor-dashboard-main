@@ -1,5 +1,6 @@
 // API base URL - update this to match your backend server
-const API_BASE_URL = 'http://143.244.132.186:3001/api';
+const API_BASE_URL = '/api';
+const WS_BASE_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 
 export const fetchLiftData = async () => {
   try {
@@ -51,7 +52,7 @@ export const connectWebSocket = (onMessage) => {
   let ws;
 
   const connect = () => {
-    ws = new WebSocket('ws://143.244.132.186:3001');
+    ws = new WebSocket(WS_BASE_URL);
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server');
