@@ -7,10 +7,6 @@ import { createServer } from 'http';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -175,11 +171,8 @@ wss.on('connection', (ws) => {
   ws.on('error', (error) => console.error('WebSocket error:', error));
 });
 
-// ✅ Start server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api/lifts`);
-  console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
 
 // ✅ Graceful shutdown
