@@ -5,7 +5,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 const app = express();
-const PORT = 5001;
+const PORT = 3001;
 
 // Middleware
 app.use(cors({
