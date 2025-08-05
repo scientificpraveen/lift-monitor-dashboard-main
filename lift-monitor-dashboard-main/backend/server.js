@@ -5,10 +5,15 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
 const app = express();
-const PORT = 3001;
+const PORT = 5001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://www.atlanwa-prestige.com'], // Allow only your frontend domain
+  methods: ['GET', 'POST'],
+  credentials: false
+}));
+
 app.use(express.json());
 app.use(compression()); // ✅ Enable gzip compression
 
