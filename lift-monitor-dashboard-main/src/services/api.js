@@ -28,22 +28,45 @@ const simulatedLiftData = () => {
   const variation = Math.floor(currentTime / 5000) % 3; // Changes every 5 seconds
   return {
     "PRESTIGE POLYGON": [
-      { ID: 'P1', Fl: '13', Alarm: '1', Door: '0' }, // Alarm = in service, no movement
-      { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
-      { ID: 'P3', Fl: String(9 - variation), Alarm: '0', Door: '0' } // Moving down
-    ],
-    "PRESTIGE PALLADIUM": [
-      { ID: 'P2', Fl: '5', Alarm: '0', Door: '1' }, // Door open = stationary
-    ],
-
-    "PRESTIGE METROPOLITAN": [
-      { ID: 'P6', Fl: '12', Alarm: '0', Door: '1' } // Door open = stationary
-    ],
-    "PRESTIGE COSMOPOLITAN": [
-      { ID: 'P1', Fl: String(8 - variation), Alarm: '0', Door: '0' }, // Moving down
-      { ID: 'P2', Fl: '15', Alarm: '1', Door: '1' }, // Alarm = in service, no movement
-      { ID: 'P3', Fl: String(3 + variation), Alarm: '0', Door: '0' } // Moving up
-    ]
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
+  ],
+  "PRESTIGE PALLADIUM": [
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
+  ],
+  "PRESTIGE METROPOLITAN": [
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
+  ],
+  "PRESTIGE COSMOPOLITAN": [
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
+  ],
+  "PRESTIGE CYBER TOWERS": [
+    { ID: 'P1', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P2', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P3', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P4', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P5', Fl: 'G', Alarm: '0', Door: '0' },
+    { ID: 'P6', Fl: 'G', Alarm: '0', Door: '0' }
+  ]
   };
 };
 
