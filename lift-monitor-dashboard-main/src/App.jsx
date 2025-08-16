@@ -14,7 +14,7 @@ const App = () => {
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({}); // Use ref instead of state
   const liftHistoryRef = useRef({}); // Track floor history for direction logic
-  const STATIONARY_THRESHOLD = 4; // Number of consecutive same floor readings before showing stationary
+  const STATIONARY_THRESHOLD = 7; // Number of consecutive same floor readings before showing stationary
   const [alerts, setAlerts] = useState([]);
   const handleCloseAlert = (index) => {
     setAlerts(prev => prev.filter((_, i) => i !== index));
