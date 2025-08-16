@@ -90,7 +90,7 @@ const App = () => {
     fetchData();
 
     // Then set up interval for periodic updates
-    const interval = setInterval(fetchData, 3000);
+    const interval = setInterval(fetchData, 500);
 
     return () => clearInterval(interval);
   }, []);
