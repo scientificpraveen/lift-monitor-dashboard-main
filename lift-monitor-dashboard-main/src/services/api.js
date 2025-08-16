@@ -1,5 +1,5 @@
 // API base URL - update this to match your backend server
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://atlanwa-prestige.com/api';
 const WS_BASE_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 
 export const fetchLiftData = async () => {
