@@ -1,5 +1,4 @@
-// components/TopAlert.jsx
-import React from "react";
+import React from 'react';
 import "./TopAlert.css";
 
 const TopAlert = ({ alerts, onClose }) => {

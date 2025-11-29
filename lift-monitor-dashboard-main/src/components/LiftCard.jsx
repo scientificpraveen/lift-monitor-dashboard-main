@@ -7,7 +7,6 @@ const LiftCard = ({ lift }) => {
   const isDoorOpen = Door === '1';
   const isAlarm = Alarm === '1';
 
-  // Debug: Log the direction value
   console.log(`Lift ${ID}: Floor=${Fl}, Door=${Door}, Direction=${direction}`);
 
   const renderDirectionIcon = () => {
@@ -28,7 +27,6 @@ const LiftCard = ({ lift }) => {
         {renderDirectionIcon()}
       </div>
 
-      {/* 🔄 force reanimation with a dynamic key */}
       <div key={`door-${isDoorOpen}`} className={`circle ${isDoorOpen ? 'open' : ''}`}>
         <span className="floor-number">{Fl}</span>
       </div>

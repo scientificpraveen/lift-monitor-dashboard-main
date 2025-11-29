@@ -1,0 +1,267 @@
+import XLSX from 'xlsx';
+import PDFDocument from 'pdfkit';
+import { getPanelLogs } from '../panelLogContext.js';
+
+export const generateExcel = async (filters) => {
+  try {
+    const logs = await getPanelLogs(filters);
+    
+    if (logs.length === 0) {
+      throw new Error('No data available for export');
+    }
+
+    const wb = XLSX.utils.book_new();
+    
+    // Group logs by date
+    const logsByDate = {};
+    logs.forEach(log => {
+      if (!logsByDate[log.date]) {
+        logsByDate[log.date] = [];
+      }
+      logsByDate[log.date].push(log);
+    });
+
+    // Create a sheet for each date
+    Object.keys(logsByDate).sort().forEach(date => {
+      const dailyLogs = logsByDate[date].sort((a, b) => a.time.localeCompare(b.time));
+      
+      // HT Panel Data
+      const htLogs = dailyLogs.filter(log => log.htPanel);
+      if (htLogs.length > 0) {
+        const htData = [];
+        
+        // Headers
+        htData.push(['HT PANEL - ' + new Date(date).toLocaleDateString()]);
+        htData.push([]);
+        htData.push([
+          'Time(Hrs)', 'I/C From TNEB', 'Volt (kv)',
+          'Current Amp R', 'Current Amp Y', 'Current Amp B', 'P.F', 'Hz',
+          'Tr-1 Current R', 'Tr-1 Current Y', 'Tr-1 Current B',
+          'Tr-1 Temp R', 'Tr-1 Temp Y', 'Tr-1 Temp B',
+          'Tr-2 Current R', 'Tr-2 Current Y', 'Tr-2 Current B',
+          'Tr-2 Temp R', 'Tr-2 Temp Y', 'Tr-2 Temp B',
+          'Tr-3 Current R', 'Tr-3 Current Y', 'Tr-3 Current B',
+          'Tr-3 Temp R', 'Tr-3 Temp Y', 'Tr-3 Temp B',
+          'Remark', 'Building'
+        ]);
+        
+        // Data rows
+        htLogs.forEach(log => {
+          htData.push([
+            log.time,
+            log.htPanel.icFromTneb || 'EB',
+            log.htPanel.voltageFromWreb?.volt || '',
+            log.htPanel.currentAmp?.r || '',
+            log.htPanel.currentAmp?.y || '',
+            log.htPanel.currentAmp?.b || '',
+            log.htPanel.currentAmp?.pf || '',
+            log.htPanel.currentAmp?.hz || '',
+            log.htPanel.outgoingTr1?.currentAmp?.r || '',
+            log.htPanel.outgoingTr1?.currentAmp?.y || '',
+            log.htPanel.outgoingTr1?.currentAmp?.b || '',
+            log.htPanel.outgoingTr1?.windingTemp?.r || '',
+            log.htPanel.outgoingTr1?.windingTemp?.y || '',
+            log.htPanel.outgoingTr1?.windingTemp?.b || '',
+            log.htPanel.outgoingTr2?.currentAmp?.r || '',
+            log.htPanel.outgoingTr2?.currentAmp?.y || '',
+            log.htPanel.outgoingTr2?.currentAmp?.b || '',
+            log.htPanel.outgoingTr2?.windingTemp?.r || '',
+            log.htPanel.outgoingTr2?.windingTemp?.y || '',
+            log.htPanel.outgoingTr2?.windingTemp?.b || '',
+            log.htPanel.outgoingTr3?.currentAmp?.r || '',
+            log.htPanel.outgoingTr3?.currentAmp?.y || '',
+            log.htPanel.outgoingTr3?.currentAmp?.b || '',
+            log.htPanel.outgoingTr3?.windingTemp?.r || '',
+            log.htPanel.outgoingTr3?.windingTemp?.y || '',
+            log.htPanel.outgoingTr3?.windingTemp?.b || '',
+            log.remarks || '',
+            log.building
+          ]);
+        });
+        
+        const htSheet = XLSX.utils.aoa_to_sheet(htData);
+        
+        // Set column widths
+        htSheet['!cols'] = Array(28).fill({ wch: 12 });
+        
+        XLSX.utils.book_append_sheet(wb, htSheet, `HT_${date}`.substring(0, 31));
+      }
+      
+      // LT Panel Data
+      const ltLogs = dailyLogs.filter(log => log.ltPanel);
+      if (ltLogs.length > 0) {
+        const ltData = [];
+        
+        // Headers
+        ltData.push(['LT PANEL - ' + new Date(date).toLocaleDateString()]);
+        ltData.push([]);
+        ltData.push([
+          'Time(Hrs)',
+          'Inc-1 Volt RY', 'Inc-1 Volt YB', 'Inc-1 Volt BR',
+          'Inc-1 Cur R', 'Inc-1 Cur Y', 'Inc-1 Cur B', 'Inc-1 TAP', 'Inc-1 KWH',
+          'Inc-2 Volt RY', 'Inc-2 Volt YB', 'Inc-2 Volt BR',
+          'Inc-2 Cur R', 'Inc-2 Cur Y', 'Inc-2 Cur B', 'Inc-2 TAP', 'Inc-2 KWH',
+          'Inc-3 Volt RY', 'Inc-3 Volt YB', 'Inc-3 Volt BR',
+          'Inc-3 Cur R', 'Inc-3 Cur Y', 'Inc-3 Cur B', 'Inc-3 TAP', 'Inc-3 KWH',
+          'Remark', 'Building'
+        ]);
+        
+        // Data rows
+        ltLogs.forEach(log => {
+          ltData.push([
+            log.time,
+            log.ltPanel.incomer1?.voltage?.ry || '',
+            log.ltPanel.incomer1?.voltage?.yb || '',
+            log.ltPanel.incomer1?.voltage?.br || '',
+            log.ltPanel.incomer1?.currentAmp?.r || '',
+            log.ltPanel.incomer1?.currentAmp?.y || '',
+            log.ltPanel.incomer1?.currentAmp?.b || '',
+            log.ltPanel.incomer1?.tap || '',
+            log.ltPanel.incomer1?.kwh || '',
+            log.ltPanel.incomer2?.voltage?.ry || '',
+            log.ltPanel.incomer2?.voltage?.yb || '',
+            log.ltPanel.incomer2?.voltage?.br || '',
+            log.ltPanel.incomer2?.currentAmp?.r || '',
+            log.ltPanel.incomer2?.currentAmp?.y || '',
+            log.ltPanel.incomer2?.currentAmp?.b || '',
+            log.ltPanel.incomer2?.tap || '',
+            log.ltPanel.incomer2?.kwh || '',
+            log.ltPanel.incomer3?.voltage?.ry || '',
+            log.ltPanel.incomer3?.voltage?.yb || '',
+            log.ltPanel.incomer3?.voltage?.br || '',
+            log.ltPanel.incomer3?.currentAmp?.r || '',
+            log.ltPanel.incomer3?.currentAmp?.y || '',
+            log.ltPanel.incomer3?.currentAmp?.b || '',
+            log.ltPanel.incomer3?.tap || '',
+            log.ltPanel.incomer3?.kwh || '',
+            log.remarks || '',
+            log.building
+          ]);
+        });
+        
+        const ltSheet = XLSX.utils.aoa_to_sheet(ltData);
+        
+        // Set column widths
+        ltSheet['!cols'] = Array(27).fill({ wch: 12 });
+        
+        XLSX.utils.book_append_sheet(wb, ltSheet, `LT_${date}`.substring(0, 31));
+      }
+    });
+    
+    // Generate buffer
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    return buffer;
+  } catch (error) {
+    console.error('Error generating Excel:', error);
+    throw error;
+  }
+};
+
+export const generatePDF = async (filters) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const logs = await getPanelLogs(filters);
+      
+      if (logs.length === 0) {
+        throw new Error('No data available for export');
+      }
+
+      const doc = new PDFDocument({ 
+        size: 'A4',
+        layout: 'landscape',
+        margin: 30
+      });
+      
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        resolve(pdfBuffer);
+      });
+      doc.on('error', reject);
+
+      // Group logs by date
+      const logsByDate = {};
+      logs.forEach(log => {
+        if (!logsByDate[log.date]) {
+          logsByDate[log.date] = [];
+        }
+        logsByDate[log.date].push(log);
+      });
+
+      let isFirstPage = true;
+
+      Object.keys(logsByDate).sort().forEach(date => {
+        const dailyLogs = logsByDate[date].sort((a, b) => a.time.localeCompare(b.time));
+        
+        if (!isFirstPage) {
+          doc.addPage();
+        }
+        isFirstPage = false;
+
+        // Title
+        doc.fontSize(16).font('Helvetica-Bold')
+           .text(`HT/LT Panel Logs - ${new Date(date).toLocaleDateString()}`, { align: 'center' });
+        doc.moveDown();
+
+        // HT Panel
+        const htLogs = dailyLogs.filter(log => log.htPanel);
+        if (htLogs.length > 0) {
+          doc.fontSize(14).font('Helvetica-Bold')
+             .text('HT Panel', { underline: true });
+          doc.moveDown(0.5);
+
+          htLogs.forEach(log => {
+            doc.fontSize(10).font('Helvetica-Bold')
+               .text(`Time: ${log.time} | Building: ${log.building}`, { continued: true })
+               .font('Helvetica')
+               .text(` | I/C: ${log.htPanel.icFromTneb || 'EB'}`);
+            
+            doc.fontSize(9).font('Helvetica')
+               .text(`Voltage: ${log.htPanel.voltageFromWreb?.volt || '-'} kV | ` +
+                     `Current: R=${log.htPanel.currentAmp?.r || '-'} Y=${log.htPanel.currentAmp?.y || '-'} B=${log.htPanel.currentAmp?.b || '-'} | ` +
+                     `PF=${log.htPanel.currentAmp?.pf || '-'} Hz=${log.htPanel.currentAmp?.hz || '-'}`);
+            
+            if (log.remarks) {
+              doc.text(`Remarks: ${log.remarks}`);
+            }
+            doc.moveDown(0.5);
+          });
+          doc.moveDown();
+        }
+
+        // LT Panel
+        const ltLogs = dailyLogs.filter(log => log.ltPanel);
+        if (ltLogs.length > 0) {
+          if (doc.y > 500) {
+            doc.addPage();
+          }
+          
+          doc.fontSize(14).font('Helvetica-Bold')
+             .text('LT Panel', { underline: true });
+          doc.moveDown(0.5);
+
+          ltLogs.forEach(log => {
+            doc.fontSize(10).font('Helvetica-Bold')
+               .text(`Time: ${log.time} | Building: ${log.building}`);
+            
+            doc.fontSize(9).font('Helvetica')
+               .text(`Incomer-1: TAP=${log.ltPanel.incomer1?.tap || '-'} KWH=${log.ltPanel.incomer1?.kwh || '-'}`);
+            doc.text(`Incomer-2: TAP=${log.ltPanel.incomer2?.tap || '-'} KWH=${log.ltPanel.incomer2?.kwh || '-'}`);
+            doc.text(`Incomer-3: TAP=${log.ltPanel.incomer3?.tap || '-'} KWH=${log.ltPanel.incomer3?.kwh || '-'}`);
+            
+            if (log.remarks) {
+              doc.text(`Remarks: ${log.remarks}`);
+            }
+            doc.moveDown(0.5);
+          });
+        }
+      });
+
+      doc.end();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      reject(error);
+    }
+  });
+};

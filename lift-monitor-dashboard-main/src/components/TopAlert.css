@@ -1,6 +1,6 @@
 .top-alert-container {
   position: fixed;
-  top: 80px; /* Adjust to just below header */
+  top: 80px;
   right: 20px;
   z-index: 9999;
   display: flex;

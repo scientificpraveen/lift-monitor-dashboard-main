@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PanelLog {
+  id        Int      @id @default(autoincrement())
+  building  String
+  date      String
+  time      String
+  panelType String
+  htPanel   Json?
+  ltPanel   Json?
+  shiftIncharge Json?
+  powerFailure Json?
+  remarks   String?
+  engineerSignature String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("panel_logs")
+  @@index([building, date, panelType])
+}

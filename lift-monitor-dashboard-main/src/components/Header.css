@@ -1,8 +1,10 @@
-/* Header.css */
 .header {
   background-color: rgba(255, 255, 255, 0.9);
   padding: 10px 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 101;
 }
 
 .header-content {
@@ -22,4 +24,36 @@
   font-size: 1.5rem;
   font-weight: bold;
   color: #333;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 15px;
+  }
+  
+  .logo {
+    height: 32px;
+    width: 32px;
+    margin-right: 10px;
+  }
+  
+  .company-name {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 12px;
+  }
+  
+  .logo {
+    height: 28px;
+    width: 28px;
+    margin-right: 8px;
+  }
+  
+  .company-name {
+    font-size: 1rem;
+  }
 }

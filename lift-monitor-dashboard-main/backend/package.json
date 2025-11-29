@@ -9,9 +9,16 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "@prisma/client": "^5.22.0",
+    "compression": "^1.7.4",
     "cors": "^2.8.5",
-    "ws": "^8.14.2"
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "prisma": "^5.22.0",
+    "ws": "^8.14.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

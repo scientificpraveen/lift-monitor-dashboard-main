@@ -10,12 +10,12 @@
 }
 
 .lift-card {
-  width: 220px;
-  height: 300px;
-  border: 2px solid #a076f9; /* lavender */
-  border-radius: 20px;
-  padding: 20px;
-  background-color: #f5f0ff; /* lavender background */
+  width: 180px;
+  height: 240px;
+  border: 2px solid #a076f9;
+  border-radius: 16px;
+  padding: 16px;
+  background-color: #f5f0ff;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -28,22 +28,22 @@
 
 .lift-card.alert {
   border: 2px solid #ff4d4d;
-  background-color: #ffe5e5; /* mild red */
+  background-color: #ffe5e5;
 }
 
 .arrow {
   position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 1.5rem;
+  top: 8px;
+  right: 12px;
+  font-size: 1.3rem;
   color: #333;
 }
 
 .circle {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 20px;
-  border: 5px solid #a076f9;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 16px;
+  border: 4px solid #a076f9;
   border-radius: 50%;
   background-color: white;
   display: flex;
@@ -57,7 +57,7 @@
 
 .circle.open {
   border-style: dashed;
-  border-radius: 0 70px 70px 0;
+  border-radius: 0 55px 55px 0;
   border-left: none;
   animation: doorOpenAnim 0.5s ease forwards;
 }
@@ -70,10 +70,10 @@
   0% {
     border-radius: 50%;
     border-style: solid;
-    border-left: 5px solid #a076f9;
+    border-left: 4px solid #a076f9;
   }
   100% {
-    border-radius: 0 70px 70px 0;
+    border-radius: 0 55px 55px 0;
     border-style: dashed #a076f9;
     border-left: none;
   }
@@ -81,25 +81,73 @@
 
 @keyframes doorCloseAnim {
   0% {
-    border-radius: 0 70px 70px 0;
+    border-radius: 0 55px 55px 0;
     border-style: dashed #a076f9;
     border-left: none;
   }
   100% {
     border-radius: 50%;
     border-style: solid;
-    border-left: 5px solid #a076f9;
+    border-left: 4px solid #a076f9;
   }
 }
 
 .floor-number {
-  font-size: 3.5rem;
+  font-size: 2.8rem;
   font-weight: bold;
   color: #8f3fff;
 }
 
+@media (max-width: 768px) {
+  .lift-card {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    min-height: 260px;
+    padding: 16px;
+  }
+  
+  .circle {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 15px;
+  }
+  
+  .floor-number {
+    font-size: 3rem;
+  }
+  
+  .arrow {
+    font-size: 1.3rem;
+    top: 8px;
+    right: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lift-card {
+    max-width: 100%;
+    min-height: 240px;
+    padding: 14px;
+  }
+  
+  .circle {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 12px;
+  }
+  
+  .floor-number {
+    font-size: 2.5rem;
+  }
+  
+  .arrow {
+    font-size: 1.2rem;
+  }
+}
+
 .lift-id {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 500;
   color: #333;
 }
