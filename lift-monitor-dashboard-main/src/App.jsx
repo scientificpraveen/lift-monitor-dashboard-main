@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import LiftCard from "./components/LiftCard";
 import Header from "./components/Header";
 import PanelLogManager from "./components/PanelLogManager";
+import ServiceLogManager from "./components/ServiceLogManager";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -14,6 +15,7 @@ import TopAlert from "./components/TopAlert";
 const App = () => {
   const { isAuthenticated, loading } = useAuth();
   const [currentView, setCurrentView] = useState("lift-monitor");
+  const [showServiceLog, setShowServiceLog] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]);
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({});
@@ -175,7 +177,10 @@ const App = () => {
           className={`nav-tab ${
             currentView === "lift-monitor" ? "active" : ""
           }`}
-          onClick={() => setCurrentView("lift-monitor")}
+          onClick={() => {
+            setCurrentView("lift-monitor");
+            setShowServiceLog(false);
+          }}
         >
           🏢 Lift Monitor
         </button>
@@ -190,17 +195,46 @@ const App = () => {
       {currentView === "lift-monitor" ? (
         <>
           <TopAlert alerts={alerts} onClose={handleCloseAlert} />
-          <div className="dashboard">
-            <Sidebar
-              selected={selectedBuilding}
-              onSelect={setSelectedBuilding}
-            />
-            <div className="main-content">
-              {visibleLifts.map((lift) => (
-                <LiftCard key={lift.ID} lift={lift} />
-              ))}
+          {!showServiceLog ? (
+            <div className="dashboard">
+              <Sidebar
+                selected={selectedBuilding}
+                onSelect={setSelectedBuilding}
+                onServiceLogClick={() => setShowServiceLog(true)}
+              />
+              <div className="main-content">
+                {visibleLifts.map((lift) => (
+                  <LiftCard key={lift.ID} lift={lift} />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: "flex" }}>
+              <Sidebar
+                selected={selectedBuilding}
+                onSelect={setSelectedBuilding}
+                onServiceLogClick={() => setShowServiceLog(true)}
+              />
+              <div style={{ flex: 1, padding: "20px" }}>
+                <button
+                  onClick={() => setShowServiceLog(false)}
+                  style={{
+                    padding: "10px 20px",
+                    marginBottom: "20px",
+                    background: "#a076f9",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                  }}
+                >
+                  ← Back to Lifts
+                </button>
+                <ServiceLogManager />
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <PanelLogManager />

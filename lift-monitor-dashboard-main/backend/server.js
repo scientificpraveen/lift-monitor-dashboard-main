@@ -7,6 +7,7 @@ import { createServer } from "http";
 import * as panelLogService from "./panelLogContext.js";
 import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
+import serviceLogRoutes from "./routes/serviceLogs.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use(compression());
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
+app.use("/api/service-logs", serviceLogRoutes);
 
 const server = createServer(app);
 

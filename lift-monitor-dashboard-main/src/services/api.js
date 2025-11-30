@@ -245,3 +245,63 @@ export const deleteAllPanelLogs = async () => {
     throw error;
   }
 };
+
+export const fetchServiceLogs = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/service-logs`, {
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch service logs');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching service logs:', error);
+    throw error;
+  }
+};
+
+export const createServiceLog = async (logData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/service-logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(logData),
+    });
+    if (!response.ok) throw new Error('Failed to create service log');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating service log:', error);
+    throw error;
+  }
+};
+
+export const updateServiceLog = async (id, logData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/service-logs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(logData),
+    });
+    if (!response.ok) throw new Error('Failed to update service log');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating service log:', error);
+    throw error;
+  }
+};
+
+export const deleteServiceLog = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/service-logs/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to delete service log');
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting service log:', error);
+    throw error;
+  }
+};
+
