@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://localhost:3001/api';
-const WS_BASE_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://localhost:3001/ws`;
+const API_BASE_URL = '/api';
+const WS_BASE_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 
 export const fetchLiftData = async () => {
   try {
