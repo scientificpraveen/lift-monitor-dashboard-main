@@ -43,18 +43,18 @@ body {
 .nav-tab.active {
   background: #34495e;
   color: white;
-  border-bottom-color: #4CAF50;
+  border-bottom-color: #a076f9;
 }
 
 .nav-tab.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: #4CAF50;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  background: linear-gradient(90deg, #a076f9 0%, #6b2eff 100%);
+  box-shadow: 0 0 10px rgba(160, 118, 249, 0.5);
 }
 
 .dashboard {
@@ -106,7 +106,7 @@ body {
 }
 
 .lift-card {
-  background-color: #E6E6FA;
+  background-color: #e6e6fa;
   border-radius: 12px;
   padding: 20px;
   width: 100%;
@@ -127,7 +127,7 @@ body {
     gap: 20px;
     padding: 20px;
   }
-  
+
   .nav-tab {
     padding: 12px 20px;
     font-size: 0.95rem;
@@ -138,12 +138,12 @@ body {
   .dashboard {
     flex-direction: column;
   }
-  
+
   .main-content {
     gap: 16px;
     padding: 16px;
   }
-  
+
   .nav-tab {
     padding: 10px 15px;
     font-size: 0.9rem;
@@ -155,7 +155,7 @@ body {
     gap: 12px;
     padding: 12px;
   }
-  
+
   .nav-tab {
     padding: 12px 10px;
     font-size: 0.85rem;
