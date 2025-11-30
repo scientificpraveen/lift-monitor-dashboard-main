@@ -5,7 +5,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   position: relative;
   box-shadow: 4px 0 12px rgba(160, 118, 249, 0.1);
   overflow: hidden;
@@ -31,7 +31,7 @@
 }
 
 .building-list::after {
-  content: '';
+  content: "";
   display: block;
   height: 80px;
 }
@@ -57,6 +57,25 @@
 }
 
 .building-item.active {
+  background-color: #a076f9;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(160, 118, 249, 0.3);
+}
+
+.service-log-item {
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  color: #5e5e5e;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-top: 1px solid #d1b3ff;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.service-log-item:hover {
   background-color: #a076f9;
   color: white;
   font-weight: 600;
@@ -90,16 +109,16 @@
     border-right: none;
     border-bottom: 2px solid #d1b3ff;
   }
-  
+
   .sidebar-title {
     font-size: 1.2rem;
     padding: 15px;
   }
-  
+
   .building-list-container {
     padding: 0 12px;
   }
-  
+
   .building-item {
     padding: 10px;
     margin: 6px 0;
@@ -111,16 +130,16 @@
   .sidebar {
     max-height: 180px;
   }
-  
+
   .sidebar-title {
     font-size: 1.1rem;
     padding: 12px;
   }
-  
+
   .building-list-container {
     padding: 0 10px;
   }
-  
+
   .building-item {
     padding: 8px;
     margin: 5px 0;

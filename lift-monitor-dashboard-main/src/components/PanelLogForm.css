@@ -17,7 +17,7 @@
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #4CAF50;
+  border-bottom: 2px solid #a076f9;
 }
 
 .panel-log-form h2 {
@@ -52,7 +52,7 @@
   padding: 20px;
   background: #f9f9f9;
   border-radius: 6px;
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid #a076f9;
 }
 
 .form-section h3 {
@@ -116,8 +116,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+  border-color: #a076f9;
+  box-shadow: 0 0 0 2px rgba(160, 118, 249, 0.1);
 }
 
 .form-group input[type="number"] {
@@ -164,14 +164,14 @@
 }
 
 .btn-primary {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #a076f9 0%, #6b2eff 100%);
   color: white;
 }
 
 .btn-primary:hover {
-  background: #45a049;
+  background: linear-gradient(135deg, #8b5cf6 0%, #5a1fa6 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 8px rgba(160, 118, 249, 0.3);
 }
 
 .btn-secondary {
@@ -189,12 +189,12 @@
   .panel-log-form-container {
     padding: 18px;
   }
-  
+
   .form-row {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
   }
-  
+
   .panel-log-form h2 {
     font-size: 1.5rem;
   }
@@ -215,7 +215,7 @@
     padding: 15px;
     margin-bottom: 15px;
   }
-  
+
   .form-section h3 {
     font-size: 1.1rem;
   }
@@ -230,19 +230,19 @@
     padding: 10px 20px;
     font-size: 0.95rem;
   }
-  
+
   .form-header {
     margin-bottom: 20px;
   }
-  
+
   .panel-log-form h2 {
     font-size: 1.3rem;
   }
-  
+
   .form-group label {
     font-size: 0.9rem;
   }
-  
+
   .form-group input,
   .form-group select {
     padding: 8px;
@@ -255,41 +255,41 @@
     padding: 12px;
     margin: 5px;
   }
-  
+
   .form-section {
     padding: 12px;
     margin-bottom: 12px;
   }
-  
+
   .form-section h3 {
     font-size: 1rem;
     margin-bottom: 12px;
   }
-  
+
   .form-header {
     margin-bottom: 15px;
   }
-  
+
   .panel-log-form h2 {
     font-size: 1.1rem;
   }
-  
+
   .form-close-btn {
     width: 32px;
     height: 32px;
     font-size: 24px;
   }
-  
+
   .form-group label {
     font-size: 0.85rem;
   }
-  
+
   .form-group input,
   .form-group select {
     padding: 6px;
     font-size: 0.85rem;
   }
-  
+
   .btn {
     padding: 8px 16px;
     font-size: 0.9rem;

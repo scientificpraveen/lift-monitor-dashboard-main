@@ -29,7 +29,7 @@
 }
 
 .message-banner.success {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #a076f9 0%, #6b2eff 100%);
   color: white;
 }
 
@@ -39,7 +39,7 @@
 }
 
 .message-banner.info {
-  background: #2196F3;
+  background: #2196f3;
   color: white;
 }
 
