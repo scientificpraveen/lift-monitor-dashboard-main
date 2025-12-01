@@ -3,4 +3,4 @@ dist/
 .env
 .DS_Store
 build/
-.env.*
+.env.production
