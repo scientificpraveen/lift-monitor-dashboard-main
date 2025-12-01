@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPanelLogs, deletePanelLog } from '../services/api';
+import { fetchPanelLogs, deletePanelLog, updatePanelLog } from '../services/api';
 import { buildings } from '../config/buildings';
+import PowerFailureModal from './PowerFailureModal';
 import './PanelLogList.css';
 
 const PanelLogList = ({ onEdit, onCreateNew }) => {
@@ -19,6 +20,8 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const [dailyViewDate, setDailyViewDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('all');
   const [filterMode, setFilterMode] = useState('today');
+  const [powerFailureLog, setPowerFailureLog] = useState(null);
+  const [showPowerFailureModal, setShowPowerFailureModal] = useState(false);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -199,6 +202,52 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     setModalPanelType(log.panelType || 'BOTH');
   };
 
+  const handleOpenPowerFailureModal = (log) => {
+    setPowerFailureLog(log);
+    setShowPowerFailureModal(true);
+  };
+
+  const handleSavePowerFailures = async (failures) => {
+    if (!powerFailureLog) return;
+    
+    try {
+      // Check if this is a daily power failure (id starts with 'daily-')
+      if (powerFailureLog.id && powerFailureLog.id.startsWith('daily-')) {
+        // Update all logs for this date
+        const date = powerFailureLog.date;
+        const dailyLogs = logs.filter(log => log.date === date);
+        
+        if (dailyLogs.length === 0) {
+          alert('No logs found for this date');
+          return;
+        }
+        
+        // Update all logs for this day with the same power failure
+        const promises = dailyLogs.map(log => 
+          updatePanelLog(log.id, { powerFailure: failures.length > 0 ? failures : null })
+        );
+        
+        await Promise.all(promises);
+      } else {
+        // Update single log
+        await updatePanelLog(powerFailureLog.id, { powerFailure: failures.length > 0 ? failures : null });
+      }
+      
+      setShowPowerFailureModal(false);
+      setPowerFailureLog(null);
+      
+      loadLogs();
+    } catch (err) {
+      alert('Failed to save power failures: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleClosePowerFailureModal = () => {
+    setShowPowerFailureModal(false);
+    setPowerFailureLog(null);
+  };
+
   if (loading) {
     return <div className="loading">Loading panel logs...</div>;
   }
@@ -361,12 +410,30 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     month: 'long', 
                     day: 'numeric' 
                   })}</h3>
-                  <button 
-                    className="btn btn-small" 
-                    onClick={() => handleDailyView(date)}
-                  >
-                    View Full Table
-                  </button>
+                  <div className="daily-header-actions">
+                    <button 
+                      className="btn btn-power-failure"
+                      onClick={() => {
+                        // Create a daily power failure log object
+                        const dailyLog = {
+                          id: `daily-${date}`,
+                          date: date,
+                          powerFailure: dailyLogs[0]?.powerFailure || [],
+                          isDaily: true
+                        };
+                        handleOpenPowerFailureModal(dailyLog);
+                      }}
+                      title="Add power failure for this day"
+                    >
+                      ⚡ Add power failure
+                    </button>
+                    <button 
+                      className="btn btn-small" 
+                      onClick={() => handleDailyView(date)}
+                    >
+                      View Full Table
+                    </button>
+                  </div>
                 </div>
 
                 {dailyLogs[0]?.htPanel && (
@@ -376,28 +443,40 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                       <table className="panel-log-table daily-table">
                         <thead>
                           <tr>
-                            <th rowSpan="3">Time (Hrs)</th>
-                            <th rowSpan="3">I/C From TNEB</th>
-                            <th colSpan="6">Main Incomer Supply</th>
-                            <th colSpan="3">Out Going to Tr-1 (2000 Kva)</th>
-                            <th colSpan="3">Out Going to Tr-2 (2000 Kva)</th>
-                            <th colSpan="3">Out Going to Tr-3 (2000 Kva)</th>
+                            <th rowSpan="3">TIME (HRS)</th>
+                            <th rowSpan="3">I/C FROM TNEB</th>
+                            <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                            <th colSpan="6">OUT GOING TO TR-1 (2000 KVA)</th>
+                            <th colSpan="6">OUT GOING TO TR-2 (2000 KVA)</th>
+                            <th colSpan="6">OUT GOING TO TR-3 (2000 KVA)</th>
                             <th rowSpan="3">REMARK</th>
                             <th rowSpan="3">ACTIONS</th>
                           </tr>
                           <tr>
-                            <th colSpan="6">Current Amp</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
+                            <th rowSpan="2">VOLT (KV)</th>
+                            <th colSpan="5">CURRENT AMP</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="3">WINDING TEMP.</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="3">WINDING TEMP.</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="3">WINDING TEMP.</th>
                           </tr>
                           <tr>
-                            <th>Volt (kv)</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
-                            <th>PF</th>
-                            <th>Hz</th>
+                            <th>P.F</th>
+                            <th>HZ</th>
+                            <th>R</th>
+                            <th>Y</th>
+                            <th>B</th>
+                            <th>R</th>
+                            <th>Y</th>
+                            <th>B</th>
+                            <th>R</th>
+                            <th>Y</th>
+                            <th>B</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
@@ -411,57 +490,53 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                         </thead>
                         <tbody>
                           {dailyLogs.map(log => log.htPanel && (
-                            <React.Fragment key={log.id}>
-                              <tr>
-                                <td rowSpan="2"><strong>{log.time}</strong></td>
-                                <td rowSpan="2">{log.htPanel.icFromTneb || 'EB'}</td>
-                                <td rowSpan="2">{log.htPanel.voltageFromWreb?.volt || '-'}</td>
-                                <td rowSpan="2">{log.htPanel.currentAmp?.r || '-'}</td>
-                                <td rowSpan="2">{log.htPanel.currentAmp?.y || '-'}</td>
-                                <td rowSpan="2">{log.htPanel.currentAmp?.b || '-'}</td>
-                                <td rowSpan="2">{log.htPanel.currentAmp?.pf || '-'}</td>
-                                <td rowSpan="2">{log.htPanel.currentAmp?.hz || '-'}</td>
-                                <td>{log.htPanel.outgoingTr1?.currentAmp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr1?.currentAmp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr1?.currentAmp?.b || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.currentAmp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.currentAmp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.currentAmp?.b || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.currentAmp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.currentAmp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.currentAmp?.b || '-'}</td>
-                                <td rowSpan="2">{log.remarks || '-'}</td>
-                                <td rowSpan="2">
-                                  <div className="action-buttons">
-                                    <button 
-                                      className="update-btn"
-                                      onClick={() => onEdit(log)}
-                                      title="Update this log"
-                                    >
-                                      ✏️ Update
-                                    </button>
-                                    <button 
-                                      className="delete-btn"
-                                      onClick={() => handleDelete(log.id, 'HT')}
-                                      title="Delete HT panel data"
-                                    >
-                                      🗑️ Delete
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>{log.htPanel.outgoingTr1?.windingTemp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr1?.windingTemp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr1?.windingTemp?.b || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.windingTemp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.windingTemp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr2?.windingTemp?.b || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.windingTemp?.r || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.windingTemp?.y || '-'}</td>
-                                <td>{log.htPanel.outgoingTr3?.windingTemp?.b || '-'}</td>
-                              </tr>
-                            </React.Fragment>
+                            <tr key={log.id}>
+                              <td><strong>{log.time}</strong></td>
+                              <td>{log.htPanel.icFromTneb || 'EB'}</td>
+                              <td>{log.htPanel.voltageFromWreb?.volt || '-'}</td>
+                              <td>{log.htPanel.currentAmp?.r || '-'}</td>
+                              <td>{log.htPanel.currentAmp?.y || '-'}</td>
+                              <td>{log.htPanel.currentAmp?.b || '-'}</td>
+                              <td>{log.htPanel.currentAmp?.pf || '-'}</td>
+                              <td>{log.htPanel.currentAmp?.hz || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.currentAmp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.currentAmp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.currentAmp?.b || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.windingTemp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.windingTemp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr1?.windingTemp?.b || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.currentAmp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.currentAmp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.currentAmp?.b || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.windingTemp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.windingTemp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr2?.windingTemp?.b || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.currentAmp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.currentAmp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.currentAmp?.b || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.windingTemp?.r || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.windingTemp?.y || '-'}</td>
+                              <td>{log.htPanel.outgoingTr3?.windingTemp?.b || '-'}</td>
+                              <td>{log.remarks || '-'}</td>
+                              <td>
+                                <div className="action-buttons">
+                                  <button 
+                                    className="update-btn"
+                                    onClick={() => onEdit(log)}
+                                    title="Update this log"
+                                  >
+                                    ✏️ Update
+                                  </button>
+                                  <button 
+                                    className="delete-btn"
+                                    onClick={() => handleDelete(log.id, 'HT')}
+                                    title="Delete HT panel data"
+                                  >
+                                    🗑️ Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -641,36 +716,50 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     <table className="panel-log-table">
                       <thead>
                         <tr>
-                          <th rowSpan="3">Time (Hrs)</th>
-                          <th rowSpan="3">I/C From TNEB</th>
-                          <th colSpan="6">Main Incomer Supply</th>
-                          <th colSpan="3">Out Going to Tr-1 (2000 Kva)</th>
-                          <th colSpan="3">Out Going to Tr-2 (2000 Kva)</th>
-                          <th colSpan="3">Out Going to Tr-3 (2000 Kva)</th>
-                          <th rowSpan="3">REMARK</th>
+                          <th rowSpan="4">TIME (HRS)</th>
+                          <th rowSpan="4">I/C FROM TNEB</th>
+                          <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                          <th colSpan="3">OUT GOING TO TR-1 (2000 KVA)</th>
+                          <th colSpan="3">OUT GOING TO TR-2 (2000 KVA)</th>
+                          <th colSpan="3">OUT GOING TO TR-3 (2000 KVA)</th>
+                          <th rowSpan="4">REMARK</th>
                         </tr>
                         <tr>
-                          <th colSpan="6">Current Amp</th>
-                          <th colSpan="3">Current Amp & winding Temp.</th>
-                          <th colSpan="3">Current Amp & winding Temp.</th>
-                          <th colSpan="3">Current Amp & winding Temp.</th>
+                          <th rowSpan="2">VOLT (KV)</th>
+                          <th colSpan="5">CURRENT AMP</th>
+                          <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                          <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                          <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
                         </tr>
                         <tr>
-                          <th>Volt (kv)</th>
                           <th>R</th>
                           <th>Y</th>
                           <th>B</th>
-                          <th>PF</th>
-                          <th>Hz</th>
-                          <th>R</th>
-                          <th>Y</th>
-                          <th>B</th>
+                          <th>P.F</th>
+                          <th>HZ</th>
                           <th>R</th>
                           <th>Y</th>
                           <th>B</th>
                           <th>R</th>
                           <th>Y</th>
                           <th>B</th>
+                          <th>R</th>
+                          <th>Y</th>
+                          <th>B</th>
+                        </tr>
+                        <tr>
+                          <th></th>
+                          <th></th>
+                          <th></th>
+                          <th></th>
+                          <th></th>
+                          <th></th>
+                          <th colspan="3">CURRENT AMP</th>
+                          <th colspan="3">WINDING TEMP.</th>
+                          <th colspan="3">CURRENT AMP</th>
+                          <th colspan="3">WINDING TEMP.</th>
+                          <th colspan="3">CURRENT AMP</th>
+                          <th colspan="3">WINDING TEMP.</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -846,36 +935,50 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                         <table className="panel-log-table daily-table">
                           <thead>
                             <tr>
-                              <th rowSpan="3">Time (Hrs)</th>
-                              <th rowSpan="3">I/C From TNEB</th>
-                              <th colSpan="6">Main Incomer Supply</th>
-                              <th colSpan="3">Out Going to Tr-1 (2000 Kva)</th>
-                              <th colSpan="3">Out Going to Tr-2 (2000 Kva)</th>
-                              <th colSpan="3">Out Going to Tr-3 (2000 Kva)</th>
-                              <th rowSpan="3">REMARK</th>
+                              <th rowSpan="4">TIME (HRS)</th>
+                              <th rowSpan="4">I/C FROM TNEB</th>
+                              <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                              <th colSpan="3">OUT GOING TO TR-1 (2000 KVA)</th>
+                              <th colSpan="3">OUT GOING TO TR-2 (2000 KVA)</th>
+                              <th colSpan="3">OUT GOING TO TR-3 (2000 KVA)</th>
+                              <th rowSpan="4">REMARK</th>
                             </tr>
                             <tr>
-                              <th colSpan="6">Current Amp</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
+                              <th rowSpan="2">VOLT (KV)</th>
+                              <th colSpan="5">CURRENT AMP</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
                             </tr>
                             <tr>
-                              <th>Volt (kv)</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
-                              <th>PF</th>
-                              <th>Hz</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
+                              <th>P.F</th>
+                              <th>HZ</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
+                              <th>R</th>
+                              <th>Y</th>
+                              <th>B</th>
+                            </tr>
+                            <tr>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1007,6 +1110,15 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {showPowerFailureModal && powerFailureLog && (
+        <PowerFailureModal
+          logId={powerFailureLog.id}
+          initialFailures={Array.isArray(powerFailureLog.powerFailure) ? powerFailureLog.powerFailure : powerFailureLog.powerFailure ? [powerFailureLog.powerFailure] : []}
+          onSave={handleSavePowerFailures}
+          onCancel={handleClosePowerFailureModal}
+        />
       )}
     </div>
   );

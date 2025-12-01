@@ -55,12 +55,6 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
       cShift: { name: '', sign: '' }
     },
     
-    powerFailure: {
-      fromHrs: '',
-      toHrs: '',
-      reason: ''
-    },
-    
     remarks: '',
     engineerSignature: ''
   });
@@ -406,7 +400,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>TAP</label>
+                  <label>TAP Position</label>
                   <input
                     type="number"
                     value={formData.ltPanel[incomer].tap}
@@ -451,36 +445,6 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="form-section">
-          <h3>Power Failure Details</h3>
-          <div className="form-row">
-            <div className="form-group">
-              <label>From Hrs</label>
-              <input
-                type="time"
-                value={formData.powerFailure.fromHrs}
-                onChange={(e) => handleInputChange('powerFailure', 'fromHrs', null, null, e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>To Hrs</label>
-              <input
-                type="time"
-                value={formData.powerFailure.toHrs}
-                onChange={(e) => handleInputChange('powerFailure', 'toHrs', null, null, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="form-group full-width">
-            <label>Reason</label>
-            <textarea
-              value={formData.powerFailure.reason}
-              onChange={(e) => handleInputChange('powerFailure', 'reason', null, null, e.target.value)}
-              rows="2"
-            />
-          </div>
         </div>
 
         <div className="form-section">

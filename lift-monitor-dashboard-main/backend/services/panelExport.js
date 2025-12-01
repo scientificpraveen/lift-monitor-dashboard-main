@@ -179,7 +179,7 @@ export const generateExcel = async (filters) => {
       }
 
       const ws = XLSX.utils.aoa_to_sheet(sheetData);
-      worksheet['!merges'] = merges;
+      ws['!merges'] = merges;
 
       // Set column widths
       const colWidths = Array(25).fill({ wch: 7 });
@@ -188,10 +188,10 @@ export const generateExcel = async (filters) => {
       colWidths[2] = { wch: 8 };  // Volt
       colWidths[17] = { wch: 15 }; // Remark
 
-      worksheet['!cols'] = colWidths;
+      ws['!cols'] = colWidths;
 
       const sheetName = new Date(date).toLocaleDateString('en-US').replace(/\//g, '-');
-      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.substring(0, 31));
+      XLSX.utils.book_append_sheet(workbook, ws, sheetName.substring(0, 31));
     });
 
     return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
@@ -256,99 +256,111 @@ export const generatePDF = async (filters) => {
           doc.fontSize(10).font('Helvetica-Bold').text('HT PANEL', startX, yPos);
           yPos += 15;
 
-          // Draw HT Table
-          const cellH = 12;
-          const timeW = 35;
-          const icW = 30;
-          const smallW = 25;
+          // Draw HT Table - optimized for landscape A4
+          const cellH = 10;
+          const timeW = 28;
+          const icW = 22;
+          const smallW = 18;
+          const trW = 22; // Smaller width for transformer boxes to fit on page
           let x = startX;
 
-          doc.fontSize(6).font('Helvetica-Bold');
+          doc.fontSize(5).font('Helvetica-Bold');
 
-          // Headers
-          doc.rect(x, yPos, timeW, cellH * 3).stroke();
-          doc.text('Time\n(Hrs)', x + 2, yPos + cellH, { width: timeW - 4, align: 'center' });
+          // Headers - Row 1: Main sections (all with increased height)
+          doc.rect(x, yPos, timeW, cellH * 3.35).stroke();
+          doc.text('Time\n(Hrs)', x + 1, yPos + cellH + 3, { width: timeW - 2, align: 'center', fontSize: 5 });
           x += timeW;
 
-          doc.rect(x, yPos, icW, cellH * 3).stroke();
-          doc.text('I/C\nFrom\nTNEB', x + 2, yPos + cellH - 2, { width: icW - 4, align: 'center' });
+          doc.rect(x, yPos, icW, cellH * 3.35).stroke();
+          doc.text('I/C\nFrom\nTNEB', x + 1, yPos + cellH + 3, { width: icW - 2, align: 'center', fontSize: 5 });
           x += icW;
 
-          // Main Incomer Supply
-          doc.rect(x, yPos, smallW * 6, cellH).stroke();
-          doc.text('Main Incomer Supply', x + 2, yPos + 3, { width: smallW * 6 - 4, align: 'center' });
+          // Main Incomer Supply (matching height)
+          doc.rect(x, yPos, smallW * 6, cellH * 1.35).stroke();
+          doc.text('Main Incomer Supply', x + 1, yPos + 3, { width: smallW * 6 - 2, align: 'center', fontSize: 5 });
           
-          doc.rect(x, yPos + cellH, smallW, cellH * 2).stroke();
-          doc.text('Volt\n(kv)', x + 2, yPos + cellH + 4, { width: smallW - 4, align: 'center' });
+          doc.rect(x, yPos + cellH * 1.35, smallW, cellH * 2).stroke();
+          doc.text('Volt\n(kv)', x + 1, yPos + cellH * 1.35 + 4, { width: smallW - 2, align: 'center', fontSize: 5 });
           
-          doc.rect(x + smallW, yPos + cellH, smallW * 5, cellH).stroke();
-          doc.text('Current Amp', x + smallW + 2, yPos + cellH + 3, { width: smallW * 5 - 4, align: 'center' });
+          doc.rect(x + smallW, yPos + cellH * 1.35, smallW * 5, cellH).stroke();
+          doc.text('Current Amp', x + smallW + 1, yPos + cellH * 1.35 + 2, { width: smallW * 5 - 2, align: 'center', fontSize: 5 });
           
           ['R', 'Y', 'B', 'PF', 'Hz'].forEach((lbl, i) => {
-            doc.rect(x + smallW * (i + 1), yPos + cellH * 2, smallW, cellH).stroke();
-            doc.text(lbl, x + smallW * (i + 1) + 2, yPos + cellH * 2 + 3, { width: smallW - 4, align: 'center' });
+            doc.rect(x + smallW * (i + 1), yPos + cellH * 2.35, smallW, cellH).stroke();
+            doc.text(lbl, x + smallW * (i + 1) + 1, yPos + cellH * 2.35 + 2, { width: smallW - 2, align: 'center', fontSize: 5 });
           });
           x += smallW * 6;
 
-          // Transformers
+          // Transformers - separated Current Amp and Winding Temp
           ['Tr-1', 'Tr-2', 'Tr-3'].forEach(tr => {
-            doc.rect(x, yPos, smallW * 3, cellH).stroke();
-            doc.text(`Out Going to ${tr}\n(2000 Kva)`, x + 1, yPos + 1, { width: smallW * 3 - 2, align: 'center' });
+            // Transformer heading (matching height)
+            doc.rect(x, yPos, trW * 6, cellH * 1.35).stroke();
+            doc.text(`Out Going to ${tr}\n(2000 Kva)`, x + 1, yPos + 2, { width: trW * 6 - 2, align: 'center', fontSize: 4 });
             
-            doc.rect(x, yPos + cellH, smallW * 3, cellH).stroke();
-            doc.text('Current Amp &\nwinding Temp.', x + 1, yPos + cellH + 1, { width: smallW * 3 - 2, align: 'center' });
+            // Current Amp heading
+            doc.rect(x, yPos + cellH * 1.35, trW * 3, cellH).stroke();
+            doc.text('Current Amp', x + 1, yPos + cellH * 1.35 + 2, { width: trW * 3 - 2, align: 'center', fontSize: 5 });
             
+            // Winding Temp heading
+            doc.rect(x + trW * 3, yPos + cellH * 1.35, trW * 3, cellH).stroke();
+            doc.text('Winding Temp.', x + trW * 3 + 1, yPos + cellH * 1.35 + 2, { width: trW * 3 - 2, align: 'center', fontSize: 4 });
+            
+            // R, Y, B columns for Current Amp
             ['R', 'Y', 'B'].forEach((lbl, i) => {
-              doc.rect(x + smallW * i, yPos + cellH * 2, smallW, cellH).stroke();
-              doc.text(lbl, x + smallW * i + 2, yPos + cellH * 2 + 3, { width: smallW - 4, align: 'center' });
+              doc.rect(x + trW * i, yPos + cellH * 2.35, trW, cellH).stroke();
+              doc.text(lbl, x + trW * i + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
             });
-            x += smallW * 3;
+            
+            // R, Y, B columns for Winding Temp
+            ['R', 'Y', 'B'].forEach((lbl, i) => {
+              doc.rect(x + trW * 3 + trW * i, yPos + cellH * 2.35, trW, cellH).stroke();
+              doc.text(lbl, x + trW * 3 + trW * i + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
+            });
+            
+            x += trW * 6;
           });
 
-          yPos += cellH * 3;
+          yPos += cellH * 3.35;
 
           // Data rows
-          doc.fontSize(5).font('Helvetica');
+          doc.fontSize(4).font('Helvetica');
           htLogs.forEach(log => {
             x = startX;
             
-            doc.rect(x, yPos, timeW, cellH * 2).stroke();
-            doc.text(log.time, x + 2, yPos + cellH / 2, { width: timeW - 4, align: 'center' });
+            doc.rect(x, yPos, timeW, cellH).stroke();
+            doc.text(log.time, x + 1, yPos + 2, { width: timeW - 2, align: 'center', fontSize: 4 });
             x += timeW;
 
-            doc.rect(x, yPos, icW, cellH * 2).stroke();
-            doc.text(log.htPanel.icFromTneb || 'EB', x + 2, yPos + cellH / 2, { width: icW - 4, align: 'center' });
+            doc.rect(x, yPos, icW, cellH).stroke();
+            doc.text(log.htPanel.icFromTneb || 'EB', x + 1, yPos + 2, { width: icW - 2, align: 'center', fontSize: 4 });
             x += icW;
 
-            doc.rect(x, yPos, smallW, cellH * 2).stroke();
-            doc.text(String(log.htPanel.voltageFromWreb?.volt || '-').substring(0, 5), x + 2, yPos + cellH / 2, { width: smallW - 4, align: 'center' });
+            doc.rect(x, yPos, smallW, cellH).stroke();
+            doc.text(String(log.htPanel.voltageFromWreb?.volt || '-').substring(0, 5), x + 1, yPos + 2, { width: smallW - 2, align: 'center', fontSize: 4 });
             x += smallW;
 
             [log.htPanel.currentAmp?.r, log.htPanel.currentAmp?.y, log.htPanel.currentAmp?.b, log.htPanel.currentAmp?.pf, log.htPanel.currentAmp?.hz].forEach(val => {
-              doc.rect(x, yPos, smallW, cellH * 2).stroke();
-              doc.text(String(val || '-').substring(0, 4), x + 2, yPos + cellH / 2, { width: smallW - 4, align: 'center' });
+              doc.rect(x, yPos, smallW, cellH).stroke();
+              doc.text(String(val || '-').substring(0, 4), x + 1, yPos + 2, { width: smallW - 2, align: 'center', fontSize: 4 });
               x += smallW;
             });
 
+            // Current Amp and Winding Temp for all transformers
+            let trIdx = 0;
             [log.htPanel.outgoingTr1, log.htPanel.outgoingTr2, log.htPanel.outgoingTr3].forEach(tr => {
-              let tempX = x;
+              // Current Amp columns (R, Y, B)
               ['r', 'y', 'b'].forEach(ph => {
-                doc.rect(tempX, yPos, smallW, cellH).stroke();
-                doc.text(String(tr?.currentAmp?.[ph] || '-').substring(0, 4), tempX + 2, yPos + 3, { width: smallW - 4, align: 'center' });
-                tempX += smallW;
+                doc.rect(x, yPos, trW, cellH).stroke();
+                doc.text(String(tr?.currentAmp?.[ph] || '-').substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
+                x += trW;
               });
-              x += smallW * 3;
-            });
-
-            yPos += cellH;
-
-            x = startX + timeW + icW + smallW * 6;
-            [log.htPanel.outgoingTr1, log.htPanel.outgoingTr2, log.htPanel.outgoingTr3].forEach(tr => {
+              // Winding Temp columns (R, Y, B)
               ['r', 'y', 'b'].forEach(ph => {
-                doc.rect(x, yPos, smallW, cellH).stroke();
-                doc.text(String(tr?.windingTemp?.[ph] || '-').substring(0, 4), x + 2, yPos + 3, { width: smallW - 4, align: 'center' });
-                x += smallW;
+                doc.rect(x, yPos, trW, cellH).stroke();
+                doc.text(String(tr?.windingTemp?.[ph] || '-').substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
+                x += trW;
               });
+              trIdx++;
             });
 
             yPos += cellH;
@@ -432,6 +444,59 @@ export const generatePDF = async (filters) => {
               doc.text(String(inc?.kwh || '-').substring(0, 5), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
               x += tinyW;
             });
+
+            yPos += cellH;
+          });
+
+          yPos += 10;
+        }
+
+        // Power Failure Section
+        const powerFailures = dateLogs.find(log => log.powerFailure);
+        if (powerFailures && powerFailures.powerFailure && powerFailures.powerFailure.length > 0) {
+          if (yPos > 650) doc.addPage();
+          
+          doc.fontSize(10).font('Helvetica-Bold').text('POWER FAILURE LOG', startX, yPos);
+          yPos += 15;
+
+          const cellH = 12;
+          const fromW = 80;
+          const toW = 80;
+          const reasonW = 200;
+          let x = startX;
+
+          doc.fontSize(7).font('Helvetica-Bold');
+
+          // Headers
+          doc.rect(x, yPos, fromW, cellH).stroke();
+          doc.text('From Time', x + 2, yPos + 3, { width: fromW - 4, align: 'center' });
+          x += fromW;
+
+          doc.rect(x, yPos, toW, cellH).stroke();
+          doc.text('To Time', x + 2, yPos + 3, { width: toW - 4, align: 'center' });
+          x += toW;
+
+          doc.rect(x, yPos, reasonW, cellH).stroke();
+          doc.text('Reason', x + 2, yPos + 3, { width: reasonW - 4, align: 'center' });
+
+          yPos += cellH;
+
+          // Power Failure Data
+          doc.fontSize(6).font('Helvetica');
+          powerFailures.powerFailure.forEach(failure => {
+            x = startX;
+
+            doc.rect(x, yPos, fromW, cellH).stroke();
+            doc.text(failure.fromHrs || '-', x + 2, yPos + 3, { width: fromW - 4, align: 'center' });
+            x += fromW;
+
+            doc.rect(x, yPos, toW, cellH).stroke();
+            doc.text(failure.toHrs || '-', x + 2, yPos + 3, { width: toW - 4, align: 'center' });
+            x += toW;
+
+            doc.rect(x, yPos, reasonW, cellH).stroke();
+            const reason = failure.reason || '-';
+            doc.text(reason.substring(0, 50), x + 2, yPos + 3, { width: reasonW - 4, align: 'left' });
 
             yPos += cellH;
           });
