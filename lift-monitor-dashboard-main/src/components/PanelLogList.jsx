@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { fetchPanelLogs, deletePanelLog, updatePanelLog } from '../services/api';
 import { buildings } from '../config/buildings';
+import { useAuth } from '../context/AuthContext';
 import PowerFailureModal from './PowerFailureModal';
 import './PanelLogList.css';
 
 const PanelLogList = ({ onEdit, onCreateNew }) => {
+  const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,6 +24,28 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const [filterMode, setFilterMode] = useState('today');
   const [powerFailureLog, setPowerFailureLog] = useState(null);
   const [showPowerFailureModal, setShowPowerFailureModal] = useState(false);
+  const [remarksLogId, setRemarksLogId] = useState(null);
+  const [remarksText, setRemarksText] = useState('');
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+
+  // Helper function to safely get winding temp - handles both old (object) and new (string) formats
+  const getSafeWindingTemp = (windingTemp) => {
+    if (!windingTemp) return '-';
+    if (typeof windingTemp === 'string' || typeof windingTemp === 'number') {
+      return windingTemp || '-';
+    }
+    // Old format: object with r, y, b
+    return '-';
+  };
+
+  // Helper function to safely get oil temp
+  const getSafeOilTemp = (oilTemp) => {
+    if (!oilTemp) return '-';
+    if (typeof oilTemp === 'string' || typeof oilTemp === 'number') {
+      return oilTemp || '-';
+    }
+    return '-';
+  };
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -248,6 +272,60 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     setPowerFailureLog(null);
   };
 
+  const handleVerifyShiftIncharge = async (date) => {
+    if (!user) {
+      alert('You must be logged in to verify');
+      return;
+    }
+    try {
+      // Update all logs for this date
+      const dailyLogs = logs.filter(log => log.date === date);
+      for (const log of dailyLogs) {
+        await updatePanelLog(log.id, { 
+          shiftIncharge: user.name,
+          lastUpdatedBy: user.name 
+        });
+      }
+      loadLogs();
+    } catch (err) {
+      alert('Failed to verify shift incharge: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleOpenRemarksModal = (date, currentRemarks) => {
+    setRemarksLogId(date); // Store date instead of logId
+    setRemarksText(currentRemarks || '');
+    setShowRemarksModal(true);
+  };
+
+  const handleSaveRemarks = async () => {
+    if (!remarksLogId) return;
+    try {
+      // Update all logs for this date
+      const dailyLogs = logs.filter(log => log.date === remarksLogId);
+      for (const log of dailyLogs) {
+        await updatePanelLog(log.id, { 
+          remarks: remarksText,
+          lastUpdatedBy: user?.name 
+        });
+      }
+      setShowRemarksModal(false);
+      setRemarksLogId(null);
+      setRemarksText('');
+      loadLogs();
+    } catch (err) {
+      alert('Failed to save remarks: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleCloseRemarksModal = () => {
+    setShowRemarksModal(false);
+    setRemarksLogId(null);
+    setRemarksText('');
+  };
+
   if (loading) {
     return <div className="loading">Loading panel logs...</div>;
   }
@@ -401,6 +479,10 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
         <div className="daily-view-container">
           {[...new Set(logs.map(log => log.date))].sort().reverse().map(date => {
             const dailyLogs = logs.filter(log => log.date === date).sort((a, b) => a.time.localeCompare(b.time));
+            const dailyPowerFailures = dailyLogs
+              .flatMap(log => (log.powerFailure || [])
+                .map(pf => ({ ...pf, logId: log.id })))
+              .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             return (
               <div key={date} className="daily-section">
                 <div className="daily-section-header">
@@ -411,6 +493,20 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     day: 'numeric' 
                   })}</h3>
                   <div className="daily-header-actions">
+                    <button 
+                      className="btn btn-small" 
+                      onClick={() => handleVerifyShiftIncharge(date)}
+                      title="Verify as shift incharge"
+                    >
+                      ✓ Verify
+                    </button>
+                    <button 
+                      className="btn btn-small" 
+                      onClick={() => handleOpenRemarksModal(date, dailyLogs[0]?.remarks)}
+                      title="Add remarks for this day"
+                    >
+                      📝 Add Remarks
+                    </button>
                     <button 
                       className="btn btn-power-failure"
                       onClick={() => {
@@ -446,21 +542,23 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                             <th rowSpan="3">TIME (HRS)</th>
                             <th rowSpan="3">I/C FROM TNEB</th>
                             <th colSpan="6">MAIN INCOMER SUPPLY</th>
-                            <th colSpan="6">OUT GOING TO TR-1 (2000 KVA)</th>
-                            <th colSpan="6">OUT GOING TO TR-2 (2000 KVA)</th>
-                            <th colSpan="6">OUT GOING TO TR-3 (2000 KVA)</th>
-                            <th rowSpan="3">REMARK</th>
+                            <th colSpan="5">OUT GOING TO TR-1 (2000 KVA)</th>
+                            <th colSpan="5">OUT GOING TO TR-2 (2000 KVA)</th>
+                            <th colSpan="5">OUT GOING TO TR-3 (2000 KVA)</th>
+                            <th rowSpan="3">LAST UPDATED BY</th>
+                            <th rowSpan="3">CREATED</th>
+                            <th rowSpan="3">UPDATED</th>
                             <th rowSpan="3">ACTIONS</th>
                           </tr>
                           <tr>
                             <th rowSpan="2">VOLT (KV)</th>
                             <th colSpan="5">CURRENT AMP</th>
                             <th colSpan="3">CURRENT AMP</th>
-                            <th colSpan="3">WINDING TEMP.</th>
+                            <th colSpan="2">TEMP</th>
                             <th colSpan="3">CURRENT AMP</th>
-                            <th colSpan="3">WINDING TEMP.</th>
+                            <th colSpan="2">TEMP</th>
                             <th colSpan="3">CURRENT AMP</th>
-                            <th colSpan="3">WINDING TEMP.</th>
+                            <th colSpan="2">TEMP</th>
                           </tr>
                           <tr>
                             <th>R</th>
@@ -471,21 +569,18 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
-                            <th>R</th>
-                            <th>Y</th>
-                            <th>B</th>
-                            <th>R</th>
-                            <th>Y</th>
-                            <th>B</th>
-                            <th>R</th>
-                            <th>Y</th>
-                            <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -502,22 +597,21 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                               <td>{log.htPanel.outgoingTr1?.currentAmp?.r || '-'}</td>
                               <td>{log.htPanel.outgoingTr1?.currentAmp?.y || '-'}</td>
                               <td>{log.htPanel.outgoingTr1?.currentAmp?.b || '-'}</td>
-                              <td>{log.htPanel.outgoingTr1?.windingTemp?.r || '-'}</td>
-                              <td>{log.htPanel.outgoingTr1?.windingTemp?.y || '-'}</td>
-                              <td>{log.htPanel.outgoingTr1?.windingTemp?.b || '-'}</td>
+                              <td>{getSafeWindingTemp(log.htPanel.outgoingTr1?.windingTemp)}</td>
+                              <td>{getSafeOilTemp(log.htPanel.outgoingTr1?.oilTemp)}</td>
                               <td>{log.htPanel.outgoingTr2?.currentAmp?.r || '-'}</td>
                               <td>{log.htPanel.outgoingTr2?.currentAmp?.y || '-'}</td>
                               <td>{log.htPanel.outgoingTr2?.currentAmp?.b || '-'}</td>
-                              <td>{log.htPanel.outgoingTr2?.windingTemp?.r || '-'}</td>
-                              <td>{log.htPanel.outgoingTr2?.windingTemp?.y || '-'}</td>
-                              <td>{log.htPanel.outgoingTr2?.windingTemp?.b || '-'}</td>
+                              <td>{getSafeWindingTemp(log.htPanel.outgoingTr2?.windingTemp)}</td>
+                              <td>{getSafeOilTemp(log.htPanel.outgoingTr2?.oilTemp)}</td>
                               <td>{log.htPanel.outgoingTr3?.currentAmp?.r || '-'}</td>
                               <td>{log.htPanel.outgoingTr3?.currentAmp?.y || '-'}</td>
                               <td>{log.htPanel.outgoingTr3?.currentAmp?.b || '-'}</td>
-                              <td>{log.htPanel.outgoingTr3?.windingTemp?.r || '-'}</td>
-                              <td>{log.htPanel.outgoingTr3?.windingTemp?.y || '-'}</td>
-                              <td>{log.htPanel.outgoingTr3?.windingTemp?.b || '-'}</td>
-                              <td>{log.remarks || '-'}</td>
+                              <td>{getSafeWindingTemp(log.htPanel.outgoingTr3?.windingTemp)}</td>
+                              <td>{getSafeOilTemp(log.htPanel.outgoingTr3?.oilTemp)}</td>
+                              <td>{log.lastUpdatedBy || '-'}</td>
+                              <td>{log.createdAt ? new Date(log.createdAt).toLocaleString() : '-'}</td>
+                              <td>{log.updatedAt ? new Date(log.updatedAt).toLocaleString() : '-'}</td>
                               <td>
                                 <div className="action-buttons">
                                   <button 
@@ -555,6 +649,9 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                             <th colSpan="8">Incomer -1 (From -Tr-1)</th>
                             <th colSpan="8">Incomer -2 (From -Tr-2)</th>
                             <th colSpan="8">Incomer -3 (From -Tr-3)</th>
+                            <th rowSpan="3">LAST UPDATED BY</th>
+                            <th rowSpan="3">CREATED</th>
+                            <th rowSpan="3">UPDATED</th>
                             <th rowSpan="3">ACTIONS</th>
                           </tr>
                           <tr>
@@ -620,6 +717,9 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                               <td>{log.ltPanel.incomer3?.currentAmp?.b || '-'}</td>
                               <td>{log.ltPanel.incomer3?.tap || '-'}</td>
                               <td>{log.ltPanel.incomer3?.kwh || '-'}</td>
+                              <td>{log.lastUpdatedBy || '-'}</td>
+                              <td>{log.createdAt ? new Date(log.createdAt).toLocaleString() : '-'}</td>
+                              <td>{log.updatedAt ? new Date(log.updatedAt).toLocaleString() : '-'}</td>
                               <td>
                                 <div className="action-buttons">
                                   <button 
@@ -645,6 +745,57 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     </div>
                   </div>
                 )}
+
+                {/* Separate Display Section for Shift, Remarks, and Power Failures */}
+                <div className="separate-section">
+                  {/* Shift Incharge Display */}
+                  <div className="shift-container">
+                    <h4 className="section-title">Shift Incharge</h4>
+                    <div className="section-content">
+                      {dailyLogs.some(log => log.shiftIncharge) ? (
+                        <p className="shift-info">{dailyLogs[0]?.shiftIncharge || '-'}</p>
+                      ) : (
+                        <p className="not-set">Not verified</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Remarks Display */}
+                  <div className="remarks-container">
+                    <h4 className="section-title">Remarks</h4>
+                    <div className="section-content">
+                      {dailyLogs.some(log => log.remarks) ? (
+                        <p className="remarks-info">{dailyLogs[0]?.remarks || '-'}</p>
+                      ) : (
+                        <p className="not-set">No remarks</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Power Failures Display */}
+                  <div className="power-failures-container">
+                    <h4 className="section-title">Power Failures</h4>
+                    <div className="section-content">
+                      {dailyPowerFailures.length > 0 ? (
+                        <div className="power-failures-list">
+                          {dailyPowerFailures.map((pf, idx) => (
+                            <div key={idx} className="power-failure-item">
+                              <div className="failure-info">
+                                <p>
+                                  <strong>{pf.fromHrs} - {pf.toHrs}</strong>
+                                  {pf.isFullDay && <span className="full-day-badge">Full Day</span>}
+                                </p>
+                                {pf.reason && <p className="reason">{pf.reason}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="not-set">-</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -784,15 +935,15 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                           <td rowSpan="2">{modalLog.remarks || '-'}</td>
                         </tr>
                         <tr>
-                          <td>{modalLog.htPanel.outgoingTr1?.windingTemp?.r || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr1?.windingTemp?.y || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr1?.windingTemp?.b || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr2?.windingTemp?.r || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr2?.windingTemp?.y || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr2?.windingTemp?.b || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr3?.windingTemp?.r || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr3?.windingTemp?.y || '-'}</td>
-                          <td>{modalLog.htPanel.outgoingTr3?.windingTemp?.b || '-'}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr1?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr1?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr1?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr2?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr2?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr2?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr3?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr3?.windingTemp)}</td>
+                          <td>{getSafeWindingTemp(modalLog.htPanel.outgoingTr3?.windingTemp)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -1005,15 +1156,15 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                   <td rowSpan="2">{log.remarks || '-'}</td>
                                 </tr>
                                 <tr>
-                                  <td>{log.htPanel.outgoingTr1?.windingTemp?.r || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr1?.windingTemp?.y || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr1?.windingTemp?.b || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr2?.windingTemp?.r || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr2?.windingTemp?.y || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr2?.windingTemp?.b || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr3?.windingTemp?.r || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr3?.windingTemp?.y || '-'}</td>
-                                  <td>{log.htPanel.outgoingTr3?.windingTemp?.b || '-'}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr1?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr1?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr1?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr2?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr2?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr2?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr3?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr3?.windingTemp)}</td>
+                                  <td>{getSafeWindingTemp(log.htPanel.outgoingTr3?.windingTemp)}</td>
                                 </tr>
                               </React.Fragment>
                             ))}
@@ -1119,6 +1270,34 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
           onSave={handleSavePowerFailures}
           onCancel={handleClosePowerFailureModal}
         />
+      )}
+
+      {showRemarksModal && (
+        <div className="modal-overlay">
+          <div className="modal-content remarks-modal">
+            <div className="modal-header">
+              <h2>Add Remarks</h2>
+              <button className="modal-close" onClick={handleCloseRemarksModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <textarea
+                value={remarksText}
+                onChange={(e) => setRemarksText(e.target.value)}
+                placeholder="Enter remarks here..."
+                rows="6"
+                className="remarks-textarea"
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={handleSaveRemarks}>
+                Save Remarks
+              </button>
+              <button className="btn btn-secondary" onClick={handleCloseRemarksModal}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
