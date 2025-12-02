@@ -8,7 +8,7 @@ import * as panelLogService from "./panelLogContext.js";
 import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
 import serviceLogRoutes from "./routes/serviceLogs.js";
-import userRoutes from "./routes/users.js";
+import { startAutoEntryScheduler, stopAutoEntryScheduler } from "./services/autoEntryService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -488,9 +488,19 @@ wss.on("connection", (ws) => {
 server.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   await panelLogService.initializeSampleData();
+  
+  // Start auto-entry scheduler
+  startAutoEntryScheduler();
 });
 
 process.on("SIGTERM", () => {
   console.log("Received SIGTERM, shutting down gracefully");
+  stopAutoEntryScheduler();
+  server.close(() => process.exit(0));
+});
+
+process.on("SIGINT", () => {
+  console.log("Received SIGINT, shutting down gracefully");
+  stopAutoEntryScheduler();
   server.close(() => process.exit(0));
 });

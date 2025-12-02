@@ -122,8 +122,10 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) => handleInputChange('date', null, null, null, e.target.value)}
-                required
+                readOnly
+                disabled
+                title="Date is automatically set to today"
+                style={{ background: '#e8f5e9', cursor: 'not-allowed', fontWeight: '500', color: '#2e7d32' }}
               />
             </div>
             
