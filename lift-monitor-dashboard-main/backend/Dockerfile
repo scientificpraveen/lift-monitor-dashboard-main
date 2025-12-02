@@ -1,13 +1,19 @@
 FROM node:20-alpine
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 COPY . .
 
+# Verify prisma schema exists
+RUN test -f prisma/schema.prisma || (echo "Prisma schema not found!" && exit 1)
+
+# Generate Prisma client
 RUN npx prisma generate
 
 EXPOSE 3001

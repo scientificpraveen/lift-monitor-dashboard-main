@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
 
   useEffect(() => {
     checkAuth();
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/auth/me`, {
+      const response = await axios.get(`${API_BASE}/auth/me`, {
         withCredentials: true,
       });
       setUser(response.data.user);
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await axios.post(
-        `${API_BASE}/api/auth/signup`,
+        `${API_BASE}/auth/signup`,
         { email, password, name },
         { withCredentials: true }
       );
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await axios.post(
-        `${API_BASE}/api/auth/login`,
+        `${API_BASE}/auth/login`,
         { email, password },
         { withCredentials: true }
       );
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await axios.post(
-        `${API_BASE}/api/auth/logout`,
+        `${API_BASE}/auth/logout`,
         {},
         { withCredentials: true }
       );
