@@ -14,8 +14,7 @@ import TopAlert from "./components/TopAlert";
 
 const App = () => {
   const { isAuthenticated, loading } = useAuth();
-  const [currentView, setCurrentView] = useState("lift-monitor");
-  const [showServiceLog, setShowServiceLog] = useState(false);
+  const [activePanel, setActivePanel] = useState(null); // null, 'service', or 'panel'
   const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]);
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({});
@@ -172,73 +171,33 @@ const App = () => {
     <div className="app">
       <Header />
 
-      <div className="view-navigation">
-        <button
-          className={`nav-tab ${
-            currentView === "lift-monitor" ? "active" : ""
-          }`}
-          onClick={() => {
-            setCurrentView("lift-monitor");
-            setShowServiceLog(false);
-          }}
-        >
-          🏢 Lift Monitor
-        </button>
-        <button
-          className={`nav-tab ${currentView === "panel-logs" ? "active" : ""}`}
-          onClick={() => setCurrentView("panel-logs")}
-        >
-          ⚡ HT/LT Panel Logs
-        </button>
-      </div>
-
-      {currentView === "lift-monitor" ? (
-        <>
-          <TopAlert alerts={alerts} onClose={handleCloseAlert} />
-          {!showServiceLog ? (
-            <div className="dashboard">
-              <Sidebar
-                selected={selectedBuilding}
-                onSelect={setSelectedBuilding}
-                onServiceLogClick={() => setShowServiceLog(true)}
-              />
-              <div className="main-content">
-                {visibleLifts.map((lift) => (
-                  <LiftCard key={lift.ID} lift={lift} />
-                ))}
-              </div>
+      <>
+        <TopAlert alerts={alerts} onClose={handleCloseAlert} />
+        <div className="dashboard">
+          <Sidebar
+            selected={selectedBuilding}
+            onSelect={(building) => {
+              setSelectedBuilding(building);
+              setActivePanel(null);
+            }}
+            onServiceLogClick={() => setActivePanel("service")}
+            onPanelLogClick={() => setActivePanel("panel")}
+            activePanel={activePanel}
+          />
+          {activePanel === null ? (
+            <div className="main-content">
+              {visibleLifts.map((lift) => (
+                <LiftCard key={lift.ID} lift={lift} />
+              ))}
             </div>
           ) : (
-            <div style={{ display: "flex" }}>
-              <Sidebar
-                selected={selectedBuilding}
-                onSelect={setSelectedBuilding}
-                onServiceLogClick={() => setShowServiceLog(true)}
-              />
-              <div style={{ flex: 1, padding: "20px" }}>
-                <button
-                  onClick={() => setShowServiceLog(false)}
-                  style={{
-                    padding: "10px 20px",
-                    marginBottom: "20px",
-                    background: "#a076f9",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                >
-                  ← Back to Lifts
-                </button>
-                <ServiceLogManager />
-              </div>
+            <div className="panel-content">
+              {activePanel === "service" && <ServiceLogManager />}
+              {activePanel === "panel" && <PanelLogManager />}
             </div>
           )}
-        </>
-      ) : (
-        <PanelLogManager />
-      )}
+        </div>
+      </>
     </div>
   );
 };
