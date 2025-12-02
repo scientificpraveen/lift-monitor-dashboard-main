@@ -9,6 +9,9 @@ import { useAuth } from "../context/AuthContext";
 import PowerFailureModal from "./PowerFailureModal";
 import "./PanelLogList.css";
 
+// API base URL for production/development
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
+
 const PanelLogList = ({ onEdit, onCreateNew }) => {
   const { user, canDelete, getAccessibleBuildings } = useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
@@ -154,7 +157,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `http://localhost:3001/api/panel-logs/export/excel?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -189,7 +192,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `http://localhost:3001/api/panel-logs/export/pdf?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`
       );
 
       if (!response.ok) {
