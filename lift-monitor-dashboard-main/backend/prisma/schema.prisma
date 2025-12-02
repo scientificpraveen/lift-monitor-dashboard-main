@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id                Int      @id @default(autoincrement())
-  email             String   @unique
+  username          String   @unique
   password          String
   name              String
   role              String   @default("user")  // admin, user
@@ -19,7 +19,7 @@ model User {
   updatedAt         DateTime @updatedAt
 
   @@map("users")
-  @@index([email])
+  @@index([username])
 }
 
 model PanelLog {

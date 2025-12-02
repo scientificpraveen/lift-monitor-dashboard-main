@@ -25,7 +25,7 @@ router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
     const users = await prisma.user.findMany({
       select: {
         id: true,
-        email: true,
+        username: true,
         name: true,
         role: true,
         privileges: true,
@@ -50,7 +50,7 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
       where: { id: parseInt(id) },
       select: {
         id: true,
-        email: true,
+        username: true,
         name: true,
         role: true,
         privileges: true,
@@ -74,25 +74,25 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
 // Create new user (admin only)
 router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { email, password, name, role, privileges, assignedBuildings } =
+    const { username, password, name, role, privileges, assignedBuildings } =
       req.body;
 
-    if (!email || !password || !name) {
+    if (!username || !password || !name) {
       return res
         .status(400)
-        .json({ error: "Email, password, and name are required" });
+        .json({ error: "Username, password, and name are required" });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { username } });
     if (existingUser) {
-      return res.status(409).json({ error: "Email already exists" });
+      return res.status(409).json({ error: "Username already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
-        email,
+        username,
         password: hashedPassword,
         name,
         role: role || "user",
@@ -101,7 +101,7 @@ router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
       },
       select: {
         id: true,
-        email: true,
+        username: true,
         name: true,
         role: true,
         privileges: true,
@@ -121,11 +121,11 @@ router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
 router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, role, privileges, assignedBuildings, password } =
+    const { username, name, role, privileges, assignedBuildings, password } =
       req.body;
 
     const updateData = {};
-    if (email) updateData.email = email;
+    if (username) updateData.username = username;
     if (name) updateData.name = name;
     if (role) updateData.role = role;
     if (privileges) updateData.privileges = privileges;
@@ -138,7 +138,7 @@ router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
       data: updateData,
       select: {
         id: true,
-        email: true,
+        username: true,
         name: true,
         role: true,
         privileges: true,

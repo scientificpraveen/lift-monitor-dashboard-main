@@ -18,7 +18,7 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    username: "",
     password: "",
     role: "user",
     privileges: ["view"],
@@ -105,7 +105,7 @@ const UserManagement = () => {
     setEditingUser(user);
     setFormData({
       name: user.name,
-      email: user.email,
+      username: user.username,
       password: "",
       role: user.role,
       privileges: user.privileges || ["view"],
@@ -128,7 +128,7 @@ const UserManagement = () => {
   const resetForm = () => {
     setFormData({
       name: "",
-      email: "",
+      username: "",
       password: "",
       role: "user",
       privileges: ["view"],
@@ -179,11 +179,11 @@ const UserManagement = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Email *</label>
+                <label>Username *</label>
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="text"
+                  name="username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                 />
@@ -307,7 +307,7 @@ const UserManagement = () => {
               {users.map((user) => (
                 <tr key={user.id}>
                   <td>{user.name}</td>
-                  <td>{user.email}</td>
+                  <td>{user.username}</td>
                   <td>
                     <span
                       className="role-badge"

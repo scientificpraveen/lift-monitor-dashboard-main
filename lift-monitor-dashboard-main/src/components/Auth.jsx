@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import "./Auth.css";
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,9 +15,9 @@ const Auth = () => {
     setMessage("");
 
     try {
-      await login(email, password);
+      await login(username, password);
       setMessage("Login successful!");
-      setEmail("");
+      setUsername("");
       setPassword("");
     } catch (err) {
       setMessage(err.message);
@@ -34,13 +34,13 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="email">Username</label>
+            <label htmlFor="username">Username</label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
               className="form-input"
             />

@@ -15,12 +15,14 @@ router.post("/signup", async (req, res) => {
     if (!email || !password || !name) {
       return res
         .status(400)
-        .json({ error: "Email, password, and name are required" });
+        .json({ error: "Username, password, and name are required" });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { username: email },
+    });
     if (existingUser) {
-      return res.status(409).json({ error: "Email already exists" });
+      return res.status(409).json({ error: "Username already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,7 +33,7 @@ router.post("/signup", async (req, res) => {
 
     const user = await prisma.user.create({
       data: {
-        email,
+        username: email,
         password: hashedPassword,
         name,
         role: isFirstUser ? "admin" : "user",
@@ -45,7 +47,7 @@ router.post("/signup", async (req, res) => {
     const token = jwt.sign(
       {
         id: user.id,
-        email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         privileges: user.privileges,
@@ -66,7 +68,7 @@ router.post("/signup", async (req, res) => {
       message: "User created successfully",
       user: {
         id: user.id,
-        email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         privileges: user.privileges,
@@ -85,10 +87,12 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { username: email } });
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -101,7 +105,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         id: user.id,
-        email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         privileges: user.privileges,
@@ -122,7 +126,7 @@ router.post("/login", async (req, res) => {
       message: "Login successful",
       user: {
         id: user.id,
-        email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         privileges: user.privileges,
@@ -160,7 +164,7 @@ router.get("/me", async (req, res) => {
     res.json({
       user: {
         id: user.id,
-        email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         privileges: user.privileges,
