@@ -82,6 +82,28 @@
   box-shadow: 0 0 10px rgba(160, 118, 249, 0.3);
 }
 
+.service-log-item.active {
+  background-color: #a076f9;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(160, 118, 249, 0.3);
+}
+
+.admin-item {
+  background-color: #fff3e0;
+  border: 1px solid #ffb74d;
+}
+
+.admin-item:hover {
+  background-color: #ff9800;
+  color: white;
+}
+
+.admin-item.active {
+  background-color: #ff9800;
+  color: white;
+}
+
 .building-list-container::-webkit-scrollbar {
   width: 10px;
   padding-right: 10px;

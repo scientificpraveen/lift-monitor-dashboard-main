@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
 const ServiceLogManager = () => {
-  const { user } = useAuth();
+  const { user, canCreate, canEdit, canDelete } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +29,7 @@ const ServiceLogManager = () => {
         hour12: false,
       })
       .slice(0, 5),
+    workOrderNo: "",
     natureOfCall: "Client call - oral",
     workDescription: "",
     status: "open",
@@ -65,7 +66,11 @@ const ServiceLogManager = () => {
     e.preventDefault();
     try {
       if (editingLog) {
-        await updateServiceLog(editingLog.id, formData);
+        await updateServiceLog(editingLog.id, {
+          ...formData,
+          lastUpdatedBy: user?.name || "",
+          lastUpdatedAt: new Date().toISOString(),
+        });
       } else {
         const nextSNo =
           logs.length > 0
@@ -109,6 +114,7 @@ const ServiceLogManager = () => {
           hour12: false,
         })
         .slice(0, 5),
+      workOrderNo: "",
       natureOfCall: "Client call - oral",
       workDescription: "",
       status: "open",
@@ -188,15 +194,17 @@ const ServiceLogManager = () => {
     <div className="service-log-container">
       <div className="service-log-header">
         <h2>Operator Log Panel</h2>
-        <button
-          className="btn-add-log"
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-        >
-          {showForm ? "✕ Cancel" : "+ Add Log"}
-        </button>
+        {canCreate() && (
+          <button
+            className="btn-add-log"
+            onClick={() => {
+              resetForm();
+              setShowForm(!showForm);
+            }}
+          >
+            {showForm ? "✕ Cancel" : "+ Add Log"}
+          </button>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -204,29 +212,15 @@ const ServiceLogManager = () => {
       {showForm && (
         <div className="service-log-form-container">
           <form onSubmit={handleSubmit} className="service-log-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Date *</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  disabled={!!editingLog}
-                />
-              </div>
-              <div className="form-group">
-                <label>Time *</label>
-                <input
-                  type="time"
-                  name="time"
-                  value={formData.time}
-                  onChange={handleInputChange}
-                  required
-                  disabled={!!editingLog}
-                />
-              </div>
+            <div className="form-group">
+              <label>Work Order No</label>
+              <input
+                type="text"
+                name="workOrderNo"
+                value={formData.workOrderNo}
+                onChange={handleInputChange}
+                placeholder="Enter work order number"
+              />
             </div>
 
             <div className="form-group">
@@ -308,10 +302,12 @@ const ServiceLogManager = () => {
                 <SortHeader field="sno" label="S.NO" />
                 <SortHeader field="date" label="Date" />
                 <SortHeader field="time" label="Time" />
+                <SortHeader field="workOrderNo" label="Work Order No" />
                 <SortHeader field="username" label="Username" />
                 <SortHeader field="natureOfCall" label="Nature of Call" />
                 <th>Work Description</th>
                 <SortHeader field="status" label="Status" />
+                <th>Last Updated</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -327,6 +323,7 @@ const ServiceLogManager = () => {
                     })}
                   </td>
                   <td>{log.time}</td>
+                  <td>{log.workOrderNo || "-"}</td>
                   <td>{log.username}</td>
                   <td>
                     <span className="nature-badge">{log.natureOfCall}</span>
@@ -340,21 +337,52 @@ const ServiceLogManager = () => {
                       {log.status.toUpperCase()}
                     </span>
                   </td>
+                  <td className="last-updated">
+                    {log.lastUpdatedBy ? (
+                      <>
+                        <div>{log.lastUpdatedBy}</div>
+                        <div className="update-time">
+                          {new Date(log.lastUpdatedAt).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}{" "}
+                          {new Date(log.lastUpdatedAt).toLocaleTimeString(
+                            "en-IN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            }
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="actions">
-                    <button
-                      className="btn-edit"
-                      onClick={() => handleEdit(log)}
-                      title="Edit"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(log.id)}
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
+                    {canEdit() && (
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEdit(log)}
+                        title="Edit"
+                      >
+                        ✎
+                      </button>
+                    )}
+                    {canDelete() && (
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDelete(log.id)}
+                        title="Delete"
+                      >
+                        🗑
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -1,10 +1,11 @@
 .service-log-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 20px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .service-log-header {
@@ -263,6 +264,17 @@
 .btn-delete:hover {
   background: #ffcdd2;
   transform: scale(1.1);
+}
+
+.last-updated {
+  font-size: 12px;
+  color: #666;
+}
+
+.last-updated .update-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
 }
 
 .loading,

@@ -4,6 +4,7 @@ import LiftCard from "./components/LiftCard";
 import Header from "./components/Header";
 import PanelLogManager from "./components/PanelLogManager";
 import ServiceLogManager from "./components/ServiceLogManager";
+import UserManagement from "./components/UserManagement";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -13,10 +14,12 @@ import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
 
 const App = () => {
-  const { isAuthenticated, loading } = useAuth();
-  const [currentView, setCurrentView] = useState("lift-monitor");
-  const [showServiceLog, setShowServiceLog] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]);
+  const { isAuthenticated, loading, getAccessibleBuildings } = useAuth();
+  const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', or 'users'
+  const accessibleBuildings = getAccessibleBuildings(buildings);
+  const [selectedBuilding, setSelectedBuilding] = useState(
+    accessibleBuildings[0] || buildings[0]
+  );
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({});
   const liftHistoryRef = useRef({});
@@ -172,73 +175,35 @@ const App = () => {
     <div className="app">
       <Header />
 
-      <div className="view-navigation">
-        <button
-          className={`nav-tab ${
-            currentView === "lift-monitor" ? "active" : ""
-          }`}
-          onClick={() => {
-            setCurrentView("lift-monitor");
-            setShowServiceLog(false);
-          }}
-        >
-          🏢 Lift Monitor
-        </button>
-        <button
-          className={`nav-tab ${currentView === "panel-logs" ? "active" : ""}`}
-          onClick={() => setCurrentView("panel-logs")}
-        >
-          ⚡ HT/LT Panel Logs
-        </button>
-      </div>
-
-      {currentView === "lift-monitor" ? (
-        <>
-          <TopAlert alerts={alerts} onClose={handleCloseAlert} />
-          {!showServiceLog ? (
-            <div className="dashboard">
-              <Sidebar
-                selected={selectedBuilding}
-                onSelect={setSelectedBuilding}
-                onServiceLogClick={() => setShowServiceLog(true)}
-              />
-              <div className="main-content">
-                {visibleLifts.map((lift) => (
-                  <LiftCard key={lift.ID} lift={lift} />
-                ))}
-              </div>
+      <>
+        <TopAlert alerts={alerts} onClose={handleCloseAlert} />
+        <div className="dashboard">
+          <Sidebar
+            selected={selectedBuilding}
+            onSelect={(building) => {
+              setSelectedBuilding(building);
+              setActivePanel(null);
+            }}
+            onServiceLogClick={() => setActivePanel("service")}
+            onPanelLogClick={() => setActivePanel("panel")}
+            onUserManagementClick={() => setActivePanel("users")}
+            activePanel={activePanel}
+          />
+          {activePanel === null ? (
+            <div className="main-content">
+              {visibleLifts.map((lift) => (
+                <LiftCard key={lift.ID} lift={lift} />
+              ))}
             </div>
           ) : (
-            <div style={{ display: "flex" }}>
-              <Sidebar
-                selected={selectedBuilding}
-                onSelect={setSelectedBuilding}
-                onServiceLogClick={() => setShowServiceLog(true)}
-              />
-              <div style={{ flex: 1, padding: "20px" }}>
-                <button
-                  onClick={() => setShowServiceLog(false)}
-                  style={{
-                    padding: "10px 20px",
-                    marginBottom: "20px",
-                    background: "#a076f9",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                >
-                  ← Back to Lifts
-                </button>
-                <ServiceLogManager />
-              </div>
+            <div className="panel-content">
+              {activePanel === "service" && <ServiceLogManager />}
+              {activePanel === "panel" && <PanelLogManager />}
+              {activePanel === "users" && <UserManagement />}
             </div>
           )}
-        </>
-      ) : (
-        <PanelLogManager />
-      )}
+        </div>
+      </>
     </div>
   );
 };

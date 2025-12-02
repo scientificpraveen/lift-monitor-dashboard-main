@@ -5,8 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import PowerFailureModal from './PowerFailureModal';
 import './PanelLogList.css';
 
+// API base URL for production/development
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
+
 const PanelLogList = ({ onEdit, onCreateNew }) => {
-  const { user } = useAuth();
+  const { user, canDelete, getAccessibleBuildings } = useAuth();
+  const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,7 +71,6 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       setLoading(true);
       setError(null);
       const filters = {};
-      if (filterBuilding) filters.building = filterBuilding;
       if (filterDateFrom) filters.dateFrom = filterDateFrom;
       if (filterDateTo) filters.dateTo = filterDateTo;
       if (filterPanelType) filters.panelType = filterPanelType;
@@ -233,36 +236,40 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
 
   const handleSavePowerFailures = async (failures) => {
     if (!powerFailureLog) return;
-    
+
     try {
       // Check if this is a daily power failure (id starts with 'daily-')
-      if (powerFailureLog.id && powerFailureLog.id.startsWith('daily-')) {
+      if (powerFailureLog.id && powerFailureLog.id.startsWith("daily-")) {
         // Update all logs for this date
         const date = powerFailureLog.date;
-        const dailyLogs = logs.filter(log => log.date === date);
-        
+        const dailyLogs = logs.filter((log) => log.date === date);
+
         if (dailyLogs.length === 0) {
-          alert('No logs found for this date');
+          alert("No logs found for this date");
           return;
         }
-        
+
         // Update all logs for this day with the same power failure
-        const promises = dailyLogs.map(log => 
-          updatePanelLog(log.id, { powerFailure: failures.length > 0 ? failures : null })
+        const promises = dailyLogs.map((log) =>
+          updatePanelLog(log.id, {
+            powerFailure: failures.length > 0 ? failures : null,
+          })
         );
-        
+
         await Promise.all(promises);
       } else {
         // Update single log
-        await updatePanelLog(powerFailureLog.id, { powerFailure: failures.length > 0 ? failures : null });
+        await updatePanelLog(powerFailureLog.id, {
+          powerFailure: failures.length > 0 ? failures : null,
+        });
       }
-      
+
       setShowPowerFailureModal(false);
       setPowerFailureLog(null);
-      
+
       loadLogs();
     } catch (err) {
-      alert('Failed to save power failures: ' + err.message);
+      alert("Failed to save power failures: " + err.message);
       console.error(err);
     }
   };
@@ -272,30 +279,47 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     setPowerFailureLog(null);
   };
 
+  const handleCreatePowerFailureLog = () => {
+    const today = new Date().toISOString().split("T")[0];
+    const todayLogs = logs.filter((log) => log.date === today);
+
+    // Get existing power failure from today's logs if any
+    const existingPowerFailure =
+      todayLogs.find((log) => log.powerFailure)?.powerFailure || [];
+
+    // Create a virtual log entry for daily power failure
+    setPowerFailureLog({
+      id: `daily-${today}`,
+      date: today,
+      powerFailure: existingPowerFailure,
+    });
+    setShowPowerFailureModal(true);
+  };
+
   const handleVerifyShiftIncharge = async (date) => {
     if (!user) {
-      alert('You must be logged in to verify');
+      alert("You must be logged in to verify");
       return;
     }
     try {
       // Update all logs for this date
-      const dailyLogs = logs.filter(log => log.date === date);
+      const dailyLogs = logs.filter((log) => log.date === date);
       for (const log of dailyLogs) {
-        await updatePanelLog(log.id, { 
+        await updatePanelLog(log.id, {
           shiftIncharge: user.name,
-          lastUpdatedBy: user.name 
+          lastUpdatedBy: user.name,
         });
       }
       loadLogs();
     } catch (err) {
-      alert('Failed to verify shift incharge: ' + err.message);
+      alert("Failed to verify shift incharge: " + err.message);
       console.error(err);
     }
   };
 
   const handleOpenRemarksModal = (date, currentRemarks) => {
     setRemarksLogId(date); // Store date instead of logId
-    setRemarksText(currentRemarks || '');
+    setRemarksText(currentRemarks || "");
     setShowRemarksModal(true);
   };
 
@@ -303,19 +327,19 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     if (!remarksLogId) return;
     try {
       // Update all logs for this date
-      const dailyLogs = logs.filter(log => log.date === remarksLogId);
+      const dailyLogs = logs.filter((log) => log.date === remarksLogId);
       for (const log of dailyLogs) {
-        await updatePanelLog(log.id, { 
+        await updatePanelLog(log.id, {
           remarks: remarksText,
-          lastUpdatedBy: user?.name 
+          lastUpdatedBy: user?.name,
         });
       }
       setShowRemarksModal(false);
       setRemarksLogId(null);
-      setRemarksText('');
+      setRemarksText("");
       loadLogs();
     } catch (err) {
-      alert('Failed to save remarks: ' + err.message);
+      alert("Failed to save remarks: " + err.message);
       console.error(err);
     }
   };
@@ -323,7 +347,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const handleCloseRemarksModal = () => {
     setShowRemarksModal(false);
     setRemarksLogId(null);
-    setRemarksText('');
+    setRemarksText("");
   };
 
   if (loading) {
@@ -334,9 +358,19 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     <div className="panel-log-list-container">
       <div className="list-header">
         <h2>HT/LT Panel Log Sheets</h2>
-        <button className="btn btn-primary" onClick={onCreateNew}>
-          + Create New Entry
-        </button>
+        <div className="header-buttons">
+          {onCreateNew && (
+            <button className="btn btn-primary" onClick={onCreateNew}>
+              + Create New Entry
+            </button>
+          )}
+          <button
+            className="btn btn-warning"
+            onClick={handleCreatePowerFailureLog}
+          >
+            Power Failure Log
+          </button>
+        </div>
       </div>
 
       <div className="filters-section">
@@ -471,9 +505,11 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       {logs.length === 0 ? (
         <div className="no-data">
           <p>No panel logs found.</p>
-          <button className="btn btn-primary" onClick={onCreateNew}>
-            Create First Entry
-          </button>
+          {onCreateNew && (
+            <button className="btn btn-primary" onClick={onCreateNew}>
+              Create First Entry
+            </button>
+          )}
         </div>
       ) : viewMode === 'daily' ? (
         <div className="daily-view-container">
@@ -1266,7 +1302,13 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       {showPowerFailureModal && powerFailureLog && (
         <PowerFailureModal
           logId={powerFailureLog.id}
-          initialFailures={Array.isArray(powerFailureLog.powerFailure) ? powerFailureLog.powerFailure : powerFailureLog.powerFailure ? [powerFailureLog.powerFailure] : []}
+          initialFailures={
+            Array.isArray(powerFailureLog.powerFailure)
+              ? powerFailureLog.powerFailure
+              : powerFailureLog.powerFailure
+              ? [powerFailureLog.powerFailure]
+              : []
+          }
           onSave={handleSavePowerFailures}
           onCancel={handleClosePowerFailureModal}
         />
@@ -1277,7 +1319,9 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
           <div className="modal-content remarks-modal">
             <div className="modal-header">
               <h2>Add Remarks</h2>
-              <button className="modal-close" onClick={handleCloseRemarksModal}>×</button>
+              <button className="modal-close" onClick={handleCloseRemarksModal}>
+                ×
+              </button>
             </div>
             <div className="modal-body">
               <textarea
@@ -1292,7 +1336,10 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
               <button className="btn btn-primary" onClick={handleSaveRemarks}>
                 Save Remarks
               </button>
-              <button className="btn btn-secondary" onClick={handleCloseRemarksModal}>
+              <button
+                className="btn btn-secondary"
+                onClick={handleCloseRemarksModal}
+              >
                 Cancel
               </button>
             </div>

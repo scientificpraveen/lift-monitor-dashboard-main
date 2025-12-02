@@ -14,7 +14,7 @@ const Header = () => {
     <header className="header">
       <div className="header-content">
         <img src={logo} alt="Company Logo" className="logo" />
-        <h1 className="company-name">ATLANWA ELEVATOR DASHBOARD</h1>
+        <h1 className="company-name">ATLANWA BMS DASHBOARD</h1>
         {user && (
           <div className="header-user">
             <span className="user-name">Welcome, {user.name}</span>

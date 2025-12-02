@@ -14,18 +14,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const defaultOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : [
-      'http://localhost:5000',
-      'http://localhost:5001',
-      'http://localhost:3001',
-    ];
+  ? process.env.CORS_ORIGIN.split(",")
+  : ["http://localhost:5000", "http://localhost:5001", "http://localhost:3001"];
 
 const corsOptions = {
   origin: defaultOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
@@ -34,6 +30,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/service-logs", serviceLogRoutes);
+app.use("/api/users", userRoutes);
 
 const server = createServer(app);
 
