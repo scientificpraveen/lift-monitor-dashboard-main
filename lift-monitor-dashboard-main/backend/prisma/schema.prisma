@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  password          String
+  name              String
+  role              String   @default("user")  // admin, user
+  privileges        String[] @default(["view"])  // view, create, edit, delete
+  assignedBuildings String[] @default([])  // empty means all buildings (for admin)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("users")
   @@index([email])
@@ -39,16 +42,19 @@ model PanelLog {
 }
 
 model ServiceLog {
-  id        Int      @id @default(autoincrement())
-  sno       String
-  date      String
-  time      String
-  natureOfCall String
+  id              Int       @id @default(autoincrement())
+  sno             String
+  date            String
+  time            String
+  workOrderNo     String?
+  natureOfCall    String
   workDescription String
-  status    String   @default("open")
-  username  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status          String    @default("open")
+  username        String
+  lastUpdatedBy   String?
+  lastUpdatedAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@map("service_logs")
   @@index([date, status, username])

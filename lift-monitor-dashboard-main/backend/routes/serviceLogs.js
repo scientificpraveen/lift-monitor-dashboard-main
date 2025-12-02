@@ -21,8 +21,16 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { sno, date, time, natureOfCall, workDescription, status, username } =
-      req.body;
+    const {
+      sno,
+      date,
+      time,
+      workOrderNo,
+      natureOfCall,
+      workDescription,
+      status,
+      username,
+    } = req.body;
 
     if (
       !sno ||
@@ -41,6 +49,7 @@ router.post("/", async (req, res) => {
         sno,
         date,
         time,
+        workOrderNo: workOrderNo || null,
         natureOfCall,
         workDescription,
         status,
@@ -58,8 +67,18 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { sno, date, time, natureOfCall, workDescription, status, username } =
-      req.body;
+    const {
+      sno,
+      date,
+      time,
+      workOrderNo,
+      natureOfCall,
+      workDescription,
+      status,
+      username,
+      lastUpdatedBy,
+      lastUpdatedAt,
+    } = req.body;
 
     const log = await prisma.serviceLog.update({
       where: { id: parseInt(id) },
@@ -67,10 +86,13 @@ router.put("/:id", async (req, res) => {
         sno,
         date,
         time,
+        workOrderNo: workOrderNo || null,
         natureOfCall,
         workDescription,
         status,
         username,
+        lastUpdatedBy: lastUpdatedBy || null,
+        lastUpdatedAt: lastUpdatedAt ? new Date(lastUpdatedAt) : null,
       },
     });
 

@@ -37,7 +37,7 @@ const Auth = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Lift Monitor</h1>
+        <h1 className="auth-title">Atlanwa BMS Dashboard</h1>
         <p className="auth-subtitle">
           {isLogin ? "Login to your account" : "Create a new account"}
         </p>
@@ -59,7 +59,7 @@ const Auth = () => {
           )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Username</label>
             <input
               type="email"
               id="email"

@@ -63,6 +63,13 @@ body {
   overflow: hidden;
 }
 
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
 .main-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
