@@ -16,15 +16,18 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
       currentAmp: { r: '', y: '', b: '', pf: '', hz: '' },
       outgoingTr1: {
         currentAmp: { r: '', y: '', b: '' },
-        windingTemp: { r: '', y: '', b: '' }
+        windingTemp: '',
+        oilTemp: ''
       },
       outgoingTr2: {
         currentAmp: { r: '', y: '', b: '' },
-        windingTemp: { r: '', y: '', b: '' }
+        windingTemp: '',
+        oilTemp: ''
       },
       outgoingTr3: {
         currentAmp: { r: '', y: '', b: '' },
-        windingTemp: { r: '', y: '', b: '' }
+        windingTemp: '',
+        oilTemp: ''
       }
     },
     
@@ -48,21 +51,8 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
         kwh: ''
       }
     },
-    
-    shiftIncharge: {
-      aShift: { name: '', sign: '' },
-      bShift: { name: '', sign: '' },
-      cShift: { name: '', sign: '' }
-    },
-    
-    powerFailure: {
-      fromHrs: '',
-      toHrs: '',
-      reason: ''
-    },
-    
-    remarks: '',
-    engineerSignature: ''
+    shiftIncharge: '',
+    remarks: ''
   });
 
   useEffect(() => {
@@ -206,8 +196,8 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
 
           <div className="subsection">
             <h4>Current Amp</h4>
-            <div className="form-row">
-              <div className="form-group">
+            <div className="form-row compact-row">
+              <div className="form-group compact-group">
                 <label>R</label>
                 <input
                   type="number"
@@ -216,7 +206,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   onChange={(e) => handleInputChange('htPanel', 'currentAmp', 'r', null, e.target.value)}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group compact-group">
                 <label>Y</label>
                 <input
                   type="number"
@@ -225,7 +215,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   onChange={(e) => handleInputChange('htPanel', 'currentAmp', 'y', null, e.target.value)}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group compact-group">
                 <label>B</label>
                 <input
                   type="number"
@@ -234,7 +224,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   onChange={(e) => handleInputChange('htPanel', 'currentAmp', 'b', null, e.target.value)}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group compact-group">
                 <label>PF</label>
                 <input
                   type="number"
@@ -243,7 +233,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   onChange={(e) => handleInputChange('htPanel', 'currentAmp', 'pf', null, e.target.value)}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group compact-group">
                 <label>Hz</label>
                 <input
                   type="number"
@@ -261,8 +251,8 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               <div className="transformer-readings">
                 <div className="reading-group">
                   <label>Current Amp</label>
-                  <div className="form-row">
-                    <div className="form-group">
+                  <div className="form-row compact-row">
+                    <div className="form-group compact-group">
                       <label>R</label>
                       <input
                         type="number"
@@ -271,7 +261,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         onChange={(e) => handleInputChange('htPanel', tr, 'currentAmp', 'r', e.target.value)}
                       />
                     </div>
-                    <div className="form-group">
+                    <div className="form-group compact-group">
                       <label>Y</label>
                       <input
                         type="number"
@@ -280,7 +270,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         onChange={(e) => handleInputChange('htPanel', tr, 'currentAmp', 'y', e.target.value)}
                       />
                     </div>
-                    <div className="form-group">
+                    <div className="form-group compact-group">
                       <label>B</label>
                       <input
                         type="number"
@@ -296,30 +286,25 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   <label>Winding Temp</label>
                   <div className="form-row">
                     <div className="form-group">
-                      <label>R</label>
+                      <label>Temperature (°C)</label>
                       <input
-                        type="number"
-                        step="0.01"
-                        value={formData.htPanel[tr].windingTemp.r}
-                        onChange={(e) => handleInputChange('htPanel', tr, 'windingTemp', 'r', e.target.value)}
+                        type="text"
+                        value={formData.htPanel[tr].windingTemp}
+                        onChange={(e) => handleInputChange('htPanel', tr, 'windingTemp', null, e.target.value)}
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="reading-group">
+                  <label>Oil Temperature</label>
+                  <div className="form-row">
                     <div className="form-group">
-                      <label>Y</label>
+                      <label>Temperature (°C)</label>
                       <input
-                        type="number"
-                        step="0.01"
-                        value={formData.htPanel[tr].windingTemp.y}
-                        onChange={(e) => handleInputChange('htPanel', tr, 'windingTemp', 'y', e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>B</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.htPanel[tr].windingTemp.b}
-                        onChange={(e) => handleInputChange('htPanel', tr, 'windingTemp', 'b', e.target.value)}
+                        type="text"
+                        value={formData.htPanel[tr].oilTemp}
+                        onChange={(e) => handleInputChange('htPanel', tr, 'oilTemp', null, e.target.value)}
                       />
                     </div>
                   </div>
@@ -340,8 +325,8 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               
               <div className="reading-group">
                 <label>Voltage</label>
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="form-row compact-row">
+                  <div className="form-group compact-group">
                     <label>RY</label>
                     <input
                       type="number"
@@ -350,7 +335,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                       onChange={(e) => handleInputChange('ltPanel', incomer, 'voltage', 'ry', e.target.value)}
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group compact-group">
                     <label>YB</label>
                     <input
                       type="number"
@@ -359,7 +344,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                       onChange={(e) => handleInputChange('ltPanel', incomer, 'voltage', 'yb', e.target.value)}
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group compact-group">
                     <label>BR</label>
                     <input
                       type="number"
@@ -373,8 +358,8 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
 
               <div className="reading-group">
                 <label>Current Amp</label>
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="form-row compact-row">
+                  <div className="form-group compact-group">
                     <label>R</label>
                     <input
                       type="number"
@@ -383,7 +368,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                       onChange={(e) => handleInputChange('ltPanel', incomer, 'currentAmp', 'r', e.target.value)}
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group compact-group">
                     <label>Y</label>
                     <input
                       type="number"
@@ -392,7 +377,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                       onChange={(e) => handleInputChange('ltPanel', incomer, 'currentAmp', 'y', e.target.value)}
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group compact-group">
                     <label>B</label>
                     <input
                       type="number"
@@ -406,7 +391,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>TAP</label>
+                  <label>TAP Position</label>
                   <input
                     type="number"
                     value={formData.ltPanel[incomer].tap}
@@ -427,81 +412,6 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
           ))}
         </div>
         )}
-
-        <div className="form-section">
-          <h3>Shift Incharge</h3>
-          
-          {['aShift', 'bShift', 'cShift'].map((shift, index) => (
-            <div key={shift} className="form-row">
-              <div className="form-group">
-                <label>{String.fromCharCode(65 + index)} Shift Name</label>
-                <input
-                  type="text"
-                  value={formData.shiftIncharge[shift].name}
-                  onChange={(e) => handleInputChange('shiftIncharge', shift, 'name', null, e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>{String.fromCharCode(65 + index)} Shift Signature</label>
-                <input
-                  type="text"
-                  value={formData.shiftIncharge[shift].sign}
-                  onChange={(e) => handleInputChange('shiftIncharge', shift, 'sign', null, e.target.value)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="form-section">
-          <h3>Power Failure Details</h3>
-          <div className="form-row">
-            <div className="form-group">
-              <label>From Hrs</label>
-              <input
-                type="time"
-                value={formData.powerFailure.fromHrs}
-                onChange={(e) => handleInputChange('powerFailure', 'fromHrs', null, null, e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>To Hrs</label>
-              <input
-                type="time"
-                value={formData.powerFailure.toHrs}
-                onChange={(e) => handleInputChange('powerFailure', 'toHrs', null, null, e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="form-group full-width">
-            <label>Reason</label>
-            <textarea
-              value={formData.powerFailure.reason}
-              onChange={(e) => handleInputChange('powerFailure', 'reason', null, null, e.target.value)}
-              rows="2"
-            />
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3>Additional Information</h3>
-          <div className="form-group full-width">
-            <label>Remarks</label>
-            <textarea
-              value={formData.remarks}
-              onChange={(e) => handleInputChange('remarks', null, null, null, e.target.value)}
-              rows="3"
-            />
-          </div>
-          <div className="form-group">
-            <label>Engineer Signature</label>
-            <input
-              type="text"
-              value={formData.engineerSignature}
-              onChange={(e) => handleInputChange('engineerSignature', null, null, null, e.target.value)}
-            />
-          </div>
-        </div>
 
         <div className="form-actions">
           <button type="submit" className="btn btn-primary">

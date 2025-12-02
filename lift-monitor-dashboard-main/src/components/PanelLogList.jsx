@@ -4,6 +4,7 @@ import { buildings } from "../config/buildings";
 import "./PanelLogList.css";
 
 const PanelLogList = ({ onEdit, onCreateNew }) => {
+  const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -211,6 +212,106 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const handleOpenModal = (log) => {
     setModalLog(log);
     setModalPanelType(log.panelType || "BOTH");
+  };
+
+  const handleOpenPowerFailureModal = (log) => {
+    setPowerFailureLog(log);
+    setShowPowerFailureModal(true);
+  };
+
+  const handleSavePowerFailures = async (failures) => {
+    if (!powerFailureLog) return;
+    
+    try {
+      // Check if this is a daily power failure (id starts with 'daily-')
+      if (powerFailureLog.id && powerFailureLog.id.startsWith('daily-')) {
+        // Update all logs for this date
+        const date = powerFailureLog.date;
+        const dailyLogs = logs.filter(log => log.date === date);
+        
+        if (dailyLogs.length === 0) {
+          alert('No logs found for this date');
+          return;
+        }
+        
+        // Update all logs for this day with the same power failure
+        const promises = dailyLogs.map(log => 
+          updatePanelLog(log.id, { powerFailure: failures.length > 0 ? failures : null })
+        );
+        
+        await Promise.all(promises);
+      } else {
+        // Update single log
+        await updatePanelLog(powerFailureLog.id, { powerFailure: failures.length > 0 ? failures : null });
+      }
+      
+      setShowPowerFailureModal(false);
+      setPowerFailureLog(null);
+      
+      loadLogs();
+    } catch (err) {
+      alert('Failed to save power failures: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleClosePowerFailureModal = () => {
+    setShowPowerFailureModal(false);
+    setPowerFailureLog(null);
+  };
+
+  const handleVerifyShiftIncharge = async (date) => {
+    if (!user) {
+      alert('You must be logged in to verify');
+      return;
+    }
+    try {
+      // Update all logs for this date
+      const dailyLogs = logs.filter(log => log.date === date);
+      for (const log of dailyLogs) {
+        await updatePanelLog(log.id, { 
+          shiftIncharge: user.name,
+          lastUpdatedBy: user.name 
+        });
+      }
+      loadLogs();
+    } catch (err) {
+      alert('Failed to verify shift incharge: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleOpenRemarksModal = (date, currentRemarks) => {
+    setRemarksLogId(date); // Store date instead of logId
+    setRemarksText(currentRemarks || '');
+    setShowRemarksModal(true);
+  };
+
+  const handleSaveRemarks = async () => {
+    if (!remarksLogId) return;
+    try {
+      // Update all logs for this date
+      const dailyLogs = logs.filter(log => log.date === remarksLogId);
+      for (const log of dailyLogs) {
+        await updatePanelLog(log.id, { 
+          remarks: remarksText,
+          lastUpdatedBy: user?.name 
+        });
+      }
+      setShowRemarksModal(false);
+      setRemarksLogId(null);
+      setRemarksText('');
+      loadLogs();
+    } catch (err) {
+      alert('Failed to save remarks: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleCloseRemarksModal = () => {
+    setShowRemarksModal(false);
+    setRemarksLogId(null);
+    setRemarksText('');
   };
 
   if (loading) {
@@ -818,27 +919,36 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                             <th rowSpan="3">REMARK</th>
                           </tr>
                           <tr>
-                            <th colSpan="6">Current Amp</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
-                            <th colSpan="3">Current Amp & winding Temp.</th>
+                            <th rowSpan="2">VOLT (KV)</th>
+                            <th colSpan="5">CURRENT AMP</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="2">TEMP</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="2">TEMP</th>
+                            <th colSpan="3">CURRENT AMP</th>
+                            <th colSpan="2">TEMP</th>
                           </tr>
                           <tr>
-                            <th>Volt (kv)</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
-                            <th>PF</th>
-                            <th>Hz</th>
+                            <th>P.F</th>
+                            <th>HZ</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                             <th>R</th>
                             <th>Y</th>
                             <th>B</th>
+                            <th>Wind</th>
+                            <th>Oil</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1158,36 +1268,50 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                         <table className="panel-log-table daily-table">
                           <thead>
                             <tr>
-                              <th rowSpan="3">Time (Hrs)</th>
-                              <th rowSpan="3">I/C From TNEB</th>
-                              <th colSpan="6">Main Incomer Supply</th>
-                              <th colSpan="3">Out Going to Tr-1 (2000 Kva)</th>
-                              <th colSpan="3">Out Going to Tr-2 (2000 Kva)</th>
-                              <th colSpan="3">Out Going to Tr-3 (2000 Kva)</th>
-                              <th rowSpan="3">REMARK</th>
+                              <th rowSpan="4">TIME (HRS)</th>
+                              <th rowSpan="4">I/C FROM TNEB</th>
+                              <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                              <th colSpan="3">OUT GOING TO TR-1 (2000 KVA)</th>
+                              <th colSpan="3">OUT GOING TO TR-2 (2000 KVA)</th>
+                              <th colSpan="3">OUT GOING TO TR-3 (2000 KVA)</th>
+                              <th rowSpan="4">REMARK</th>
                             </tr>
                             <tr>
-                              <th colSpan="6">Current Amp</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
-                              <th colSpan="3">Current Amp & winding Temp.</th>
+                              <th rowSpan="2">VOLT (KV)</th>
+                              <th colSpan="5">CURRENT AMP</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
+                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
                             </tr>
                             <tr>
-                              <th>Volt (kv)</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
-                              <th>PF</th>
-                              <th>Hz</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
+                              <th>P.F</th>
+                              <th>HZ</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
                               <th>R</th>
                               <th>Y</th>
                               <th>B</th>
+                              <th>R</th>
+                              <th>Y</th>
+                              <th>B</th>
+                            </tr>
+                            <tr>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th></th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
+                              <th colspan="3">CURRENT AMP</th>
+                              <th colspan="3">WINDING TEMP.</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1440,6 +1564,43 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPowerFailureModal && powerFailureLog && (
+        <PowerFailureModal
+          logId={powerFailureLog.id}
+          initialFailures={Array.isArray(powerFailureLog.powerFailure) ? powerFailureLog.powerFailure : powerFailureLog.powerFailure ? [powerFailureLog.powerFailure] : []}
+          onSave={handleSavePowerFailures}
+          onCancel={handleClosePowerFailureModal}
+        />
+      )}
+
+      {showRemarksModal && (
+        <div className="modal-overlay">
+          <div className="modal-content remarks-modal">
+            <div className="modal-header">
+              <h2>Add Remarks</h2>
+              <button className="modal-close" onClick={handleCloseRemarksModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <textarea
+                value={remarksText}
+                onChange={(e) => setRemarksText(e.target.value)}
+                placeholder="Enter remarks here..."
+                rows="6"
+                className="remarks-textarea"
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={handleSaveRemarks}>
+                Save Remarks
+              </button>
+              <button className="btn btn-secondary" onClick={handleCloseRemarksModal}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>
