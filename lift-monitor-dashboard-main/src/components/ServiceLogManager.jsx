@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
 const ServiceLogManager = () => {
-  const { user } = useAuth();
+  const { user, canCreate, canEdit, canDelete } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -194,15 +194,17 @@ const ServiceLogManager = () => {
     <div className="service-log-container">
       <div className="service-log-header">
         <h2>Operator Log Panel</h2>
-        <button
-          className="btn-add-log"
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-        >
-          {showForm ? "✕ Cancel" : "+ Add Log"}
-        </button>
+        {canCreate() && (
+          <button
+            className="btn-add-log"
+            onClick={() => {
+              resetForm();
+              setShowForm(!showForm);
+            }}
+          >
+            {showForm ? "✕ Cancel" : "+ Add Log"}
+          </button>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -363,20 +365,24 @@ const ServiceLogManager = () => {
                     )}
                   </td>
                   <td className="actions">
-                    <button
-                      className="btn-edit"
-                      onClick={() => handleEdit(log)}
-                      title="Edit"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(log.id)}
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
+                    {canEdit() && (
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEdit(log)}
+                        title="Edit"
+                      >
+                        ✎
+                      </button>
+                    )}
+                    {canDelete() && (
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDelete(log.id)}
+                        title="Delete"
+                      >
+                        🗑
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

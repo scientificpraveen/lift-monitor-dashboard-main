@@ -1,5 +1,6 @@
 import React from "react";
 import { buildings } from "../config/buildings";
+import { useAuth } from "../context/AuthContext";
 import "./Sidebar.css";
 
 const Sidebar = ({
@@ -7,15 +8,19 @@ const Sidebar = ({
   onSelect,
   onServiceLogClick,
   onPanelLogClick,
+  onUserManagementClick,
   activePanel,
 }) => {
+  const { getAccessibleBuildings, isAdmin } = useAuth();
+  const accessibleBuildings = getAccessibleBuildings(buildings);
+
   return (
     <div className="sidebar">
       <h2 className="sidebar-title">🏢 Buildings</h2>
 
       <div className="building-list-container">
         <ul className="building-list">
-          {buildings.map((building) => (
+          {accessibleBuildings.map((building) => (
             <li
               key={building}
               className={`building-item ${
@@ -42,6 +47,16 @@ const Sidebar = ({
           >
             ⚡ HT/LT PANEL LOGS
           </li>
+          {isAdmin() && (
+            <li
+              className={`service-log-item admin-item ${
+                activePanel === "users" ? "active" : ""
+              }`}
+              onClick={onUserManagementClick}
+            >
+              👥 USER MANAGEMENT
+            </li>
+          )}
         </ul>
       </div>
     </div>

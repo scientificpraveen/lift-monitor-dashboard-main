@@ -84,6 +84,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Helper functions for privilege checking
+  const hasPrivilege = (privilege) => {
+    if (!user) return false;
+    return user.privileges?.includes(privilege) || false;
+  };
+
+  const canView = () => hasPrivilege("view");
+  const canCreate = () => hasPrivilege("create");
+  const canEdit = () => hasPrivilege("edit");
+  const canDelete = () => hasPrivilege("delete");
+  const isAdmin = () => user?.role === "admin";
+
+  // Get user's accessible buildings
+  const getAccessibleBuildings = (allBuildings) => {
+    if (!user) return [];
+    // Admin or users with no assigned buildings can see all
+    if (
+      user.role === "admin" ||
+      !user.assignedBuildings ||
+      user.assignedBuildings.length === 0
+    ) {
+      return allBuildings;
+    }
+    return allBuildings.filter((b) => user.assignedBuildings.includes(b));
+  };
+
+  // Check if user has access to a specific building
+  const hasAccessToBuilding = (building) => {
+    if (!user) return false;
+    if (
+      user.role === "admin" ||
+      !user.assignedBuildings ||
+      user.assignedBuildings.length === 0
+    ) {
+      return true;
+    }
+    return user.assignedBuildings.includes(building);
+  };
+
   const value = {
     user,
     loading,
@@ -92,6 +131,15 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
+    // Privilege helpers
+    hasPrivilege,
+    canView,
+    canCreate,
+    canEdit,
+    canDelete,
+    isAdmin,
+    getAccessibleBuildings,
+    hasAccessToBuilding,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

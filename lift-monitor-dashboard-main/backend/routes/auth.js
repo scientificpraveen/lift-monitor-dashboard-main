@@ -25,16 +25,32 @@ router.post("/signup", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Check if this is the first user - make them admin
+    const userCount = await prisma.user.count();
+    const isFirstUser = userCount === 0;
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
+        role: isFirstUser ? "admin" : "user",
+        privileges: isFirstUser
+          ? ["view", "create", "edit", "delete"]
+          : ["view"],
+        assignedBuildings: [], // empty means all buildings for admin
       },
     });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        privileges: user.privileges,
+        assignedBuildings: user.assignedBuildings,
+      },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -48,7 +64,14 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).json({
       message: "User created successfully",
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        privileges: user.privileges,
+        assignedBuildings: user.assignedBuildings,
+      },
       token,
     });
   } catch (error) {
@@ -76,7 +99,14 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        privileges: user.privileges,
+        assignedBuildings: user.assignedBuildings,
+      },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -90,7 +120,14 @@ router.post("/login", async (req, res) => {
 
     res.json({
       message: "Login successful",
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        privileges: user.privileges,
+        assignedBuildings: user.assignedBuildings,
+      },
       token,
     });
   } catch (error) {
@@ -121,7 +158,14 @@ router.get("/me", async (req, res) => {
     }
 
     res.json({
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        privileges: user.privileges,
+        assignedBuildings: user.assignedBuildings,
+      },
     });
   } catch (error) {
     res.status(401).json({ error: "Invalid token" });

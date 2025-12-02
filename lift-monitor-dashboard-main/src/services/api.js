@@ -320,3 +320,72 @@ export const deleteServiceLog = async (id) => {
     throw error;
   }
 };
+
+// User Management API
+export const fetchUsers = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch users");
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+};
+
+export const createUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to create user");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
+
+export const updateUser = async (id, userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update user");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to delete user");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw error;
+  }
+};

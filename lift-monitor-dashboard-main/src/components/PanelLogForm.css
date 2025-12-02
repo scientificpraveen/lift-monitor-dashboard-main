@@ -1,7 +1,7 @@
 .panel-log-form-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 15px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -15,8 +15,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #a076f9;
 }
 
@@ -24,6 +24,7 @@
   color: #1a1a1a;
   margin: 0;
   flex: 1;
+  font-size: 1.3rem;
 }
 
 .form-close-btn {
@@ -48,8 +49,8 @@
 }
 
 .form-section {
-  margin-bottom: 30px;
-  padding: 20px;
+  margin-bottom: 15px;
+  padding: 12px;
   background: #f9f9f9;
   border-radius: 6px;
   border-left: 4px solid #a076f9;
@@ -57,14 +58,14 @@
 
 .form-section h3 {
   color: #2c3e50;
-  margin-bottom: 20px;
-  font-size: 1.3rem;
+  margin-bottom: 12px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .subsection {
-  margin: 20px 0;
-  padding: 15px;
+  margin: 10px 0;
+  padding: 10px;
   background: #fff;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
@@ -72,23 +73,23 @@
 
 .subsection h4 {
   color: #34495e;
-  margin-bottom: 15px;
-  font-size: 1.1rem;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
   font-weight: 500;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #ecf0f1;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .form-row.compact-row {
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  gap: 6px;
 }
 
 .form-group {
@@ -97,17 +98,17 @@
 }
 
 .form-group.compact-group {
-  gap: 3px;
+  gap: 2px;
 }
 
 .form-group.compact-group input {
-  padding: 6px 4px;
-  font-size: 0.85rem;
+  padding: 4px 6px;
+  font-size: 0.8rem;
 }
 
 .form-group.compact-group label {
   margin-bottom: 2px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
@@ -117,18 +118,18 @@
 
 .form-group label {
   font-weight: 500;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   color: #555;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px;
+  padding: 6px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   transition: border-color 0.3s ease;
 }
 
@@ -147,11 +148,11 @@
 .transformer-readings {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .reading-group {
-  padding: 10px;
+  padding: 8px;
   background: #fafafa;
   border-radius: 4px;
 }
@@ -160,24 +161,24 @@
   display: block;
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
 }
 
 .form-actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   justify-content: flex-end;
-  margin-top: 30px;
-  padding-top: 20px;
+  margin-top: 15px;
+  padding-top: 12px;
   border-top: 2px solid #e0e0e0;
 }
 
 .btn {
-  padding: 12px 30px;
+  padding: 8px 20px;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;

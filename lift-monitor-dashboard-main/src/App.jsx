@@ -4,6 +4,7 @@ import LiftCard from "./components/LiftCard";
 import Header from "./components/Header";
 import PanelLogManager from "./components/PanelLogManager";
 import ServiceLogManager from "./components/ServiceLogManager";
+import UserManagement from "./components/UserManagement";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -13,9 +14,12 @@ import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
 
 const App = () => {
-  const { isAuthenticated, loading } = useAuth();
-  const [activePanel, setActivePanel] = useState(null); // null, 'service', or 'panel'
-  const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]);
+  const { isAuthenticated, loading, getAccessibleBuildings } = useAuth();
+  const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', or 'users'
+  const accessibleBuildings = getAccessibleBuildings(buildings);
+  const [selectedBuilding, setSelectedBuilding] = useState(
+    accessibleBuildings[0] || buildings[0]
+  );
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({});
   const liftHistoryRef = useRef({});
@@ -182,6 +186,7 @@ const App = () => {
             }}
             onServiceLogClick={() => setActivePanel("service")}
             onPanelLogClick={() => setActivePanel("panel")}
+            onUserManagementClick={() => setActivePanel("users")}
             activePanel={activePanel}
           />
           {activePanel === null ? (
@@ -194,6 +199,7 @@ const App = () => {
             <div className="panel-content">
               {activePanel === "service" && <ServiceLogManager />}
               {activePanel === "panel" && <PanelLogManager />}
+              {activePanel === "users" && <UserManagement />}
             </div>
           )}
         </div>
