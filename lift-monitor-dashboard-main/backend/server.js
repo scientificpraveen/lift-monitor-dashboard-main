@@ -8,6 +8,7 @@ import * as panelLogService from "./panelLogContext.js";
 import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
 import serviceLogRoutes from "./routes/serviceLogs.js";
+import userRoutes from "./routes/users.js";
 import { startAutoEntryScheduler, stopAutoEntryScheduler } from "./services/autoEntryService.js";
 
 const app = express();

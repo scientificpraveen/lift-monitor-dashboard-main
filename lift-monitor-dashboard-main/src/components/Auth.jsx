@@ -3,13 +3,11 @@ import { useAuth } from "../context/AuthContext";
 import "./Auth.css";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const { login, signup, error } = useAuth();
+  const { login, error } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,16 +15,10 @@ const Auth = () => {
     setMessage("");
 
     try {
-      if (isLogin) {
-        await login(email, password);
-        setMessage("Login successful!");
-      } else {
-        await signup(email, password, name);
-        setMessage("Signup successful!");
-      }
+      await login(email, password);
+      setMessage("Login successful!");
       setEmail("");
       setPassword("");
-      setName("");
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -38,26 +30,9 @@ const Auth = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h1 className="auth-title">Atlanwa BMS Dashboard</h1>
-        <p className="auth-subtitle">
-          {isLogin ? "Login to your account" : "Create a new account"}
-        </p>
+        <p className="auth-subtitle">Login to your account</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {!isLogin && (
-            <div className="form-group">
-              <label htmlFor="name">Full Name</label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
-                required={!isLogin}
-                className="form-input"
-              />
-            </div>
-          )}
-
           <div className="form-group">
             <label htmlFor="email">Username</label>
             <input
@@ -90,25 +65,9 @@ const Auth = () => {
           )}
 
           <button type="submit" disabled={loading} className="auth-button">
-            {loading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
+            {loading ? "Processing..." : "Login"}
           </button>
         </form>
-
-        <div className="auth-toggle">
-          <p>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setMessage("");
-              }}
-              className="toggle-button"
-            >
-              {isLogin ? "Sign Up" : "Login"}
-            </button>
-          </p>
-        </div>
       </div>
     </div>
   );
