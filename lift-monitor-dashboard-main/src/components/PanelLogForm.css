@@ -86,9 +86,29 @@
   margin-bottom: 15px;
 }
 
+.form-row.compact-row {
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
+}
+
+.form-group.compact-group {
+  gap: 3px;
+}
+
+.form-group.compact-group input {
+  padding: 6px 4px;
+  font-size: 0.85rem;
+}
+
+.form-group.compact-group label {
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .form-group.full-width {
