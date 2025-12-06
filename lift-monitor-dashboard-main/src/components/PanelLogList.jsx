@@ -13,7 +13,7 @@ import "./PanelLogList.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
 
 const PanelLogList = ({ onEdit, onCreateNew }) => {
-  const { user, canDelete, getAccessibleBuildings } = useAuth();
+  const { user, canDelete, getAccessibleBuildings, isAdmin } = useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -513,7 +513,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
           </select>
         </div>
 
-        {logs.length > 0 && (
+        {logs.length > 0 && isAdmin() && (
           <>
             <button className="btn btn-export" onClick={handleExportToExcel}>
               📊 Export XLSX
