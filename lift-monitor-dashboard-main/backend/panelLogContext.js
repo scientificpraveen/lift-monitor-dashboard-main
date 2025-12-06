@@ -405,25 +405,44 @@ export const getPanelLogs = async (filters = {}) => {
     }
   }
 
-  // Filter by panel type - check if the actual panel data exists
-  if (filters.panelType) {
-    if (filters.panelType === "HT") {
-      where.htPanel = { not: null };
-    } else if (filters.panelType === "LT") {
-      where.ltPanel = { not: null };
-    } else if (filters.panelType === "BOTH") {
-      where.AND = [{ htPanel: { not: null } }, { ltPanel: { not: null } }];
-    }
-  }
-
   if (filters.time) {
     where.time = filters.time;
   }
 
-  return await prisma.panelLog.findMany({
+  // Fetch all matching logs first
+  let logs = await prisma.panelLog.findMany({
     where,
     orderBy: [{ date: "desc" }, { time: "desc" }],
   });
+
+  // Helper to check if panel data has actual values (not just empty strings)
+  const hasActualPanelData = (panel) => {
+    if (!panel || typeof panel !== "object") return false;
+    return Object.values(panel).some((val) => {
+      if (typeof val === "object" && val !== null) {
+        return Object.values(val).some(
+          (v) => v !== "" && v !== null && v !== undefined && v !== "-"
+        );
+      }
+      return val !== "" && val !== null && val !== undefined && val !== "-";
+    });
+  };
+
+  // Post-query filter by panel type (since Prisma can't filter JSON content)
+  if (filters.panelType) {
+    if (filters.panelType === "HT") {
+      logs = logs.filter((log) => hasActualPanelData(log.htPanel));
+    } else if (filters.panelType === "LT") {
+      logs = logs.filter((log) => hasActualPanelData(log.ltPanel));
+    } else if (filters.panelType === "BOTH") {
+      logs = logs.filter(
+        (log) =>
+          hasActualPanelData(log.htPanel) && hasActualPanelData(log.ltPanel)
+      );
+    }
+  }
+
+  return logs;
 };
 
 export const getPanelLogById = async (id) => {

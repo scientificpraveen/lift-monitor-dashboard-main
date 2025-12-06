@@ -37,7 +37,7 @@ model PanelLog {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([building, date, time, panelType])
+  @@unique([building, date, time])
   @@map("panel_logs")
   @@index([building, date, panelType])
 }

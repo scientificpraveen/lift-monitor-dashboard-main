@@ -97,11 +97,10 @@ const createEmptyEntry = async (building, date, timeSlot) => {
     // Use upsert to prevent duplicates - only create if doesn't exist
     const result = await prisma.panelLog.upsert({
       where: {
-        building_date_time_panelType: {
+        building_date_time: {
           building,
           date,
           time: timeSlot,
-          panelType: "BOTH",
         },
       },
       update: {}, // Don't update if exists
