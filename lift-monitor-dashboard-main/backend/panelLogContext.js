@@ -603,16 +603,28 @@ export const updatePanelLog = async (id, logData) => {
       return hasIncomer1 || hasIncomer2;
     };
 
+    const now = new Date().toISOString();
+
     // Merge htPanel - keep existing if new data is empty
     if (hasActualHTData(logData.htPanel)) {
-      updateData.htPanel = logData.htPanel;
+      updateData.htPanel = {
+        ...logData.htPanel,
+        _updatedAt: now,
+        _updatedBy:
+          logData.lastUpdatedBy || existingLog.htPanel?._updatedBy || "Unknown",
+      };
     } else if (existingLog.htPanel) {
       updateData.htPanel = existingLog.htPanel;
     }
 
     // Merge ltPanel - keep existing if new data is empty
     if (hasActualLTData(logData.ltPanel)) {
-      updateData.ltPanel = logData.ltPanel;
+      updateData.ltPanel = {
+        ...logData.ltPanel,
+        _updatedAt: now,
+        _updatedBy:
+          logData.lastUpdatedBy || existingLog.ltPanel?._updatedBy || "Unknown",
+      };
     } else if (existingLog.ltPanel) {
       updateData.ltPanel = existingLog.ltPanel;
     }

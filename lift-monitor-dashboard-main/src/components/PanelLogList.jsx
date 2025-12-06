@@ -796,12 +796,19 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                           log.htPanel.outgoingTr3?.oilTemp
                                         )}
                                       </td>
-                                      <td>{log.lastUpdatedBy || "-"}</td>
+                                      <td>
+                                        {log.htPanel._updatedBy ||
+                                          log.lastUpdatedBy ||
+                                          "-"}
+                                      </td>
                                       <td>
                                         {formatDateTime24hr(log.createdAt)}
                                       </td>
                                       <td>
-                                        {formatDateTime24hr(log.updatedAt)}
+                                        {formatDateTime24hr(
+                                          log.htPanel._updatedAt ||
+                                            log.updatedAt
+                                        )}
                                       </td>
                                       <td>
                                         <div className="action-buttons">
@@ -990,12 +997,19 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       <td>
                                         {log.ltPanel.incomer3?.kwh || "-"}
                                       </td>
-                                      <td>{log.lastUpdatedBy || "-"}</td>
+                                      <td>
+                                        {log.ltPanel._updatedBy ||
+                                          log.lastUpdatedBy ||
+                                          "-"}
+                                      </td>
                                       <td>
                                         {formatDateTime24hr(log.createdAt)}
                                       </td>
                                       <td>
-                                        {formatDateTime24hr(log.updatedAt)}
+                                        {formatDateTime24hr(
+                                          log.ltPanel._updatedAt ||
+                                            log.updatedAt
+                                        )}
                                       </td>
                                       <td>
                                         <div className="action-buttons">
