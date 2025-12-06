@@ -44,12 +44,39 @@ const PanelLogManager = () => {
           formData.building
         );
         if (duplicate) {
+          // Check what data exists and what's being added
+          const existingHasHT =
+            duplicate.htPanel &&
+            Object.values(duplicate.htPanel).some(
+              (v) =>
+                v && (typeof v !== "object" || Object.values(v).some((x) => x))
+            );
+          const existingHasLT =
+            duplicate.ltPanel &&
+            Object.values(duplicate.ltPanel).some(
+              (v) =>
+                v && (typeof v !== "object" || Object.values(v).some((x) => x))
+            );
+
+          let confirmMessage = `An entry already exists for ${formData.building} on ${formData.date} at ${formData.time}.`;
+
+          if (existingHasHT && !existingHasLT) {
+            confirmMessage += `\n\nThe existing entry has HT Panel data. Your new data will be merged with it.`;
+          } else if (existingHasLT && !existingHasHT) {
+            confirmMessage += `\n\nThe existing entry has LT Panel data. Your new data will be merged with it.`;
+          } else if (existingHasHT && existingHasLT) {
+            confirmMessage += `\n\nThe existing entry has both HT and LT Panel data. Your new data will be merged/updated.`;
+          } else {
+            confirmMessage += `\n\nWould you like to update the existing entry?`;
+          }
+
           const shouldUpdate = window.confirm(
-            `An entry already exists for ${formData.building} on ${formData.date} at ${formData.time}.\n\nWould you like to update the existing entry instead?`
+            confirmMessage + "\n\nClick OK to merge, Cancel to abort."
           );
+
           if (shouldUpdate) {
             await updatePanelLog(duplicate.id, formData);
-            showMessage("Existing panel log updated successfully!", "success");
+            showMessage("Panel log merged successfully!", "success");
           } else {
             showMessage("Entry creation cancelled.", "info");
             return;
