@@ -623,355 +623,399 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     </div>
                   </div>
 
-                  {dailyLogs[0]?.htPanel && (
-                    <div className="ht-table-section">
-                      <h4>HT Panel</h4>
-                      <div className="table-scroll-container">
-                        <table className="panel-log-table daily-table">
-                          <thead>
-                            <tr>
-                              <th rowSpan="3">TIME (HRS)</th>
-                              <th rowSpan="3">I/C FROM TNEB</th>
-                              <th colSpan="6">MAIN INCOMER SUPPLY</th>
-                              <th colSpan="5">OUT GOING TO TR-1 (2000 KVA)</th>
-                              <th colSpan="5">OUT GOING TO TR-2 (2000 KVA)</th>
-                              <th colSpan="5">OUT GOING TO TR-3 (2000 KVA)</th>
-                              <th rowSpan="3">LAST UPDATED BY</th>
-                              <th rowSpan="3">CREATED</th>
-                              <th rowSpan="3">UPDATED</th>
-                              <th rowSpan="3">ACTIONS</th>
-                            </tr>
-                            <tr>
-                              <th rowSpan="2">VOLT (KV)</th>
-                              <th colSpan="5">CURRENT AMP</th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="2">TEMP</th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="2">TEMP</th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="2">TEMP</th>
-                            </tr>
-                            <tr>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>P.F</th>
-                              <th>HZ</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>Wind</th>
-                              <th>Oil</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>Wind</th>
-                              <th>Oil</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>Wind</th>
-                              <th>Oil</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {dailyLogs.map(
-                              (log) =>
-                                log.htPanel && (
-                                  <tr key={log.id}>
-                                    <td>
-                                      <strong>{log.time}</strong>
-                                    </td>
-                                    <td>{log.htPanel.icFromTneb || "EB"}</td>
-                                    <td>
-                                      {log.htPanel.voltageFromWreb?.volt || "-"}
-                                    </td>
-                                    <td>{log.htPanel.currentAmp?.r || "-"}</td>
-                                    <td>{log.htPanel.currentAmp?.y || "-"}</td>
-                                    <td>{log.htPanel.currentAmp?.b || "-"}</td>
-                                    <td>{log.htPanel.currentAmp?.pf || "-"}</td>
-                                    <td>{log.htPanel.currentAmp?.hz || "-"}</td>
-                                    <td>
-                                      {log.htPanel.outgoingTr1?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr1?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr1?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {getSafeWindingTemp(
-                                        log.htPanel.outgoingTr1?.windingTemp
-                                      )}
-                                    </td>
-                                    <td>
-                                      {getSafeOilTemp(
-                                        log.htPanel.outgoingTr1?.oilTemp
-                                      )}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr2?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr2?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr2?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {getSafeWindingTemp(
-                                        log.htPanel.outgoingTr2?.windingTemp
-                                      )}
-                                    </td>
-                                    <td>
-                                      {getSafeOilTemp(
-                                        log.htPanel.outgoingTr2?.oilTemp
-                                      )}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr3?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr3?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.htPanel.outgoingTr3?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {getSafeWindingTemp(
-                                        log.htPanel.outgoingTr3?.windingTemp
-                                      )}
-                                    </td>
-                                    <td>
-                                      {getSafeOilTemp(
-                                        log.htPanel.outgoingTr3?.oilTemp
-                                      )}
-                                    </td>
-                                    <td>{log.lastUpdatedBy || "-"}</td>
-                                    <td>
-                                      {log.createdAt
-                                        ? new Date(
-                                            log.createdAt
-                                          ).toLocaleString()
-                                        : "-"}
-                                    </td>
-                                    <td>
-                                      {log.updatedAt
-                                        ? new Date(
-                                            log.updatedAt
-                                          ).toLocaleString()
-                                        : "-"}
-                                    </td>
-                                    <td>
-                                      <div className="action-buttons">
-                                        <button
-                                          className="update-btn"
-                                          onClick={() => onEdit(log)}
-                                          title="Update this log"
-                                        >
-                                          ✏️ Update
-                                        </button>
-                                        <button
-                                          className="delete-btn"
-                                          onClick={() =>
-                                            handleDelete(log.id, "HT")
-                                          }
-                                          title="Delete HT panel data"
-                                        >
-                                          🗑️ Delete
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )
-                            )}
-                          </tbody>
-                        </table>
+                  {dailyLogs[0]?.htPanel &&
+                    (filterPanelType === "" ||
+                      filterPanelType === "HT" ||
+                      filterPanelType === "BOTH") && (
+                      <div className="ht-table-section">
+                        <h4>HT Panel</h4>
+                        <div className="table-scroll-container">
+                          <table className="panel-log-table daily-table">
+                            <thead>
+                              <tr>
+                                <th rowSpan="3">TIME (HRS)</th>
+                                <th rowSpan="3">I/C FROM TNEB</th>
+                                <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                                <th colSpan="5">
+                                  OUT GOING TO TR-1 (2000 KVA)
+                                </th>
+                                <th colSpan="5">
+                                  OUT GOING TO TR-2 (2000 KVA)
+                                </th>
+                                <th colSpan="5">
+                                  OUT GOING TO TR-3 (2000 KVA)
+                                </th>
+                                <th rowSpan="3">LAST UPDATED BY</th>
+                                <th rowSpan="3">CREATED</th>
+                                <th rowSpan="3">UPDATED</th>
+                                <th rowSpan="3">ACTIONS</th>
+                              </tr>
+                              <tr>
+                                <th rowSpan="2">VOLT (KV)</th>
+                                <th colSpan="5">CURRENT AMP</th>
+                                <th colSpan="3">CURRENT AMP</th>
+                                <th colSpan="2">TEMP</th>
+                                <th colSpan="3">CURRENT AMP</th>
+                                <th colSpan="2">TEMP</th>
+                                <th colSpan="3">CURRENT AMP</th>
+                                <th colSpan="2">TEMP</th>
+                              </tr>
+                              <tr>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>P.F</th>
+                                <th>HZ</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>Wind</th>
+                                <th>Oil</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>Wind</th>
+                                <th>Oil</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>Wind</th>
+                                <th>Oil</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dailyLogs.map(
+                                (log) =>
+                                  log.htPanel && (
+                                    <tr key={log.id}>
+                                      <td>
+                                        <strong>{log.time}</strong>
+                                      </td>
+                                      <td>{log.htPanel.icFromTneb || "EB"}</td>
+                                      <td>
+                                        {log.htPanel.voltageFromWreb?.volt ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.currentAmp?.r || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.currentAmp?.y || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.currentAmp?.b || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.currentAmp?.pf || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.currentAmp?.hz || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr1?.currentAmp
+                                          ?.r || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr1?.currentAmp
+                                          ?.y || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr1?.currentAmp
+                                          ?.b || "-"}
+                                      </td>
+                                      <td>
+                                        {getSafeWindingTemp(
+                                          log.htPanel.outgoingTr1?.windingTemp
+                                        )}
+                                      </td>
+                                      <td>
+                                        {getSafeOilTemp(
+                                          log.htPanel.outgoingTr1?.oilTemp
+                                        )}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr2?.currentAmp
+                                          ?.r || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr2?.currentAmp
+                                          ?.y || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr2?.currentAmp
+                                          ?.b || "-"}
+                                      </td>
+                                      <td>
+                                        {getSafeWindingTemp(
+                                          log.htPanel.outgoingTr2?.windingTemp
+                                        )}
+                                      </td>
+                                      <td>
+                                        {getSafeOilTemp(
+                                          log.htPanel.outgoingTr2?.oilTemp
+                                        )}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr3?.currentAmp
+                                          ?.r || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr3?.currentAmp
+                                          ?.y || "-"}
+                                      </td>
+                                      <td>
+                                        {log.htPanel.outgoingTr3?.currentAmp
+                                          ?.b || "-"}
+                                      </td>
+                                      <td>
+                                        {getSafeWindingTemp(
+                                          log.htPanel.outgoingTr3?.windingTemp
+                                        )}
+                                      </td>
+                                      <td>
+                                        {getSafeOilTemp(
+                                          log.htPanel.outgoingTr3?.oilTemp
+                                        )}
+                                      </td>
+                                      <td>{log.lastUpdatedBy || "-"}</td>
+                                      <td>
+                                        {log.createdAt
+                                          ? new Date(
+                                              log.createdAt
+                                            ).toLocaleString()
+                                          : "-"}
+                                      </td>
+                                      <td>
+                                        {log.updatedAt
+                                          ? new Date(
+                                              log.updatedAt
+                                            ).toLocaleString()
+                                          : "-"}
+                                      </td>
+                                      <td>
+                                        <div className="action-buttons">
+                                          <button
+                                            className="update-btn"
+                                            onClick={() => onEdit(log)}
+                                            title="Update this log"
+                                          >
+                                            ✏️ Update
+                                          </button>
+                                          <button
+                                            className="delete-btn"
+                                            onClick={() =>
+                                              handleDelete(log.id, "HT")
+                                            }
+                                            title="Delete HT panel data"
+                                          >
+                                            🗑️ Delete
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {dailyLogs[0]?.ltPanel && (
-                    <div className="lt-table-section">
-                      <h4>LT Panel</h4>
-                      <div className="table-scroll-container">
-                        <table className="panel-log-table daily-table">
-                          <thead>
-                            <tr>
-                              <th rowSpan="3">Time (Hrs)</th>
-                              <th colSpan="8">Incomer -1 (From -Tr-1)</th>
-                              <th colSpan="8">Incomer -2 (From -Tr-2)</th>
-                              <th colSpan="8">Incomer -3 (From -Tr-3)</th>
-                              <th rowSpan="3">LAST UPDATED BY</th>
-                              <th rowSpan="3">CREATED</th>
-                              <th rowSpan="3">UPDATED</th>
-                              <th rowSpan="3">ACTIONS</th>
-                            </tr>
-                            <tr>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                            </tr>
-                            <tr>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {dailyLogs.map(
-                              (log) =>
-                                log.ltPanel && (
-                                  <tr key={log.id}>
-                                    <td>
-                                      <strong>{log.time}</strong>
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer1?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer1?.kwh || "-"}</td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer2?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer2?.kwh || "-"}</td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer3?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer3?.kwh || "-"}</td>
-                                    <td>{log.lastUpdatedBy || "-"}</td>
-                                    <td>
-                                      {log.createdAt
-                                        ? new Date(
-                                            log.createdAt
-                                          ).toLocaleString()
-                                        : "-"}
-                                    </td>
-                                    <td>
-                                      {log.updatedAt
-                                        ? new Date(
-                                            log.updatedAt
-                                          ).toLocaleString()
-                                        : "-"}
-                                    </td>
-                                    <td>
-                                      <div className="action-buttons">
-                                        <button
-                                          className="update-btn"
-                                          onClick={() => onEdit(log)}
-                                          title="Update this log"
-                                        >
-                                          ✏️ Update
-                                        </button>
-                                        <button
-                                          className="delete-btn"
-                                          onClick={() =>
-                                            handleDelete(log.id, "LT")
-                                          }
-                                          title="Delete LT panel data"
-                                        >
-                                          🗑️ Delete
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )
-                            )}
-                          </tbody>
-                        </table>
+                  {dailyLogs[0]?.ltPanel &&
+                    (filterPanelType === "" ||
+                      filterPanelType === "LT" ||
+                      filterPanelType === "BOTH") && (
+                      <div className="lt-table-section">
+                        <h4>LT Panel</h4>
+                        <div className="table-scroll-container">
+                          <table className="panel-log-table daily-table">
+                            <thead>
+                              <tr>
+                                <th rowSpan="3">Time (Hrs)</th>
+                                <th colSpan="8">Incomer -1 (From -Tr-1)</th>
+                                <th colSpan="8">Incomer -2 (From -Tr-2)</th>
+                                <th colSpan="8">Incomer -3 (From -Tr-3)</th>
+                                <th rowSpan="3">LAST UPDATED BY</th>
+                                <th rowSpan="3">CREATED</th>
+                                <th rowSpan="3">UPDATED</th>
+                                <th rowSpan="3">ACTIONS</th>
+                              </tr>
+                              <tr>
+                                <th colSpan="3">Voltage</th>
+                                <th colSpan="3">Current Amp</th>
+                                <th rowSpan="2">TAP No.</th>
+                                <th rowSpan="2">KWH</th>
+                                <th colSpan="3">Voltage</th>
+                                <th colSpan="3">Current Amp</th>
+                                <th rowSpan="2">TAP No.</th>
+                                <th rowSpan="2">KWH</th>
+                                <th colSpan="3">Voltage</th>
+                                <th colSpan="3">Current Amp</th>
+                                <th rowSpan="2">TAP No.</th>
+                                <th rowSpan="2">KWH</th>
+                              </tr>
+                              <tr>
+                                <th>RY</th>
+                                <th>YB</th>
+                                <th>BR</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>RY</th>
+                                <th>YB</th>
+                                <th>BR</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                                <th>RY</th>
+                                <th>YB</th>
+                                <th>BR</th>
+                                <th>R</th>
+                                <th>Y</th>
+                                <th>B</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dailyLogs.map(
+                                (log) =>
+                                  log.ltPanel && (
+                                    <tr key={log.id}>
+                                      <td>
+                                        <strong>{log.time}</strong>
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.voltage?.ry ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.voltage?.yb ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.voltage?.br ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.currentAmp?.r ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.currentAmp?.y ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.currentAmp?.b ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.tap || "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer1?.kwh || "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.voltage?.ry ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.voltage?.yb ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.voltage?.br ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.currentAmp?.r ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.currentAmp?.y ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.currentAmp?.b ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.tap || "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer2?.kwh || "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.voltage?.ry ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.voltage?.yb ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.voltage?.br ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.currentAmp?.r ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.currentAmp?.y ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.currentAmp?.b ||
+                                          "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.tap || "-"}
+                                      </td>
+                                      <td>
+                                        {log.ltPanel.incomer3?.kwh || "-"}
+                                      </td>
+                                      <td>{log.lastUpdatedBy || "-"}</td>
+                                      <td>
+                                        {log.createdAt
+                                          ? new Date(
+                                              log.createdAt
+                                            ).toLocaleString()
+                                          : "-"}
+                                      </td>
+                                      <td>
+                                        {log.updatedAt
+                                          ? new Date(
+                                              log.updatedAt
+                                            ).toLocaleString()
+                                          : "-"}
+                                      </td>
+                                      <td>
+                                        <div className="action-buttons">
+                                          <button
+                                            className="update-btn"
+                                            onClick={() => onEdit(log)}
+                                            title="Update this log"
+                                          >
+                                            ✏️ Update
+                                          </button>
+                                          <button
+                                            className="delete-btn"
+                                            onClick={() =>
+                                              handleDelete(log.id, "LT")
+                                            }
+                                            title="Delete LT panel data"
+                                          >
+                                            🗑️ Delete
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Separate Display Section for Shift, Remarks, and Power Failures */}
                   <div className="separate-section">

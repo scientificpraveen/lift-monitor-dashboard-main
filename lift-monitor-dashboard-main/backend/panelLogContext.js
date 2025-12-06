@@ -415,29 +415,84 @@ export const getPanelLogs = async (filters = {}) => {
     orderBy: [{ date: "desc" }, { time: "desc" }],
   });
 
-  // Helper to check if panel data has actual values (not just empty strings)
-  const hasActualPanelData = (panel) => {
-    if (!panel || typeof panel !== "object") return false;
-    return Object.values(panel).some((val) => {
-      if (typeof val === "object" && val !== null) {
-        return Object.values(val).some(
-          (v) => v !== "" && v !== null && v !== undefined && v !== "-"
-        );
-      }
-      return val !== "" && val !== null && val !== undefined && val !== "-";
-    });
+  // Helper to check if HT panel has actual measurement values (not just default "EB")
+  const hasActualHTData = (htPanel) => {
+    if (!htPanel || typeof htPanel !== "object") return false;
+
+    // Check for actual voltage/current readings (the meaningful data)
+    const hasVoltage =
+      htPanel.voltageFromWreb?.volt &&
+      htPanel.voltageFromWreb.volt !== "" &&
+      htPanel.voltageFromWreb.volt !== "-";
+
+    const hasCurrentAmp =
+      htPanel.currentAmp &&
+      ((htPanel.currentAmp.r &&
+        htPanel.currentAmp.r !== "" &&
+        htPanel.currentAmp.r !== "-") ||
+        (htPanel.currentAmp.y &&
+          htPanel.currentAmp.y !== "" &&
+          htPanel.currentAmp.y !== "-") ||
+        (htPanel.currentAmp.b &&
+          htPanel.currentAmp.b !== "" &&
+          htPanel.currentAmp.b !== "-"));
+
+    const hasTr1Data =
+      htPanel.outgoingTr1?.currentAmp &&
+      ((htPanel.outgoingTr1.currentAmp.r &&
+        htPanel.outgoingTr1.currentAmp.r !== "" &&
+        htPanel.outgoingTr1.currentAmp.r !== "-") ||
+        (htPanel.outgoingTr1.currentAmp.y &&
+          htPanel.outgoingTr1.currentAmp.y !== "" &&
+          htPanel.outgoingTr1.currentAmp.y !== "-") ||
+        (htPanel.outgoingTr1.currentAmp.b &&
+          htPanel.outgoingTr1.currentAmp.b !== "" &&
+          htPanel.outgoingTr1.currentAmp.b !== "-"));
+
+    return hasVoltage || hasCurrentAmp || hasTr1Data;
+  };
+
+  // Helper to check if LT panel has actual measurement values
+  const hasActualLTData = (ltPanel) => {
+    if (!ltPanel || typeof ltPanel !== "object") return false;
+
+    // Check incomer1 for actual readings
+    const hasIncomer1 =
+      ltPanel.incomer1 &&
+      ((ltPanel.incomer1.voltage?.ry &&
+        ltPanel.incomer1.voltage.ry !== "" &&
+        ltPanel.incomer1.voltage.ry !== "-") ||
+        (ltPanel.incomer1.currentAmp?.r &&
+          ltPanel.incomer1.currentAmp.r !== "" &&
+          ltPanel.incomer1.currentAmp.r !== "-") ||
+        (ltPanel.incomer1.kwh &&
+          ltPanel.incomer1.kwh !== "" &&
+          ltPanel.incomer1.kwh !== "-"));
+
+    const hasIncomer2 =
+      ltPanel.incomer2 &&
+      ((ltPanel.incomer2.voltage?.ry &&
+        ltPanel.incomer2.voltage.ry !== "" &&
+        ltPanel.incomer2.voltage.ry !== "-") ||
+        (ltPanel.incomer2.currentAmp?.r &&
+          ltPanel.incomer2.currentAmp.r !== "" &&
+          ltPanel.incomer2.currentAmp.r !== "-") ||
+        (ltPanel.incomer2.kwh &&
+          ltPanel.incomer2.kwh !== "" &&
+          ltPanel.incomer2.kwh !== "-"));
+
+    return hasIncomer1 || hasIncomer2;
   };
 
   // Post-query filter by panel type (since Prisma can't filter JSON content)
   if (filters.panelType) {
     if (filters.panelType === "HT") {
-      logs = logs.filter((log) => hasActualPanelData(log.htPanel));
+      logs = logs.filter((log) => hasActualHTData(log.htPanel));
     } else if (filters.panelType === "LT") {
-      logs = logs.filter((log) => hasActualPanelData(log.ltPanel));
+      logs = logs.filter((log) => hasActualLTData(log.ltPanel));
     } else if (filters.panelType === "BOTH") {
       logs = logs.filter(
-        (log) =>
-          hasActualPanelData(log.htPanel) && hasActualPanelData(log.ltPanel)
+        (log) => hasActualHTData(log.htPanel) && hasActualLTData(log.ltPanel)
       );
     }
   }
@@ -487,36 +542,83 @@ export const updatePanelLog = async (id, logData) => {
     // Prepare the update data
     const updateData = { ...logData };
 
-    // Helper to check if panel data has actual values
-    const hasActualData = (panel) => {
-      if (!panel || typeof panel !== "object") return false;
-      return Object.values(panel).some((val) => {
-        if (typeof val === "object" && val !== null) {
-          return Object.values(val).some(
-            (v) => v !== "" && v !== null && v !== undefined
-          );
-        }
-        return val !== "" && val !== null && val !== undefined;
-      });
+    // Helper to check if HT panel has actual measurement values
+    const hasActualHTData = (htPanel) => {
+      if (!htPanel || typeof htPanel !== "object") return false;
+      const hasVoltage =
+        htPanel.voltageFromWreb?.volt &&
+        htPanel.voltageFromWreb.volt !== "" &&
+        htPanel.voltageFromWreb.volt !== "-";
+      const hasCurrentAmp =
+        htPanel.currentAmp &&
+        ((htPanel.currentAmp.r &&
+          htPanel.currentAmp.r !== "" &&
+          htPanel.currentAmp.r !== "-") ||
+          (htPanel.currentAmp.y &&
+            htPanel.currentAmp.y !== "" &&
+            htPanel.currentAmp.y !== "-") ||
+          (htPanel.currentAmp.b &&
+            htPanel.currentAmp.b !== "" &&
+            htPanel.currentAmp.b !== "-"));
+      const hasTr1Data =
+        htPanel.outgoingTr1?.currentAmp &&
+        ((htPanel.outgoingTr1.currentAmp.r &&
+          htPanel.outgoingTr1.currentAmp.r !== "" &&
+          htPanel.outgoingTr1.currentAmp.r !== "-") ||
+          (htPanel.outgoingTr1.currentAmp.y &&
+            htPanel.outgoingTr1.currentAmp.y !== "" &&
+            htPanel.outgoingTr1.currentAmp.y !== "-") ||
+          (htPanel.outgoingTr1.currentAmp.b &&
+            htPanel.outgoingTr1.currentAmp.b !== "" &&
+            htPanel.outgoingTr1.currentAmp.b !== "-"));
+      return hasVoltage || hasCurrentAmp || hasTr1Data;
+    };
+
+    // Helper to check if LT panel has actual measurement values
+    const hasActualLTData = (ltPanel) => {
+      if (!ltPanel || typeof ltPanel !== "object") return false;
+      const hasIncomer1 =
+        ltPanel.incomer1 &&
+        ((ltPanel.incomer1.voltage?.ry &&
+          ltPanel.incomer1.voltage.ry !== "" &&
+          ltPanel.incomer1.voltage.ry !== "-") ||
+          (ltPanel.incomer1.currentAmp?.r &&
+            ltPanel.incomer1.currentAmp.r !== "" &&
+            ltPanel.incomer1.currentAmp.r !== "-") ||
+          (ltPanel.incomer1.kwh &&
+            ltPanel.incomer1.kwh !== "" &&
+            ltPanel.incomer1.kwh !== "-"));
+      const hasIncomer2 =
+        ltPanel.incomer2 &&
+        ((ltPanel.incomer2.voltage?.ry &&
+          ltPanel.incomer2.voltage.ry !== "" &&
+          ltPanel.incomer2.voltage.ry !== "-") ||
+          (ltPanel.incomer2.currentAmp?.r &&
+            ltPanel.incomer2.currentAmp.r !== "" &&
+            ltPanel.incomer2.currentAmp.r !== "-") ||
+          (ltPanel.incomer2.kwh &&
+            ltPanel.incomer2.kwh !== "" &&
+            ltPanel.incomer2.kwh !== "-"));
+      return hasIncomer1 || hasIncomer2;
     };
 
     // Merge htPanel - keep existing if new data is empty
-    if (hasActualData(logData.htPanel)) {
+    if (hasActualHTData(logData.htPanel)) {
       updateData.htPanel = logData.htPanel;
     } else if (existingLog.htPanel) {
       updateData.htPanel = existingLog.htPanel;
     }
 
     // Merge ltPanel - keep existing if new data is empty
-    if (hasActualData(logData.ltPanel)) {
+    if (hasActualLTData(logData.ltPanel)) {
       updateData.ltPanel = logData.ltPanel;
     } else if (existingLog.ltPanel) {
       updateData.ltPanel = existingLog.ltPanel;
     }
 
     // Update panelType based on what panels exist after merge
-    const hasHT = hasActualData(updateData.htPanel);
-    const hasLT = hasActualData(updateData.ltPanel);
+    const hasHT = hasActualHTData(updateData.htPanel);
+    const hasLT = hasActualLTData(updateData.ltPanel);
 
     if (hasHT && hasLT) {
       updateData.panelType = "BOTH";
