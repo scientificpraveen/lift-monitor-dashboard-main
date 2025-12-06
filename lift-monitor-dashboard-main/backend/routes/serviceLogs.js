@@ -91,15 +91,15 @@ router.put("/:id", async (req, res) => {
 
     // Build change description
     const changes = [];
-    
+
     if (existingLog.status !== status) {
       changes.push(`Status: ${existingLog.status} → ${status}`);
     }
-    
+
     if (existingLog.natureOfCall !== natureOfCall) {
       changes.push(`Nature: ${existingLog.natureOfCall} → ${natureOfCall}`);
     }
-    
+
     if (existingLog.workDescription !== workDescription) {
       changes.push("Description updated");
     }
