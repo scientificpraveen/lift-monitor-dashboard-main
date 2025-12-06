@@ -9,6 +9,7 @@ import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
 import { useAuth } from "./context/AuthContext";
+import { parseFloor } from "./utils/floorUtils";
 import "./App.css";
 import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
@@ -41,7 +42,7 @@ const App = () => {
 
       const flattenedData = Object.entries(data).flatMap(([building, lifts]) =>
         lifts.map((lift) => {
-          const currentFloor = parseInt(lift.Fl);
+          const currentFloor = parseFloor(lift.Fl);
           const liftKey = `${building}-${lift.ID}`;
           const prevFloor = previousFloorsRef.current[liftKey];
 
@@ -115,7 +116,7 @@ const App = () => {
       const newPreviousFloors = {};
       flattenedData.forEach((lift) => {
         const liftKey = `${lift.building}-${lift.ID}`;
-        newPreviousFloors[liftKey] = parseInt(lift.Fl);
+        newPreviousFloors[liftKey] = parseFloor(lift.Fl);
       });
       previousFloorsRef.current = newPreviousFloors;
       console.log("Updated previous floors:", newPreviousFloors);
