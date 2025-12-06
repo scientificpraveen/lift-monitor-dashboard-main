@@ -539,8 +539,9 @@ export const updatePanelLog = async (id, logData) => {
       return null;
     }
 
-    // Prepare the update data
-    const updateData = { ...logData };
+    // Prepare the update data - exclude id, createdAt, updatedAt to let Prisma handle them
+    const { id: _id, createdAt, updatedAt, ...restLogData } = logData;
+    const updateData = { ...restLogData };
 
     // Helper to check if HT panel has actual measurement values
     const hasActualHTData = (htPanel) => {
