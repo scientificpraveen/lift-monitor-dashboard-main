@@ -96,6 +96,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       setLoading(true);
       setError(null);
       const filters = {};
+      if (filterBuilding) filters.building = filterBuilding;
       if (filterDateFrom) filters.dateFrom = filterDateFrom;
       if (filterDateTo) filters.dateTo = filterDateTo;
       if (filterPanelType) filters.panelType = filterPanelType;
