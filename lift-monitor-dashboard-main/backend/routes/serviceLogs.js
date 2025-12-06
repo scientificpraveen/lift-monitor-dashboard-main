@@ -80,6 +80,32 @@ router.put("/:id", async (req, res) => {
       lastUpdatedAt,
     } = req.body;
 
+    // Fetch the existing log to compare changes
+    const existingLog = await prisma.serviceLog.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existingLog) {
+      return res.status(404).json({ error: "Service log not found" });
+    }
+
+    // Build change description
+    const changes = [];
+    
+    if (existingLog.status !== status) {
+      changes.push(`Status: ${existingLog.status} → ${status}`);
+    }
+    
+    if (existingLog.natureOfCall !== natureOfCall) {
+      changes.push(`Nature: ${existingLog.natureOfCall} → ${natureOfCall}`);
+    }
+    
+    if (existingLog.workDescription !== workDescription) {
+      changes.push("Description updated");
+    }
+
+    const changeDescription = changes.length > 0 ? changes.join(", ") : null;
+
     const log = await prisma.serviceLog.update({
       where: { id: parseInt(id) },
       data: {
@@ -93,6 +119,7 @@ router.put("/:id", async (req, res) => {
         username,
         lastUpdatedBy: lastUpdatedBy || null,
         lastUpdatedAt: lastUpdatedAt ? new Date(lastUpdatedAt) : null,
+        changeDescription,
       },
     });
 

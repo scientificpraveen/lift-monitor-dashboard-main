@@ -277,6 +277,17 @@
   margin-top: 2px;
 }
 
+.last-updated .change-description {
+  font-size: 10px;
+  color: #a076f9;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: #f3e8ff;
+  border-radius: 4px;
+  display: inline-block;
+}
+
 .loading,
 .empty-state {
   text-align: center;

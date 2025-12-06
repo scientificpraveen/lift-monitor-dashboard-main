@@ -359,6 +359,11 @@ const ServiceLogManager = () => {
                             }
                           )}
                         </div>
+                        {log.changeDescription && (
+                          <div className="change-description">
+                            {log.changeDescription}
+                          </div>
+                        )}
                       </>
                     ) : (
                       "-"
