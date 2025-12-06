@@ -57,7 +57,25 @@ model ServiceLog {
   changeDescription String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  
+  // Relation to history
+  history           ServiceLogHistory[]
 
   @@map("service_logs")
   @@index([date, status, username])
+}
+
+model ServiceLogHistory {
+  id                Int        @id @default(autoincrement())
+  serviceLogId      Int
+  serviceLog        ServiceLog @relation(fields: [serviceLogId], references: [id], onDelete: Cascade)
+  changeType        String     // "created", "status_change", "nature_change", "description_change"
+  changeDescription String     // e.g., "Status: open → closed"
+  changedBy         String
+  changedAt         DateTime   @default(now())
+  oldValue          String?
+  newValue          String?
+
+  @@map("service_log_history")
+  @@index([serviceLogId, changedAt])
 }

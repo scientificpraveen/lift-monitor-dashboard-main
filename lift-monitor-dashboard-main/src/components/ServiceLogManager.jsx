@@ -15,6 +15,7 @@ const ServiceLogManager = () => {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
+  const [expandedLogId, setExpandedLogId] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
@@ -134,6 +135,53 @@ const ServiceLogManager = () => {
       default:
         return "#999";
     }
+  };
+
+  const getChangeTypeColor = (changeType) => {
+    switch (changeType) {
+      case "created":
+        return "#2196F3";
+      case "status_change":
+        return "#9C27B0";
+      case "nature_change":
+        return "#FF5722";
+      case "description_change":
+        return "#607D8B";
+      default:
+        return "#999";
+    }
+  };
+
+  const getChangeTypeLabel = (changeType) => {
+    switch (changeType) {
+      case "created":
+        return "Created";
+      case "status_change":
+        return "Status";
+      case "nature_change":
+        return "Nature";
+      case "description_change":
+        return "Description";
+      default:
+        return changeType;
+    }
+  };
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return `${date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })} ${date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })}`;
+  };
+
+  const toggleExpand = (logId) => {
+    setExpandedLogId(expandedLogId === logId ? null : logId);
   };
 
   const handleSort = (key) => {
@@ -299,6 +347,7 @@ const ServiceLogManager = () => {
           <table>
             <thead>
               <tr>
+                <th style={{ width: "40px" }}></th>
                 <SortHeader field="sno" label="S.NO" />
                 <SortHeader field="date" label="Date" />
                 <SortHeader field="time" label="Time" />
@@ -313,83 +362,139 @@ const ServiceLogManager = () => {
             </thead>
             <tbody>
               {getSortedLogs().map((log) => (
-                <tr key={log.id}>
-                  <td>{log.sno}</td>
-                  <td>
-                    {new Date(log.date).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td>{log.time}</td>
-                  <td>{log.workOrderNo || "-"}</td>
-                  <td>{log.username}</td>
-                  <td>
-                    <span className="nature-badge">{log.natureOfCall}</span>
-                  </td>
-                  <td className="description">{log.workDescription}</td>
-                  <td>
-                    <span
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(log.status) }}
-                    >
-                      {log.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="last-updated">
-                    {log.lastUpdatedBy ? (
-                      <>
-                        <div>{log.lastUpdatedBy}</div>
-                        <div className="update-time">
-                          {new Date(log.lastUpdatedAt).toLocaleDateString(
-                            "en-IN",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )}{" "}
-                          {new Date(log.lastUpdatedAt).toLocaleTimeString(
-                            "en-IN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            }
-                          )}
-                        </div>
-                        {log.changeDescription && (
-                          <div className="change-description">
-                            {log.changeDescription}
+                <React.Fragment key={log.id}>
+                  {/* Main log row */}
+                  <tr
+                    className={expandedLogId === log.id ? "expanded-row" : ""}
+                  >
+                    <td>
+                      {log.history && log.history.length > 0 && (
+                        <button
+                          className="btn-expand"
+                          onClick={() => toggleExpand(log.id)}
+                          title={
+                            expandedLogId === log.id
+                              ? "Hide History"
+                              : "Show History"
+                          }
+                        >
+                          {expandedLogId === log.id ? "▼" : "▶"}
+                        </button>
+                      )}
+                    </td>
+                    <td>{log.sno}</td>
+                    <td>
+                      {new Date(log.date).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>{log.time}</td>
+                    <td>{log.workOrderNo || "-"}</td>
+                    <td>{log.username}</td>
+                    <td>
+                      <span className="nature-badge">{log.natureOfCall}</span>
+                    </td>
+                    <td className="description">{log.workDescription}</td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(log.status) }}
+                      >
+                        {log.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="last-updated">
+                      {log.lastUpdatedBy ? (
+                        <>
+                          <div>{log.lastUpdatedBy}</div>
+                          <div className="update-time">
+                            {formatDateTime(log.lastUpdatedAt)}
                           </div>
-                        )}
-                      </>
-                    ) : (
-                      "-"
+                        </>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="actions">
+                      {canEdit() && (
+                        <button
+                          className="btn-edit"
+                          onClick={() => handleEdit(log)}
+                          title="Edit"
+                        >
+                          ✎
+                        </button>
+                      )}
+                      {canDelete() && (
+                        <button
+                          className="btn-delete"
+                          onClick={() => handleDelete(log.id)}
+                          title="Delete"
+                        >
+                          🗑
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+
+                  {/* History rows */}
+                  {expandedLogId === log.id &&
+                    log.history &&
+                    log.history.length > 0 && (
+                      <tr className="history-container-row">
+                        <td colSpan="11">
+                          <div className="history-container">
+                            <div className="history-header">
+                              <span className="history-icon">📋</span> Change
+                              History
+                            </div>
+                            <table className="history-table">
+                              <thead>
+                                <tr>
+                                  <th>Change Type</th>
+                                  <th>Change Details</th>
+                                  <th>Changed By</th>
+                                  <th>Changed At</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {log.history.map((historyItem) => (
+                                  <tr
+                                    key={historyItem.id}
+                                    className="history-row"
+                                  >
+                                    <td>
+                                      <span
+                                        className="change-type-badge"
+                                        style={{
+                                          backgroundColor: getChangeTypeColor(
+                                            historyItem.changeType
+                                          ),
+                                        }}
+                                      >
+                                        {getChangeTypeLabel(
+                                          historyItem.changeType
+                                        )}
+                                      </span>
+                                    </td>
+                                    <td className="history-change-description">
+                                      {historyItem.changeDescription}
+                                    </td>
+                                    <td>{historyItem.changedBy}</td>
+                                    <td>
+                                      {formatDateTime(historyItem.changedAt)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td className="actions">
-                    {canEdit() && (
-                      <button
-                        className="btn-edit"
-                        onClick={() => handleEdit(log)}
-                        title="Edit"
-                      >
-                        ✎
-                      </button>
-                    )}
-                    {canDelete() && (
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDelete(log.id)}
-                        title="Delete"
-                      >
-                        🗑
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

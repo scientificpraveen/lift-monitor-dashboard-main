@@ -7,10 +7,16 @@ const prisma = new PrismaClient();
 
 router.use(optionalAuthMiddleware);
 
+// Get all logs with their history
 router.get("/", async (req, res) => {
   try {
     const logs = await prisma.serviceLog.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        history: {
+          orderBy: { changedAt: "desc" },
+        },
+      },
     });
     res.json(logs);
   } catch (error) {
@@ -54,6 +60,19 @@ router.post("/", async (req, res) => {
         workDescription,
         status,
         username,
+        // Create initial history entry
+        history: {
+          create: {
+            changeType: "created",
+            changeDescription: "Log created",
+            changedBy: username,
+            oldValue: null,
+            newValue: JSON.stringify({ status, natureOfCall }),
+          },
+        },
+      },
+      include: {
+        history: true,
       },
     });
 
@@ -89,23 +108,48 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Service log not found" });
     }
 
-    // Build change description
+    // Build change descriptions and history entries
+    const historyEntries = [];
     const changes = [];
 
     if (existingLog.status !== status) {
-      changes.push(`Status: ${existingLog.status} → ${status}`);
+      const changeDesc = `Status: ${existingLog.status} → ${status}`;
+      changes.push(changeDesc);
+      historyEntries.push({
+        changeType: "status_change",
+        changeDescription: changeDesc,
+        changedBy: lastUpdatedBy || username,
+        oldValue: existingLog.status,
+        newValue: status,
+      });
     }
 
     if (existingLog.natureOfCall !== natureOfCall) {
-      changes.push(`Nature: ${existingLog.natureOfCall} → ${natureOfCall}`);
+      const changeDesc = `Nature: ${existingLog.natureOfCall} → ${natureOfCall}`;
+      changes.push(changeDesc);
+      historyEntries.push({
+        changeType: "nature_change",
+        changeDescription: changeDesc,
+        changedBy: lastUpdatedBy || username,
+        oldValue: existingLog.natureOfCall,
+        newValue: natureOfCall,
+      });
     }
 
     if (existingLog.workDescription !== workDescription) {
       changes.push("Description updated");
+      historyEntries.push({
+        changeType: "description_change",
+        changeDescription: "Description updated",
+        changedBy: lastUpdatedBy || username,
+        oldValue: existingLog.workDescription,
+        newValue: workDescription,
+      });
     }
 
     const changeDescription = changes.length > 0 ? changes.join(", ") : null;
 
+    // Update the log and create history entries
     const log = await prisma.serviceLog.update({
       where: { id: parseInt(id) },
       data: {
@@ -120,6 +164,15 @@ router.put("/:id", async (req, res) => {
         lastUpdatedBy: lastUpdatedBy || null,
         lastUpdatedAt: lastUpdatedAt ? new Date(lastUpdatedAt) : null,
         changeDescription,
+        // Create history entries for each change
+        history: {
+          create: historyEntries,
+        },
+      },
+      include: {
+        history: {
+          orderBy: { changedAt: "desc" },
+        },
       },
     });
 

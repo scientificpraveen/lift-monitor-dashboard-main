@@ -305,6 +305,137 @@
   border-left: 4px solid #c62828;
 }
 
+/* Expand button */
+.btn-expand {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-expand:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+/* Expanded row highlight */
+.expanded-row {
+  background-color: #f5f5f5 !important;
+}
+
+/* History container row */
+.history-container-row {
+  background-color: #fafafa;
+}
+
+.history-container-row > td {
+  padding: 0 !important;
+}
+
+/* History container */
+.history-container {
+  margin: 0;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.history-header {
+  font-weight: 600;
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-icon {
+  font-size: 16px;
+}
+
+/* History table */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.history-table thead tr {
+  background-color: #6c757d;
+}
+
+.history-table thead th {
+  color: white;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s;
+}
+
+.history-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.history-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.history-table td {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #495057;
+}
+
+/* Change type badge */
+.change-type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Change description styling */
+.history-table .history-change-description {
+  font-weight: 500;
+  color: #212529;
+}
+
+/* History row animation */
+.history-row {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
