@@ -351,12 +351,10 @@ const ServiceLogManager = () => {
                 <SortHeader field="sno" label="S.NO" />
                 <SortHeader field="date" label="Date" />
                 <SortHeader field="time" label="Time" />
-                <SortHeader field="workOrderNo" label="Work Order No" />
                 <SortHeader field="username" label="Username" />
                 <SortHeader field="natureOfCall" label="Nature of Call" />
                 <th>Work Description</th>
                 <SortHeader field="status" label="Status" />
-                <th>Last Updated</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -391,7 +389,6 @@ const ServiceLogManager = () => {
                       })}
                     </td>
                     <td>{log.time}</td>
-                    <td>{log.workOrderNo || "-"}</td>
                     <td>{log.username}</td>
                     <td>
                       <span className="nature-badge">{log.natureOfCall}</span>
@@ -404,18 +401,6 @@ const ServiceLogManager = () => {
                       >
                         {log.status.toUpperCase()}
                       </span>
-                    </td>
-                    <td className="last-updated">
-                      {log.lastUpdatedBy ? (
-                        <>
-                          <div>{log.lastUpdatedBy}</div>
-                          <div className="update-time">
-                            {formatDateTime(log.lastUpdatedAt)}
-                          </div>
-                        </>
-                      ) : (
-                        "-"
-                      )}
                     </td>
                     <td className="actions">
                       {canEdit() && (
