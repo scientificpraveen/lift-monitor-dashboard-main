@@ -47,7 +47,6 @@ model ServiceLog {
   sno               String
   date              String
   time              String
-  workOrderNo       String?
   natureOfCall      String
   workDescription   String
   status            String    @default("open")

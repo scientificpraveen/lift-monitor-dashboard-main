@@ -30,7 +30,6 @@ const ServiceLogManager = () => {
         hour12: false,
       })
       .slice(0, 5),
-    workOrderNo: "",
     natureOfCall: "Client call - oral",
     workDescription: "",
     status: "open",
@@ -115,7 +114,6 @@ const ServiceLogManager = () => {
           hour12: false,
         })
         .slice(0, 5),
-      workOrderNo: "",
       natureOfCall: "Client call - oral",
       workDescription: "",
       status: "open",
@@ -260,17 +258,6 @@ const ServiceLogManager = () => {
       {showForm && (
         <div className="service-log-form-container">
           <form onSubmit={handleSubmit} className="service-log-form">
-            <div className="form-group">
-              <label>Work Order No</label>
-              <input
-                type="text"
-                name="workOrderNo"
-                value={formData.workOrderNo}
-                onChange={handleInputChange}
-                placeholder="Enter work order number"
-              />
-            </div>
-
             <div className="form-group">
               <label>Nature of Call *</label>
               <select

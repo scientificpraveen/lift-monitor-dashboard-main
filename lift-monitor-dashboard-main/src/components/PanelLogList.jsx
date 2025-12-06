@@ -800,20 +800,20 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       <td>
                                         <div className="action-buttons">
                                           <button
-                                            className="update-btn"
+                                            className="btn-edit"
                                             onClick={() => onEdit(log)}
                                             title="Update this log"
                                           >
-                                            ✏️ Update
+                                            ✎
                                           </button>
                                           <button
-                                            className="delete-btn"
+                                            className="btn-delete"
                                             onClick={() =>
                                               handleDelete(log.id, "HT")
                                             }
                                             title="Delete HT panel data"
                                           >
-                                            🗑️ Delete
+                                            🗑
                                           </button>
                                         </div>
                                       </td>
@@ -988,20 +988,20 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       <td>
                                         <div className="action-buttons">
                                           <button
-                                            className="update-btn"
+                                            className="btn-edit"
                                             onClick={() => onEdit(log)}
                                             title="Update this log"
                                           >
-                                            ✏️ Update
+                                            ✎
                                           </button>
                                           <button
-                                            className="delete-btn"
+                                            className="btn-delete"
                                             onClick={() =>
                                               handleDelete(log.id, "LT")
                                             }
                                             title="Delete LT panel data"
                                           >
-                                            🗑️ Delete
+                                            🗑
                                           </button>
                                         </div>
                                       </td>

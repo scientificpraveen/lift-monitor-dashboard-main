@@ -1277,10 +1277,42 @@
 
 .action-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 110px;
-  padding: 5px;
+  flex-direction: row;
+  gap: 6px;
+  min-width: auto;
+  padding: 2px;
+  justify-content: center;
+}
+
+.btn-edit,
+.btn-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-edit {
+  color: #1976d2;
+  background: #e3f2fd;
+}
+
+.btn-edit:hover {
+  background: #bbdefb;
+  transform: scale(1.1);
+}
+
+.btn-delete {
+  color: #d32f2f;
+  background: #ffebee;
+}
+
+.btn-delete:hover {
+  background: #ffcdd2;
+  transform: scale(1.1);
 }
 
 .update-btn {
