@@ -644,6 +644,11 @@ export const updatePanelLog = async (id, logData) => {
       updateData.powerFailure = existingLog.powerFailure;
     }
 
+    // Always update lastUpdatedBy if provided
+    if (logData.lastUpdatedBy) {
+      updateData.lastUpdatedBy = logData.lastUpdatedBy;
+    }
+
     return await prisma.panelLog.update({
       where: { id: parseInt(id) },
       data: updateData,

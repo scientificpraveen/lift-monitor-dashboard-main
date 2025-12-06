@@ -658,7 +658,13 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                 <th colSpan="5">
                                   OUT GOING TO TR-3 (2000 KVA)
                                 </th>
-                                <th rowSpan="3">LAST UPDATED BY</th>
+                                <th rowSpan="3">
+                                  LAST
+                                  <br />
+                                  UPDATED
+                                  <br />
+                                  BY
+                                </th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
                                 <th rowSpan="3">ACTIONS</th>
@@ -840,7 +846,13 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                 <th colSpan="8">Incomer -1 (From -Tr-1)</th>
                                 <th colSpan="8">Incomer -2 (From -Tr-2)</th>
                                 <th colSpan="8">Incomer -3 (From -Tr-3)</th>
-                                <th rowSpan="3">LAST UPDATED BY</th>
+                                <th rowSpan="3">
+                                  LAST
+                                  <br />
+                                  UPDATED
+                                  <br />
+                                  BY
+                                </th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
                                 <th rowSpan="3">ACTIONS</th>
