@@ -36,6 +36,19 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const [remarksText, setRemarksText] = useState("");
   const [showRemarksModal, setShowRemarksModal] = useState(false);
 
+  // Helper function to format date/time in 24hr format (compact: 2 lines instead of 3)
+  const formatDateTime24hr = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    const dateStr = date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+    const timeStr = date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }); // HH:MM
+    return `${dateStr} ${timeStr}`;
+  };
+
   // Helper function to safely get winding temp - handles both old (object) and new (string) formats
   const getSafeWindingTemp = (windingTemp) => {
     if (!windingTemp) return "-";
@@ -779,18 +792,10 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       </td>
                                       <td>{log.lastUpdatedBy || "-"}</td>
                                       <td>
-                                        {log.createdAt
-                                          ? new Date(
-                                              log.createdAt
-                                            ).toLocaleString()
-                                          : "-"}
+                                        {formatDateTime24hr(log.createdAt)}
                                       </td>
                                       <td>
-                                        {log.updatedAt
-                                          ? new Date(
-                                              log.updatedAt
-                                            ).toLocaleString()
-                                          : "-"}
+                                        {formatDateTime24hr(log.updatedAt)}
                                       </td>
                                       <td>
                                         <div className="action-buttons">
@@ -975,18 +980,10 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       </td>
                                       <td>{log.lastUpdatedBy || "-"}</td>
                                       <td>
-                                        {log.createdAt
-                                          ? new Date(
-                                              log.createdAt
-                                            ).toLocaleString()
-                                          : "-"}
+                                        {formatDateTime24hr(log.createdAt)}
                                       </td>
                                       <td>
-                                        {log.updatedAt
-                                          ? new Date(
-                                              log.updatedAt
-                                            ).toLocaleString()
-                                          : "-"}
+                                        {formatDateTime24hr(log.updatedAt)}
                                       </td>
                                       <td>
                                         <div className="action-buttons">
