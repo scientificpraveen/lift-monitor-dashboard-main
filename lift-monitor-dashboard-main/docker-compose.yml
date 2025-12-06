@@ -9,8 +9,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-    expose:
-      - "3001"
+    ports:
+      - "3001:3001"  # Changed from expose to ports - allows ESP8266 to connect
     restart: unless-stopped
     healthcheck:
       test:
