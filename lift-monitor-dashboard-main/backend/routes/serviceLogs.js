@@ -90,13 +90,11 @@ router.put("/:id", async (req, res) => {
       sno,
       date,
       time,
-      workOrderNo,
       natureOfCall,
       workDescription,
       status,
       username,
       lastUpdatedBy,
-      lastUpdatedAt,
     } = req.body;
 
     // Fetch the existing log to compare changes
@@ -156,13 +154,12 @@ router.put("/:id", async (req, res) => {
         sno,
         date,
         time,
-        workOrderNo: workOrderNo || null,
         natureOfCall,
         workDescription,
         status,
         username,
         lastUpdatedBy: lastUpdatedBy || null,
-        lastUpdatedAt: lastUpdatedAt ? new Date(lastUpdatedAt) : null,
+        // Remove lastUpdatedAt - Prisma automatically updates updatedAt
         changeDescription,
         // Create history entries for each change
         history: {
