@@ -119,7 +119,6 @@ const sampleLogs = [
       reason: "",
     },
     remarks: "",
-    engineerSignature: "",
     createdAt: "2025-11-10T00:00:00.000Z",
     updatedAt: "2025-11-10T00:00:00.000Z",
   },
@@ -242,7 +241,6 @@ const sampleLogs = [
       reason: "",
     },
     remarks: "",
-    engineerSignature: "",
     createdAt: "2025-11-10T02:00:00.000Z",
     updatedAt: "2025-11-10T02:00:00.000Z",
   },
@@ -365,7 +363,6 @@ const sampleLogs = [
       reason: "",
     },
     remarks: "",
-    engineerSignature: "",
   },
 ];
 

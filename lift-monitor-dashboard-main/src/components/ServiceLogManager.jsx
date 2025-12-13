@@ -5,23 +5,30 @@ import {
   updateServiceLog,
   deleteServiceLog,
 } from "../services/api";
+import { buildings } from "../config/buildings";
 import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
 const ServiceLogManager = () => {
-  const { user, canCreate, canEdit, canDelete } = useAuth();
+  const { user, canCreate, canEdit, canDelete, getAccessibleBuildings } =
+    useAuth();
+  const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
   const [expandedLogId, setExpandedLogId] = useState(null);
+  const [filterBuilding, setFilterBuilding] = useState(
+    accessibleBuildings[0] || ""
+  );
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
   });
   const [formData, setFormData] = useState({
     sno: "",
+    building: accessibleBuildings[0] || "",
     date: new Date().toISOString().split("T")[0],
     time: new Date()
       .toLocaleTimeString("en-IN", {
@@ -106,6 +113,7 @@ const ServiceLogManager = () => {
   const resetForm = () => {
     setFormData({
       sno: "",
+      building: filterBuilding || accessibleBuildings[0] || "",
       date: new Date().toISOString().split("T")[0],
       time: new Date()
         .toLocaleTimeString("en-IN", {
@@ -190,7 +198,11 @@ const ServiceLogManager = () => {
   };
 
   const getSortedLogs = () => {
-    const sorted = [...logs].sort((a, b) => {
+    const filtered = logs.filter(
+      (log) => !filterBuilding || log.building === filterBuilding
+    );
+
+    const sorted = [...filtered].sort((a, b) => {
       let aVal = a[sortConfig.key];
       let bVal = b[sortConfig.key];
 
@@ -255,9 +267,43 @@ const ServiceLogManager = () => {
 
       {error && <div className="error-message">{error}</div>}
 
+      <div className="filter-section">
+        <div className="filter-group">
+          <label>Building</label>
+          <select
+            value={filterBuilding}
+            onChange={(e) => setFilterBuilding(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Buildings</option>
+            {accessibleBuildings.map((building) => (
+              <option key={building} value={building}>
+                {building}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {showForm && (
         <div className="service-log-form-container">
           <form onSubmit={handleSubmit} className="service-log-form">
+            <div className="form-group">
+              <label>Building *</label>
+              <select
+                name="building"
+                value={formData.building}
+                onChange={handleInputChange}
+                required
+              >
+                {accessibleBuildings.map((building) => (
+                  <option key={building} value={building}>
+                    {building}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
               <label>Nature of Call *</label>
               <select
@@ -336,6 +382,7 @@ const ServiceLogManager = () => {
               <tr>
                 <th style={{ width: "40px" }}></th>
                 <SortHeader field="sno" label="S.NO" />
+                <SortHeader field="building" label="Building" />
                 <SortHeader field="date" label="Date" />
                 <SortHeader field="time" label="Time" />
                 <SortHeader field="username" label="Username" />
@@ -368,6 +415,7 @@ const ServiceLogManager = () => {
                       )}
                     </td>
                     <td>{log.sno}</td>
+                    <td>{log.building}</td>
                     <td>
                       {new Date(log.date).toLocaleDateString("en-IN", {
                         day: "2-digit",

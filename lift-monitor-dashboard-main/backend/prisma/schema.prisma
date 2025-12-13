@@ -31,7 +31,7 @@ model PanelLog {
   htPanel   Json?
   ltPanel   Json?
   powerFailure Json?
-  shiftIncharge String?
+  shiftIncharge Json?
   remarks   String?
   lastUpdatedBy String?
   createdAt DateTime @default(now())
@@ -45,6 +45,7 @@ model PanelLog {
 model ServiceLog {
   id                Int       @id @default(autoincrement())
   sno               String
+  building          String
   date              String
   time              String
   natureOfCall      String
@@ -61,7 +62,7 @@ model ServiceLog {
   history           ServiceLogHistory[]
 
   @@map("service_logs")
-  @@index([date, status, username])
+  @@index([building, date, status, username])
 }
 
 model ServiceLogHistory {

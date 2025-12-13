@@ -40,6 +40,47 @@
   box-shadow: 0 5px 15px rgba(160, 118, 249, 0.3);
 }
 
+.filter-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 200px;
+  transition: border-color 0.2s ease;
+}
+
+.filter-select:hover {
+  border-color: #a076f9;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #a076f9;
+  box-shadow: 0 0 5px rgba(160, 118, 249, 0.3);
+}
+
 .service-log-form-container {
   background: #f9f9f9;
   padding: 20px;

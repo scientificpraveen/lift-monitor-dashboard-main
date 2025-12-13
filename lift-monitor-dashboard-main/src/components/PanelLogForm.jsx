@@ -53,7 +53,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
         kwh: "",
       },
     },
-    shiftIncharge: "",
+    shiftIncharge: {
+      aShift: { name: "", signature: "" },
+      bShift: { name: "", signature: "" },
+      cShift: { name: "", signature: "" },
+    },
     remarks: "",
   });
 

@@ -29,9 +29,9 @@ router.post("/", async (req, res) => {
   try {
     const {
       sno,
+      building,
       date,
       time,
-      workOrderNo,
       natureOfCall,
       workDescription,
       status,
@@ -40,6 +40,7 @@ router.post("/", async (req, res) => {
 
     if (
       !sno ||
+      !building ||
       !date ||
       !time ||
       !natureOfCall ||
@@ -53,9 +54,9 @@ router.post("/", async (req, res) => {
     const log = await prisma.serviceLog.create({
       data: {
         sno,
+        building,
         date,
         time,
-        workOrderNo: workOrderNo || null,
         natureOfCall,
         workDescription,
         status,
@@ -88,6 +89,7 @@ router.put("/:id", async (req, res) => {
     const { id } = req.params;
     const {
       sno,
+      building,
       date,
       time,
       natureOfCall,
@@ -152,6 +154,7 @@ router.put("/:id", async (req, res) => {
       where: { id: parseInt(id) },
       data: {
         sno,
+        building,
         date,
         time,
         natureOfCall,

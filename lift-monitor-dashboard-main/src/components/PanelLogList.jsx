@@ -354,7 +354,11 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       const dailyLogs = logs.filter((log) => log.date === date);
       for (const log of dailyLogs) {
         await updatePanelLog(log.id, {
-          shiftIncharge: user.name,
+          shiftIncharge: {
+            aShift: { name: user.name, signature: "" },
+            bShift: { name: "", signature: "" },
+            cShift: { name: "", signature: "" },
+          },
           lastUpdatedBy: user.name,
         });
       }
@@ -1048,7 +1052,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                       <div className="section-content">
                         {dailyLogs.some((log) => log.shiftIncharge) ? (
                           <p className="shift-info">
-                            {dailyLogs[0]?.shiftIncharge || "-"}
+                            {dailyLogs[0]?.shiftIncharge?.aShift?.name &&
+                              `A: ${dailyLogs[0].shiftIncharge.aShift.name} | `}
+                            {dailyLogs[0]?.shiftIncharge?.bShift?.name &&
+                              `B: ${dailyLogs[0].shiftIncharge.bShift.name} | `}
+                            {dailyLogs[0]?.shiftIncharge?.cShift?.name &&
+                              `C: ${dailyLogs[0].shiftIncharge.cShift.name}`}
                           </p>
                         ) : (
                           <p className="not-set">Not verified</p>
