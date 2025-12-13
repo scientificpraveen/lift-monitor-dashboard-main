@@ -219,7 +219,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `http://localhost:3001/api/panel-logs/export/excel?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -255,7 +255,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `http://localhost:3001/api/panel-logs/export/pdf?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -292,7 +292,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       // If specific building is selected, download just that building's PDF
       if (filterBuilding) {
         const response = await fetch(
-          `http://localhost:3001/api/panel-logs/export/pdf/building/${encodeURIComponent(
+          `${API_BASE_URL}/panel-logs/export/pdf/building/${encodeURIComponent(
             filterBuilding
           )}?${params.toString()}`
         );
@@ -315,7 +315,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       } else {
         // Export all buildings
         const response = await fetch(
-          `http://localhost:3001/api/panel-logs/export/pdf/by-building?${params.toString()}`
+          `${API_BASE_URL}/panel-logs/export/pdf/by-building?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -327,7 +327,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
           // Download each building's PDF
           for (const building of data.buildings) {
             const pdfResponse = await fetch(
-              `http://localhost:3001/api/panel-logs/export/pdf/building/${encodeURIComponent(
+              `${API_BASE_URL}/panel-logs/export/pdf/building/${encodeURIComponent(
                 building
               )}?${params.toString()}`
             );
