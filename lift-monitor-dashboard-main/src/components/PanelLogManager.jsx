@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import "./PanelLogManager.css";
 
 const PanelLogManager = () => {
-  const { canCreate, canEdit } = useAuth();
+  const { canCreatePanelLog, canEditPanelLog } = useAuth();
   const [view, setView] = useState("list");
   const [editingLog, setEditingLog] = useState(null);
   const [message, setMessage] = useState(null);
@@ -21,13 +21,13 @@ const PanelLogManager = () => {
   };
 
   const handleCreateNew = () => {
-    if (!canCreate()) return;
+    if (!canCreatePanelLog()) return;
     setEditingLog(null);
     setView("create");
   };
 
   const handleEdit = (log) => {
-    if (!canEdit()) return;
+    if (!canEditPanelLog()) return;
     setEditingLog(log);
     setView("edit");
   };
@@ -107,8 +107,8 @@ const PanelLogManager = () => {
 
       {view === "list" && (
         <PanelLogList
-          onEdit={canEdit() ? handleEdit : null}
-          onCreateNew={canCreate() ? handleCreateNew : null}
+          onEdit={canEditPanelLog() ? handleEdit : null}
+          onCreateNew={canCreatePanelLog() ? handleCreateNew : null}
         />
       )}
 

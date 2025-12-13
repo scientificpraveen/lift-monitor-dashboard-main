@@ -28,7 +28,8 @@ router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
-        privileges: true,
+        panelLogPrivileges: true,
+        serviceLogPrivileges: true,
         assignedBuildings: true,
         createdAt: true,
         updatedAt: true,
@@ -53,7 +54,8 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
-        privileges: true,
+        panelLogPrivileges: true,
+        serviceLogPrivileges: true,
         assignedBuildings: true,
         createdAt: true,
         updatedAt: true,
@@ -74,8 +76,15 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
 // Create new user (admin only)
 router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { username, password, name, role, privileges, assignedBuildings } =
-      req.body;
+    const {
+      username,
+      password,
+      name,
+      role,
+      panelLogPrivileges,
+      serviceLogPrivileges,
+      assignedBuildings,
+    } = req.body;
 
     if (!username || !password || !name) {
       return res
@@ -96,7 +105,8 @@ router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
         password: hashedPassword,
         name,
         role: role || "user",
-        privileges: privileges || ["view"],
+        panelLogPrivileges: panelLogPrivileges || ["view"],
+        serviceLogPrivileges: serviceLogPrivileges || ["view"],
         assignedBuildings: assignedBuildings || [],
       },
       select: {
@@ -104,7 +114,8 @@ router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
-        privileges: true,
+        panelLogPrivileges: true,
+        serviceLogPrivileges: true,
         assignedBuildings: true,
         createdAt: true,
       },
@@ -121,14 +132,23 @@ router.post("/", authMiddleware, adminMiddleware, async (req, res) => {
 router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, name, role, privileges, assignedBuildings, password } =
-      req.body;
+    const {
+      username,
+      name,
+      role,
+      panelLogPrivileges,
+      serviceLogPrivileges,
+      assignedBuildings,
+      password,
+    } = req.body;
 
     const updateData = {};
     if (username) updateData.username = username;
     if (name) updateData.name = name;
     if (role) updateData.role = role;
-    if (privileges) updateData.privileges = privileges;
+    if (panelLogPrivileges) updateData.panelLogPrivileges = panelLogPrivileges;
+    if (serviceLogPrivileges)
+      updateData.serviceLogPrivileges = serviceLogPrivileges;
     if (assignedBuildings !== undefined)
       updateData.assignedBuildings = assignedBuildings;
     if (password) updateData.password = await bcrypt.hash(password, 10);
@@ -141,7 +161,8 @@ router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
-        privileges: true,
+        panelLogPrivileges: true,
+        serviceLogPrivileges: true,
         assignedBuildings: true,
         createdAt: true,
         updatedAt: true,

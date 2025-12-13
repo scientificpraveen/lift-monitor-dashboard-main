@@ -13,7 +13,8 @@ import "./PanelLogList.css";
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
 
 const PanelLogList = ({ onEdit, onCreateNew }) => {
-  const { user, canDelete, getAccessibleBuildings, isAdmin } = useAuth();
+  const { user, canDeletePanelLog, getAccessibleBuildings, isAdmin } =
+    useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +127,11 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   };
 
   const handleDelete = async (id, panelType = null) => {
+    if (!canDeletePanelLog()) {
+      alert("You don't have permission to delete panel logs");
+      return;
+    }
+
     const confirmMessage = panelType
       ? `Are you sure you want to delete the ${panelType} panel data? ${
           logs.find((l) => l.id === id)?.panelType === "BOTH"
@@ -267,6 +273,90 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       document.body.removeChild(a);
     } catch (error) {
       alert("Failed to export PDF: " + error.message);
+      console.error("Export error:", error);
+    }
+  };
+
+  const handleExportToPDFByBuilding = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filterMode === "today") {
+        params.append("date", filterDateFrom);
+      } else {
+        if (filterDateFrom) params.append("dateFrom", filterDateFrom);
+        if (filterDateTo) params.append("dateTo", filterDateTo);
+      }
+      if (filterPanelType) params.append("panelType", filterPanelType);
+      if (filterTime) params.append("time", filterTime);
+
+      // If specific building is selected, download just that building's PDF
+      if (filterBuilding) {
+        const response = await fetch(
+          `http://localhost:3001/api/panel-logs/export/pdf/building/${encodeURIComponent(
+            filterBuilding
+          )}?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to export PDF");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Panel_Logs_${filterBuilding}_${
+          filterDateFrom || "export"
+        }.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        // Export all buildings
+        const response = await fetch(
+          `http://localhost:3001/api/panel-logs/export/pdf/by-building?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to export PDFs");
+        }
+
+        const data = await response.json();
+        if (data.success && data.buildings && data.buildings.length > 0) {
+          // Download each building's PDF
+          for (const building of data.buildings) {
+            const pdfResponse = await fetch(
+              `http://localhost:3001/api/panel-logs/export/pdf/building/${encodeURIComponent(
+                building
+              )}?${params.toString()}`
+            );
+
+            if (!pdfResponse.ok) {
+              console.error(`Failed to download PDF for ${building}`);
+              continue;
+            }
+
+            const blob = await pdfResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Panel_Logs_${building}_${
+              filterDateFrom || "export"
+            }.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Add delay between downloads to prevent browser blocking
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+          alert(`Downloaded PDFs for ${data.count} building(s)`);
+        }
+      }
+    } catch (error) {
+      alert("Failed to export PDFs: " + error.message);
       console.error("Export error:", error);
     }
   };
@@ -538,6 +628,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             </button>
             <button className="btn btn-export" onClick={handleExportToPDF}>
               📄 Export PDF
+            </button>
+            <button
+              className="btn btn-export"
+              onClick={handleExportToPDFByBuilding}
+            >
+              🏢 Export PDFs by Building
             </button>
           </>
         )}
@@ -823,15 +919,17 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                           >
                                             ✎
                                           </button>
-                                          <button
-                                            className="btn-delete"
-                                            onClick={() =>
-                                              handleDelete(log.id, "HT")
-                                            }
-                                            title="Delete HT panel data"
-                                          >
-                                            🗑
-                                          </button>
+                                          {canDeletePanelLog() && (
+                                            <button
+                                              className="btn-delete"
+                                              onClick={() =>
+                                                handleDelete(log.id, "HT")
+                                              }
+                                              title="Delete HT panel data"
+                                            >
+                                              🗑
+                                            </button>
+                                          )}
                                         </div>
                                       </td>
                                     </tr>
@@ -1024,15 +1122,17 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                           >
                                             ✎
                                           </button>
-                                          <button
-                                            className="btn-delete"
-                                            onClick={() =>
-                                              handleDelete(log.id, "LT")
-                                            }
-                                            title="Delete LT panel data"
-                                          >
-                                            🗑
-                                          </button>
+                                          {canDeletePanelLog() && (
+                                            <button
+                                              className="btn-delete"
+                                              onClick={() =>
+                                                handleDelete(log.id, "LT")
+                                              }
+                                              title="Delete LT panel data"
+                                            >
+                                              🗑
+                                            </button>
+                                          )}
                                         </div>
                                       </td>
                                     </tr>
@@ -1142,13 +1242,15 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                   >
                     ✎
                   </button>
-                  <button
-                    className="btn-icon btn-delete"
-                    onClick={() => handleDelete(log.id)}
-                    title="Delete"
-                  >
-                    🗑
-                  </button>
+                  {canDeletePanelLog() && (
+                    <button
+                      className="btn-icon btn-delete"
+                      onClick={() => handleDelete(log.id)}
+                      title="Delete"
+                    >
+                      🗑
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

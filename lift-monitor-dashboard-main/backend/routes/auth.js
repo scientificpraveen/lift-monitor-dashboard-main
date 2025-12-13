@@ -37,7 +37,10 @@ router.post("/signup", async (req, res) => {
         password: hashedPassword,
         name,
         role: isFirstUser ? "admin" : "user",
-        privileges: isFirstUser
+        panelLogPrivileges: isFirstUser
+          ? ["view", "create", "edit", "delete"]
+          : ["view"],
+        serviceLogPrivileges: isFirstUser
           ? ["view", "create", "edit", "delete"]
           : ["view"],
         assignedBuildings: [], // empty means all buildings for admin
@@ -50,7 +53,8 @@ router.post("/signup", async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
-        privileges: user.privileges,
+        panelLogPrivileges: user.panelLogPrivileges,
+        serviceLogPrivileges: user.serviceLogPrivileges,
         assignedBuildings: user.assignedBuildings,
       },
       JWT_SECRET,
@@ -71,7 +75,8 @@ router.post("/signup", async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
-        privileges: user.privileges,
+        panelLogPrivileges: user.panelLogPrivileges,
+        serviceLogPrivileges: user.serviceLogPrivileges,
         assignedBuildings: user.assignedBuildings,
       },
       token,
@@ -108,7 +113,8 @@ router.post("/login", async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
-        privileges: user.privileges,
+        panelLogPrivileges: user.panelLogPrivileges,
+        serviceLogPrivileges: user.serviceLogPrivileges,
         assignedBuildings: user.assignedBuildings,
       },
       JWT_SECRET,
@@ -129,7 +135,8 @@ router.post("/login", async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
-        privileges: user.privileges,
+        panelLogPrivileges: user.panelLogPrivileges,
+        serviceLogPrivileges: user.serviceLogPrivileges,
         assignedBuildings: user.assignedBuildings,
       },
       token,
@@ -167,7 +174,8 @@ router.get("/me", async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
-        privileges: user.privileges,
+        panelLogPrivileges: user.panelLogPrivileges,
+        serviceLogPrivileges: user.serviceLogPrivileges,
         assignedBuildings: user.assignedBuildings,
       },
     });

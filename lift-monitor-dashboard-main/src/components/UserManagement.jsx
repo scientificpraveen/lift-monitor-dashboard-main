@@ -9,6 +9,10 @@ import { buildings } from "../config/buildings";
 import "./UserManagement.css";
 
 const PRIVILEGES = ["view", "create", "edit", "delete"];
+const LOG_TYPES = [
+  { key: "panelLog", label: "HT/LT Panel Logs" },
+  { key: "serviceLog", label: "Operator/Service Logs" },
+];
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -21,7 +25,8 @@ const UserManagement = () => {
     username: "",
     password: "",
     role: "user",
-    privileges: ["view"],
+    panelLogPrivileges: ["view"],
+    serviceLogPrivileges: ["view"],
     assignedBuildings: [],
   });
   const [message, setMessage] = useState(null);
@@ -35,7 +40,13 @@ const UserManagement = () => {
       setLoading(true);
       setError(null);
       const data = await fetchUsers();
-      setUsers(data);
+      // Normalize users to ensure they have both privilege fields
+      const normalizedData = data.map((user) => ({
+        ...user,
+        panelLogPrivileges: user.panelLogPrivileges || ["view"],
+        serviceLogPrivileges: user.serviceLogPrivileges || ["view"],
+      }));
+      setUsers(normalizedData);
     } catch (err) {
       setError("Failed to load users: " + err.message);
     } finally {
@@ -53,12 +64,13 @@ const UserManagement = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePrivilegeChange = (privilege) => {
+  const handlePrivilegeChange = (logType, privilege) => {
     setFormData((prev) => {
-      const privileges = prev.privileges.includes(privilege)
-        ? prev.privileges.filter((p) => p !== privilege)
-        : [...prev.privileges, privilege];
-      return { ...prev, privileges };
+      const currentPrivileges = prev[logType] || ["view"];
+      const privileges = currentPrivileges.includes(privilege)
+        ? currentPrivileges.filter((p) => p !== privilege)
+        : [...currentPrivileges, privilege];
+      return { ...prev, [logType]: privileges };
     });
   };
 
@@ -108,7 +120,8 @@ const UserManagement = () => {
       username: user.username,
       password: "",
       role: user.role,
-      privileges: user.privileges || ["view"],
+      panelLogPrivileges: user.panelLogPrivileges || ["view"],
+      serviceLogPrivileges: user.serviceLogPrivileges || ["view"],
       assignedBuildings: user.assignedBuildings || [],
     });
     setShowForm(true);
@@ -131,7 +144,8 @@ const UserManagement = () => {
       username: "",
       password: "",
       role: "user",
-      privileges: ["view"],
+      panelLogPrivileges: ["view"],
+      serviceLogPrivileges: ["view"],
       assignedBuildings: [],
     });
     setEditingUser(null);
@@ -218,23 +232,33 @@ const UserManagement = () => {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Privileges</label>
-              <div className="checkbox-group">
-                {PRIVILEGES.map((privilege) => (
-                  <label key={privilege} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={formData.privileges.includes(privilege)}
-                      onChange={() => handlePrivilegeChange(privilege)}
-                    />
-                    <span className="privilege-name">
-                      {privilege.charAt(0).toUpperCase() + privilege.slice(1)}
-                    </span>
-                  </label>
-                ))}
+            {/* Separate Privileges for Each Log Type */}
+            {LOG_TYPES.map((logType) => (
+              <div key={logType.key} className="form-group">
+                <label>{logType.label} Privileges</label>
+                <div className="checkbox-group">
+                  {PRIVILEGES.map((privilege) => (
+                    <label
+                      key={`${logType.key}-${privilege}`}
+                      className="checkbox-label"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(formData[logType.key] || ["view"]).includes(
+                          privilege
+                        )}
+                        onChange={() =>
+                          handlePrivilegeChange(logType.key, privilege)
+                        }
+                      />
+                      <span className="privilege-name">
+                        {privilege.charAt(0).toUpperCase() + privilege.slice(1)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
 
             <div className="form-group">
               <label>
@@ -298,7 +322,8 @@ const UserManagement = () => {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Privileges</th>
+                <th>Panel Log Privileges</th>
+                <th>Service Log Privileges</th>
                 <th>Assigned Buildings</th>
                 <th>Actions</th>
               </tr>
@@ -318,7 +343,16 @@ const UserManagement = () => {
                   </td>
                   <td>
                     <div className="privilege-tags">
-                      {user.privileges?.map((p) => (
+                      {user.panelLogPrivileges?.map((p) => (
+                        <span key={p} className={`privilege-tag ${p}`}>
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="privilege-tags">
+                      {user.serviceLogPrivileges?.map((p) => (
                         <span key={p} className={`privilege-tag ${p}`}>
                           {p}
                         </span>

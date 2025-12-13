@@ -10,8 +10,13 @@ import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
 const ServiceLogManager = () => {
-  const { user, canCreate, canEdit, canDelete, getAccessibleBuildings } =
-    useAuth();
+  const {
+    user,
+    canCreateServiceLog,
+    canEditServiceLog,
+    canDeleteServiceLog,
+    getAccessibleBuildings,
+  } = useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,7 +257,7 @@ const ServiceLogManager = () => {
     <div className="service-log-container">
       <div className="service-log-header">
         <h2>Operator Log Panel</h2>
-        {canCreate() && (
+        {canCreateServiceLog() && (
           <button
             className="btn-add-log"
             onClick={() => {
@@ -438,7 +443,7 @@ const ServiceLogManager = () => {
                       </span>
                     </td>
                     <td className="actions">
-                      {canEdit() && (
+                      {canEditServiceLog() && (
                         <button
                           className="btn-edit"
                           onClick={() => handleEdit(log)}
@@ -447,7 +452,7 @@ const ServiceLogManager = () => {
                           ✎
                         </button>
                       )}
-                      {canDelete() && (
+                      {canDeleteServiceLog() && (
                         <button
                           className="btn-delete"
                           onClick={() => handleDelete(log.id)}

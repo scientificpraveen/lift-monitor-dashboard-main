@@ -475,6 +475,120 @@ app.get("/api/panel-logs/export/pdf", async (req, res) => {
   }
 });
 
+// Export PDFs grouped by building
+app.get("/api/panel-logs/export/pdf/by-building", async (req, res) => {
+  try {
+    const { building, date, dateFrom, dateTo, panelType, time } = req.query;
+
+    const filters = {};
+    if (building) filters.building = building;
+    if (date) filters.date = date;
+    if (dateFrom || dateTo) {
+      filters.dateRange = { from: dateFrom, to: dateTo };
+    }
+    if (panelType) filters.panelType = panelType;
+    if (time) filters.time = time;
+
+    const logs = await panelLogService.getPanelLogs(filters);
+
+    if (logs.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No data available for export",
+      });
+    }
+
+    const { generatePDFByBuilding } = await import("./exportService.js");
+    const pdfsByBuilding = await generatePDFByBuilding(logs);
+
+    // If single building requested, return single PDF
+    if (building && pdfsByBuilding[building]) {
+      const filename = `Panel_Logs_${building}_${
+        date || dateFrom || "export"
+      }.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.send(pdfsByBuilding[building]);
+    } else {
+      // Return JSON with building information
+      res.json({
+        success: true,
+        buildings: Object.keys(pdfsByBuilding),
+        message:
+          "PDFs generated for each building. Use individual endpoints to download.",
+        count: Object.keys(pdfsByBuilding).length,
+      });
+    }
+  } catch (error) {
+    console.error("Error exporting PDFs by building:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate PDF files",
+      message: error.message,
+    });
+  }
+});
+
+// Download individual building PDF
+app.get(
+  "/api/panel-logs/export/pdf/building/:buildingName",
+  async (req, res) => {
+    try {
+      const buildingName = decodeURIComponent(req.params.buildingName);
+      const { date, dateFrom, dateTo, panelType, time } = req.query;
+
+      const filters = {
+        building: buildingName,
+      };
+      if (date) filters.date = date;
+      if (dateFrom || dateTo) {
+        filters.dateRange = { from: dateFrom, to: dateTo };
+      }
+      if (panelType) filters.panelType = panelType;
+      if (time) filters.time = time;
+
+      const logs = await panelLogService.getPanelLogs(filters);
+
+      if (logs.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "No data found for this building",
+        });
+      }
+
+      const { generatePDFByBuilding } = await import("./exportService.js");
+      const pdfsByBuilding = await generatePDFByBuilding(logs);
+
+      if (pdfsByBuilding[buildingName]) {
+        const filename = `Panel_Logs_${buildingName}_${
+          date || dateFrom || "export"
+        }.pdf`;
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${filename}"`
+        );
+        res.send(pdfsByBuilding[buildingName]);
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "PDF generation failed for this building",
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting PDF for building:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to generate PDF file",
+        message: error.message,
+      });
+    }
+  }
+);
+
 wss.on("connection", (ws) => {
   console.log("Client connected via WebSocket");
 

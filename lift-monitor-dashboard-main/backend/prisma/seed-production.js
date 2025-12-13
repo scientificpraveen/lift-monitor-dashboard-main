@@ -23,7 +23,8 @@ async function main() {
       password: hashedPassword,
       name: "Atlanwa Admin",
       role: "admin",
-      privileges: ["view", "create", "edit", "delete"],
+      panelLogPrivileges: ["view", "create", "edit", "delete"],
+      serviceLogPrivileges: ["view", "create", "edit", "delete"],
       assignedBuildings: [], // empty means all buildings for admin
     },
   });

@@ -84,16 +84,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Helper functions for privilege checking
-  const hasPrivilege = (privilege) => {
+  // Helper functions for privilege checking - PanelLog (HT/LT)
+  const hasPanelLogPrivilege = (privilege) => {
     if (!user) return false;
-    return user.privileges?.includes(privilege) || false;
+    return user.panelLogPrivileges?.includes(privilege) || false;
   };
 
-  const canView = () => hasPrivilege("view");
-  const canCreate = () => hasPrivilege("create");
-  const canEdit = () => hasPrivilege("edit");
-  const canDelete = () => hasPrivilege("delete");
+  const canViewPanelLog = () => hasPanelLogPrivilege("view");
+  const canCreatePanelLog = () => hasPanelLogPrivilege("create");
+  const canEditPanelLog = () => hasPanelLogPrivilege("edit");
+  const canDeletePanelLog = () => hasPanelLogPrivilege("delete");
+
+  // Helper functions for privilege checking - ServiceLog (Operator)
+  const hasServiceLogPrivilege = (privilege) => {
+    if (!user) return false;
+    return user.serviceLogPrivileges?.includes(privilege) || false;
+  };
+
+  const canViewServiceLog = () => hasServiceLogPrivilege("view");
+  const canCreateServiceLog = () => hasServiceLogPrivilege("create");
+  const canEditServiceLog = () => hasServiceLogPrivilege("edit");
+  const canDeleteServiceLog = () => hasServiceLogPrivilege("delete");
+
+  // Legacy function names for backward compatibility (defaults to service logs)
+  const hasPrivilege = (privilege) => hasServiceLogPrivilege(privilege);
+  const canView = () => canViewServiceLog();
+  const canCreate = () => canCreateServiceLog();
+  const canEdit = () => canEditServiceLog();
+  const canDelete = () => canDeleteServiceLog();
+
   const isAdmin = () => user?.role === "admin";
 
   // Get user's accessible buildings
@@ -131,7 +150,19 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
-    // Privilege helpers
+    // Panel Log Privileges (HT/LT)
+    hasPanelLogPrivilege,
+    canViewPanelLog,
+    canCreatePanelLog,
+    canEditPanelLog,
+    canDeletePanelLog,
+    // Service Log Privileges (Operator)
+    hasServiceLogPrivilege,
+    canViewServiceLog,
+    canCreateServiceLog,
+    canEditServiceLog,
+    canDeleteServiceLog,
+    // Legacy (backward compatible - defaults to service logs)
     hasPrivilege,
     canView,
     canCreate,
