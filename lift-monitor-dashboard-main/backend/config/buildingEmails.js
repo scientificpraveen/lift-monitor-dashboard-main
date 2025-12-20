@@ -2,23 +2,23 @@
 // TODO: Replace dummy emails with actual building admin emails once provided by client
 export const BUILDING_ADMIN_EMAILS = {
   "PRESTIGE POLYGON": {
-    email: "polygon.admin@example.com", // TODO: Update with actual email
+    email: "polygon@prestigeconstructions.co.in", // TODO: Update with actual email
     adminName: "Polygon Admin",
   },
   "PRESTIGE PALLADIUM": {
-    email: "palladium.admin@example.com", // TODO: Update with actual email
+    email: "Palladium@prestigeconstructions.co.in", // TODO: Update with actual email
     adminName: "Palladium Admin",
   },
   "PRESTIGE METROPOLITAN": {
-    email: "metropolitan.admin@example.com", // TODO: Update with actual email
+    email: "PMMETROPOLITAN@prestigeconstructions.co.in", // TODO: Update with actual email
     adminName: "Metropolitan Admin",
   },
   "PRESTIGE COSMOPOLITAN": {
-    email: "cosmopolitan.admin@example.com", // TODO: Update with actual email
+    email: "cosmopolitan@prestigeconstructions.co.in", // TODO: Update with actual email
     adminName: "Cosmopolitan Admin",
   },
   "PRESTIGE CYBER TOWERS": {
-    email: "cybertowers.admin@example.com", // TODO: Update with actual email
+    email: "cybertower@prestigeconstructions.co.in", // TODO: Update with actual email
     adminName: "Cyber Towers Admin",
   },
 };
