@@ -97,8 +97,18 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       if (editingUser) {
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
+        const updateData = {
+          name: formData.name,
+          username: formData.username,
+          role: formData.role,
+          panelLogPrivileges: formData.panelLogPrivileges,
+          serviceLogPrivileges: formData.serviceLogPrivileges,
+          assignedBuildings: formData.assignedBuildings,
+        };
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
+        console.log("Sending update data:", updateData); // Debug log
         await updateUser(editingUser.id, updateData);
         showMessage("User updated successfully!");
       } else {

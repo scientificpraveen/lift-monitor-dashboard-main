@@ -142,6 +142,21 @@ router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
       password,
     } = req.body;
 
+    console.log("Update request received for user ID:", id);
+    console.log("Payload:", req.body);
+    console.log(
+      "panelLogPrivileges:",
+      panelLogPrivileges,
+      "Type:",
+      typeof panelLogPrivileges
+    );
+    console.log(
+      "serviceLogPrivileges:",
+      serviceLogPrivileges,
+      "Type:",
+      typeof serviceLogPrivileges
+    );
+
     const updateData = {};
     if (username) updateData.username = username;
     if (name) updateData.name = name;
@@ -153,6 +168,8 @@ router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
     if (assignedBuildings !== undefined)
       updateData.assignedBuildings = assignedBuildings;
     if (password) updateData.password = await bcrypt.hash(password, 10);
+
+    console.log("Final updateData:", updateData);
 
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
