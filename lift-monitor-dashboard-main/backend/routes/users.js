@@ -146,8 +146,9 @@ router.put("/:id", authMiddleware, adminMiddleware, async (req, res) => {
     if (username) updateData.username = username;
     if (name) updateData.name = name;
     if (role) updateData.role = role;
-    if (panelLogPrivileges) updateData.panelLogPrivileges = panelLogPrivileges;
-    if (serviceLogPrivileges)
+    if (panelLogPrivileges !== undefined)
+      updateData.panelLogPrivileges = panelLogPrivileges;
+    if (serviceLogPrivileges !== undefined)
       updateData.serviceLogPrivileges = serviceLogPrivileges;
     if (assignedBuildings !== undefined)
       updateData.assignedBuildings = assignedBuildings;

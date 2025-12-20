@@ -80,3 +80,20 @@ model ServiceLogHistory {
   @@map("service_log_history")
   @@index([serviceLogId, changedAt])
 }
+
+model EmailLog {
+  id             Int      @id @default(autoincrement())
+  building       String
+  recipientEmail String
+  subject        String
+  status         String   // "sent", "failed", "pending"
+  messageId      String?
+  errorMessage   String?
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("email_logs")
+  @@index([building, sentAt])
+  @@index([status, sentAt])
+}

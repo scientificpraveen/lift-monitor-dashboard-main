@@ -13,6 +13,16 @@ import {
   startAutoEntryScheduler,
   stopAutoEntryScheduler,
 } from "./services/autoEntryService.js";
+import {
+  startEmailScheduler,
+  stopEmailScheduler,
+  triggerDailyEmailReportManual,
+  triggerEmailReportForDate,
+} from "./services/emailScheduler.js";
+import {
+  initializeEmailTransporter,
+  testEmailConnection,
+} from "./services/emailService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -589,6 +599,131 @@ app.get(
   }
 );
 
+// Email API Routes
+
+// Test email connection
+app.get("/api/email/test", async (req, res) => {
+  try {
+    const result = await testEmailConnection();
+    if (result.success) {
+      res.json({ success: true, message: "Email connection successful" });
+    } else {
+      res.status(400).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Trigger email reports manually (for previous day)
+app.post("/api/email/trigger-reports", async (req, res) => {
+  try {
+    console.log("📧 Manual trigger received for daily email reports");
+    const result = await triggerDailyEmailReportManual();
+    res.json({
+      success: true,
+      message: "Email reports triggered successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("Error triggering email reports:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Trigger email reports for specific date
+app.post("/api/email/trigger-reports/:date", async (req, res) => {
+  try {
+    const { date } = req.params;
+
+    // Validate date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid date format. Use YYYY-MM-DD",
+      });
+    }
+
+    console.log(`📧 Manual trigger received for date: ${date}`);
+    const result = await triggerEmailReportForDate(date);
+    res.json({
+      success: true,
+      message: `Email reports triggered for ${date}`,
+      result,
+    });
+  } catch (error) {
+    console.error("Error triggering email reports:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get email logs
+app.get("/api/email/logs", async (req, res) => {
+  try {
+    const { building, status, days = 7 } = req.query;
+
+    const where = {};
+    if (building) where.building = building;
+    if (status) where.status = status;
+
+    // Get logs from last N days
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    where.sentAt = { gte: startDate };
+
+    const logs = await prisma.emailLog.findMany({
+      where,
+      orderBy: { sentAt: "desc" },
+      take: 100,
+    });
+
+    res.json({ success: true, logs, count: logs.length });
+  } catch (error) {
+    console.error("Error fetching email logs:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get email configuration (building admin emails)
+app.get("/api/email/config/buildings", async (req, res) => {
+  try {
+    const { getAllBuildingEmails } = await import("./config/buildingEmails.js");
+    const buildingEmails = getAllBuildingEmails();
+    res.json({ success: true, buildingEmails });
+  } catch (error) {
+    console.error("Error fetching building emails:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update building admin email (admin only - TODO: add auth middleware)
+app.put("/api/email/config/buildings/:building", async (req, res) => {
+  try {
+    const { building } = req.params;
+    const { email, adminName } = req.body;
+
+    // TODO: Add authentication middleware to check if user is admin
+
+    if (!email || !adminName) {
+      return res.status(400).json({
+        success: false,
+        error: "email and adminName are required",
+      });
+    }
+
+    // TODO: Implement persistent storage for building emails (update backend config or DB)
+    // For now, just return success (changes won't persist)
+    res.json({
+      success: true,
+      message: `Building email configuration for ${building} would be updated to ${email}`,
+      note: "Note: Email configuration is currently stored in code. Please update backend/config/buildingEmails.js to make changes persistent.",
+    });
+  } catch (error) {
+    console.error("Error updating building email:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 wss.on("connection", (ws) => {
   console.log("Client connected via WebSocket");
 
@@ -613,6 +748,16 @@ server.listen(PORT, "0.0.0.0", async () => {
 
   // Start auto-entry scheduler
   startAutoEntryScheduler();
+
+  // Initialize and start email scheduler
+  const emailReady = initializeEmailTransporter();
+  if (emailReady) {
+    startEmailScheduler();
+  } else {
+    console.log(
+      "⚠️ Email scheduler not started - check GMAIL_PASSWORD environment variable"
+    );
+  }
 });
 
 process.on("SIGTERM", () => {
