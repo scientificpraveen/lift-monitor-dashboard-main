@@ -69,10 +69,7 @@ const App = () => {
           } else if (lift.Door === "1") {
             direction = "stationary";
             console.log(`${liftKey}: Door open, direction = stationary`);
-            direction =
-              liftHistory.lastDirection === "stationary"
-                ? "stationary"
-                : liftHistory.lastDirection;
+            liftHistory.lastDirection = "stationary";
           } else if (prevFloor !== undefined && prevFloor !== currentFloor) {
             direction = currentFloor > prevFloor ? "up" : "down";
             console.log(
