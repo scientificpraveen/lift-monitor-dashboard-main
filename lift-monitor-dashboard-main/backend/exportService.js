@@ -934,7 +934,7 @@ export const generatePDFByBuilding = (logs) => {
 };
 
 // Generate PDF for a single building
-const generateSingleBuildingPDF = (building, logs) => {
+export const generateSingleBuildingPDF = (building, logs) => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
