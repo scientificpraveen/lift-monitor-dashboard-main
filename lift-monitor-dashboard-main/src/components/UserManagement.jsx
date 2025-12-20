@@ -66,11 +66,12 @@ const UserManagement = () => {
 
   const handlePrivilegeChange = (logType, privilege) => {
     setFormData((prev) => {
-      const currentPrivileges = prev[logType] || ["view"];
+      const key = `${logType}Privileges`;
+      const currentPrivileges = prev[key] || ["view"];
       const privileges = currentPrivileges.includes(privilege)
         ? currentPrivileges.filter((p) => p !== privilege)
         : [...currentPrivileges, privilege];
-      return { ...prev, [logType]: privileges };
+      return { ...prev, [key]: privileges };
     });
   };
 
@@ -254,9 +255,9 @@ const UserManagement = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={(formData[logType.key] || ["view"]).includes(
-                          privilege
-                        )}
+                        checked={(
+                          formData[`${logType.key}Privileges`] || ["view"]
+                        ).includes(privilege)}
                         onChange={() =>
                           handlePrivilegeChange(logType.key, privilege)
                         }
