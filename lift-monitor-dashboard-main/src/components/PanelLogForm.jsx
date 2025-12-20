@@ -90,8 +90,61 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
     });
   };
 
+  const validateForm = () => {
+    // Validate HT Panel if present
+    if (formData.panelType === "HT" || formData.panelType === "BOTH") {
+      const ht = formData.htPanel;
+      if (!ht.voltageFromWreb.volt) return "HT Panel Voltage is required";
+      if (
+        !ht.currentAmp.r ||
+        !ht.currentAmp.y ||
+        !ht.currentAmp.b ||
+        !ht.currentAmp.pf ||
+        !ht.currentAmp.hz
+      ) {
+        return "All HT Panel Current Amp fields are required";
+      }
+      for (let i = 1; i <= 3; i++) {
+        const tr = `outgoingTr${i}`;
+        if (
+          !ht[tr].currentAmp.r ||
+          !ht[tr].currentAmp.y ||
+          !ht[tr].currentAmp.b
+        ) {
+          return `Outgoing Tr-${i} Current Amp (R, Y, B) are required`;
+        }
+        if (!ht[tr].windingTemp)
+          return `Outgoing Tr-${i} Winding Temp is required`;
+        if (!ht[tr].oilTemp) return `Outgoing Tr-${i} Oil Temp is required`;
+      }
+    }
+
+    // Validate LT Panel if present
+    if (formData.panelType === "LT" || formData.panelType === "BOTH") {
+      const lt = formData.ltPanel;
+      for (const incomer of ["incomer1", "incomer2", "incomer3"]) {
+        const inc = lt[incomer];
+        if (!inc.voltage.ry || !inc.voltage.yb || !inc.voltage.br) {
+          return `${incomer} Voltage fields are required`;
+        }
+        if (!inc.currentAmp.r || !inc.currentAmp.y || !inc.currentAmp.b) {
+          return `${incomer} Current Amp fields are required`;
+        }
+        if (!inc.tap) return `${incomer} Tap is required`;
+        if (!inc.kwh) return `${incomer} KWH is required`;
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
     const dataToSubmit = {
       ...formData,
       time: initialData ? formData.time : getISTTimeSlot(),
@@ -242,7 +295,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               <h4>Volt (kv)</h4>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Voltage (kV)</label>
+                  <label>Voltage (kV) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -257,6 +310,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                       )
                     }
                     placeholder="Enter voltage in kV"
+                    required
                   />
                 </div>
               </div>
@@ -266,7 +320,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
               <h4>Current Amp</h4>
               <div className="form-row compact-row">
                 <div className="form-group compact-group">
-                  <label>R</label>
+                  <label>R *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -280,10 +334,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         e.target.value
                       )
                     }
+                    required
                   />
                 </div>
                 <div className="form-group compact-group">
-                  <label>Y</label>
+                  <label>Y *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -297,10 +352,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         e.target.value
                       )
                     }
+                    required
                   />
                 </div>
                 <div className="form-group compact-group">
-                  <label>B</label>
+                  <label>B *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -314,10 +370,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         e.target.value
                       )
                     }
+                    required
                   />
                 </div>
                 <div className="form-group compact-group">
-                  <label>PF</label>
+                  <label>PF *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -331,10 +388,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         e.target.value
                       )
                     }
+                    required
                   />
                 </div>
                 <div className="form-group compact-group">
-                  <label>Hz</label>
+                  <label>Hz *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -348,6 +406,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         e.target.value
                       )
                     }
+                    required
                   />
                 </div>
               </div>
@@ -361,7 +420,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                     <label>Current Amp</label>
                     <div className="form-row compact-row">
                       <div className="form-group compact-group">
-                        <label>R</label>
+                        <label>R *</label>
                         <input
                           type="number"
                           step="0.01"
@@ -375,10 +434,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               e.target.value
                             )
                           }
+                          required
                         />
                       </div>
                       <div className="form-group compact-group">
-                        <label>Y</label>
+                        <label>Y *</label>
                         <input
                           type="number"
                           step="0.01"
@@ -392,10 +452,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               e.target.value
                             )
                           }
+                          required
                         />
                       </div>
                       <div className="form-group compact-group">
-                        <label>B</label>
+                        <label>B *</label>
                         <input
                           type="number"
                           step="0.01"
@@ -409,6 +470,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               e.target.value
                             )
                           }
+                          required
                         />
                       </div>
                     </div>
@@ -418,7 +480,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                     <label>Winding Temp</label>
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Temperature (°C)</label>
+                        <label>Temperature (°C) *</label>
                         <input
                           type="text"
                           value={formData.htPanel[tr].windingTemp}
@@ -431,6 +493,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               e.target.value
                             )
                           }
+                          required
                         />
                       </div>
                     </div>
@@ -440,7 +503,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                     <label>Oil Temperature</label>
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Temperature (°C)</label>
+                        <label>Temperature (°C) *</label>
                         <input
                           type="text"
                           value={formData.htPanel[tr].oilTemp}
@@ -453,6 +516,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               e.target.value
                             )
                           }
+                          required
                         />
                       </div>
                     </div>
@@ -477,7 +541,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   <label>Voltage</label>
                   <div className="form-row compact-row">
                     <div className="form-group compact-group">
-                      <label>RY</label>
+                      <label>RY *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -491,10 +555,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                     <div className="form-group compact-group">
-                      <label>YB</label>
+                      <label>YB *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -508,10 +573,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                     <div className="form-group compact-group">
-                      <label>BR</label>
+                      <label>BR *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -525,6 +591,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                   </div>
@@ -534,7 +601,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                   <label>Current Amp</label>
                   <div className="form-row compact-row">
                     <div className="form-group compact-group">
-                      <label>R</label>
+                      <label>R *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -548,10 +615,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                     <div className="form-group compact-group">
-                      <label>Y</label>
+                      <label>Y *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -565,10 +633,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                     <div className="form-group compact-group">
-                      <label>B</label>
+                      <label>B *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -582,6 +651,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             e.target.value
                           )
                         }
+                        required
                       />
                     </div>
                   </div>
@@ -589,7 +659,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>TAP Position</label>
+                    <label>TAP Position *</label>
                     <input
                       type="number"
                       value={formData.ltPanel[incomer].tap}
@@ -602,10 +672,11 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                           e.target.value
                         )
                       }
+                      required
                     />
                   </div>
                   <div className="form-group">
-                    <label>KWH</label>
+                    <label>KWH *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -619,6 +690,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                           e.target.value
                         )
                       }
+                      required
                     />
                   </div>
                 </div>
