@@ -545,7 +545,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             onChange={(e) => setFilterBuilding(e.target.value)}
           >
             <option value="">All Buildings</option>
-            {buildings.map((building) => (
+            {accessibleBuildings.map((building) => (
               <option key={building} value={building}>
                 {building}
               </option>
@@ -607,17 +607,6 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             <option value="18:00">18:00</option>
             <option value="20:00">20:00</option>
             <option value="22:00">22:00</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>View Mode:</label>
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-          >
-            <option value="daily">Daily View</option>
-            <option value="cards">Time Wise Card View</option>
           </select>
         </div>
 
