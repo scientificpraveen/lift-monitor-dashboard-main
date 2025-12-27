@@ -194,7 +194,9 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   const getAvailableTimeSlots = () => {
     if (!dailyViewDate) return [];
     const slots = logs
-      .filter((log) => log.date === dailyViewDate && log.building === filterBuilding)
+      .filter(
+        (log) => log.date === dailyViewDate && log.building === filterBuilding
+      )
       .map((log) => log.time)
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort();
