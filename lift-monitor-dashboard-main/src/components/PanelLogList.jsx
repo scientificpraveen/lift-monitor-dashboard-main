@@ -88,7 +88,11 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     const today = new Date().toISOString().split("T")[0];
     setFilterDateFrom(today);
     setFilterDateTo(today);
-  }, []);
+    // Set first accessible building as default if available
+    if (accessibleBuildings.length > 0 && !filterBuilding) {
+      setFilterBuilding(accessibleBuildings[0]);
+    }
+  }, [accessibleBuildings]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
