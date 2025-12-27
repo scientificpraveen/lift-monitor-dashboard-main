@@ -178,6 +178,58 @@ app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
+// Test email endpoints
+app.get("/api/test-email/trigger-manual", async (req, res) => {
+  try {
+    const result = await triggerDailyEmailReportManual();
+    res.json({
+      success: true,
+      message: "Manual email trigger executed",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.post("/api/test-email/trigger-date", async (req, res) => {
+  try {
+    const { date } = req.body;
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: "Date parameter required (format: YYYY-MM-DD)",
+      });
+    }
+    const result = await triggerEmailReportForDate(date);
+    res.json({
+      success: true,
+      message: `Email trigger executed for date: ${date}`,
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get("/api/test-email/connection", async (req, res) => {
+  try {
+    const result = await testEmailConnection();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 app.get("/api/panel-logs", async (req, res) => {
   try {
     const { building, date, dateFrom, dateTo, panelType, time } = req.query;

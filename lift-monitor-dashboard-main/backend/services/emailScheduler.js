@@ -5,19 +5,41 @@ let emailSchedulerInterval = null;
 // Calculate milliseconds until next 12:00 IST
 const getTimeUntilNextNoon = () => {
   const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
 
-  // Set target time to 12:00 IST
-  const targetTime = new Date(istTime);
-  targetTime.setUTCHours(6, 30, 0, 0); // 12:00 IST = 06:30 UTC
+  // Create a date string for IST using proper timezone handling
+  const istDateString = new Date(
+    now.toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    })
+  );
 
-  let msUntilNoon = targetTime.getTime() - istTime.getTime();
+  // Extract IST hours and minutes
+  const istHours = istDateString.getHours();
+  const istMinutes = istDateString.getMinutes();
+  const istSeconds = istDateString.getSeconds();
 
-  // If time has passed today, schedule for tomorrow
+  // Calculate target time: 12:00 IST today
+  const targetTimeIST = new Date(istDateString);
+  targetTimeIST.setHours(12, 0, 0, 0);
+
+  // Convert back to get UTC equivalent
+  const targetUTC = new Date(
+    targetTimeIST.toLocaleString("en-US", {
+      timeZone: "UTC",
+    })
+  );
+
+  let msUntilNoon = targetUTC.getTime() - now.getTime();
+
+  // If time has passed today, schedule for tomorrow at 12:00 IST
   if (msUntilNoon <= 0) {
-    targetTime.setUTCDate(targetTime.getUTCDate() + 1);
-    msUntilNoon = targetTime.getTime() - istTime.getTime();
+    targetTimeIST.setDate(targetTimeIST.getDate() + 1);
+    const nextDayUTC = new Date(
+      targetTimeIST.toLocaleString("en-US", {
+        timeZone: "UTC",
+      })
+    );
+    msUntilNoon = nextDayUTC.getTime() - now.getTime();
   }
 
   return msUntilNoon;
@@ -26,14 +48,19 @@ const getTimeUntilNextNoon = () => {
 // Check if current time is around 12:00 IST (within 5 minute window)
 const isNoonTimeWindow = () => {
   const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
 
-  const hours = istTime.getUTCHours();
-  const minutes = istTime.getUTCMinutes();
+  // Get IST time properly
+  const istDateString = new Date(
+    now.toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    })
+  );
 
-  // Check if time is between 06:25 and 06:35 UTC (12:00 IST ± 5 min)
-  return hours === 6 && minutes >= 25 && minutes <= 35;
+  const hours = istDateString.getHours();
+  const minutes = istDateString.getMinutes();
+
+  // Check if time is between 11:55 and 12:05 IST
+  return (hours === 11 && minutes >= 55) || (hours === 12 && minutes <= 5);
 };
 
 // Send reports and handle scheduling
