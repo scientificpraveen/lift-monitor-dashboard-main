@@ -23,6 +23,12 @@ import {
   initializeEmailTransporter,
   testEmailConnection,
 } from "./services/emailService.js";
+import {
+  startEmailQueueProcessor,
+  stopEmailQueueProcessor,
+  getEmailQueueStatus,
+  getRecentEmailJobs,
+} from "./services/emailQueue.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -215,6 +221,26 @@ app.post("/api/test-email/trigger-date", async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+// Email queue endpoints
+app.get("/api/email/queue/status", async (req, res) => {
+  try {
+    const status = await getEmailQueueStatus();
+    res.json({ success: true, status });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/api/email/queue/jobs", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const jobs = await getRecentEmailJobs(limit);
+    res.json({ success: true, jobs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -860,10 +886,11 @@ server.listen(PORT, "0.0.0.0", async () => {
   // Start auto-entry scheduler
   startAutoEntryScheduler();
 
-  // Initialize and start email scheduler
+  // Initialize and start email scheduler & queue processor
   const emailReady = initializeEmailTransporter();
   if (emailReady) {
     startEmailScheduler();
+    startEmailQueueProcessor(); // Start the email queue processor
   } else {
     console.log(
       "⚠️ Email scheduler not started - check GMAIL_PASSWORD environment variable"
@@ -874,11 +901,13 @@ server.listen(PORT, "0.0.0.0", async () => {
 process.on("SIGTERM", () => {
   console.log("Received SIGTERM, shutting down gracefully");
   stopAutoEntryScheduler();
+  stopEmailQueueProcessor(); // Stop email queue processor
   server.close(() => process.exit(0));
 });
 
 process.on("SIGINT", () => {
   console.log("Received SIGINT, shutting down gracefully");
   stopAutoEntryScheduler();
+  stopEmailQueueProcessor(); // Stop email queue processor
   server.close(() => process.exit(0));
 });

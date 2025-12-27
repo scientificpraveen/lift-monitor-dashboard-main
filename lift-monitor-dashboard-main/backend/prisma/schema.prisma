@@ -97,3 +97,22 @@ model EmailLog {
   @@index([building, sentAt])
   @@index([status, sentAt])
 }
+
+model EmailQueue {
+  id             Int      @id @default(autoincrement())
+  building       String
+  date           String
+  status         String   @default("pending") // pending, processing, sent, failed, skipped
+  attempts       Int      @default(0)
+  messageId      String?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+  updatedAt      DateTime @updatedAt
+
+  @@map("email_queue")
+  @@index([status])
+  @@index([building])
+  @@index([date])
+  @@index([createdAt])
+}

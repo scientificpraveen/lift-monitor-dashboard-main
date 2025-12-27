@@ -1,6 +1,14 @@
-import { sendDailyReports } from "./emailService.js";
+import { queueEmailReport } from "./emailQueue.js";
 
 let emailSchedulerInterval = null;
+
+const BUILDINGS = [
+  "PRESTIGE POLYGON",
+  "PRESTIGE PALLADIUM",
+  "PRESTIGE METROPOLITAN",
+  "PRESTIGE COSMOPOLITAN",
+  "PRESTIGE CYBER TOWERS",
+];
 
 // Calculate milliseconds until next 12:00 IST
 const getTimeUntilNextNoon = () => {
@@ -77,17 +85,28 @@ const handleDailyEmailReport = async () => {
       })}] Running daily email report scheduler...`
     );
 
-    // Send reports for yesterday (so admins get the previous day's data at noon)
+    // Queue emails for yesterday (non-blocking)
     const yesterday = new Date(istTime);
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-    const result = await sendDailyReports(yesterdayStr);
+    let queuedCount = 0;
+    for (const building of BUILDINGS) {
+      try {
+        await queueEmailReport(building, yesterdayStr);
+        queuedCount++;
+      } catch (error) {
+        console.error(
+          `❌ Failed to queue email for ${building}:`,
+          error.message
+        );
+      }
+    }
 
     console.log(
-      `✅ Daily email report scheduled for ${yesterdayStr} completed`
+      `✅ Queued ${queuedCount} emails for processing (Date: ${yesterdayStr})`
     );
-    return result;
+    return { queued: queuedCount };
   } catch (error) {
     console.error("❌ Error in email scheduler:", error.message);
   }
@@ -135,7 +154,7 @@ export const stopEmailScheduler = () => {
   }
 };
 
-// Manual trigger for testing (sends previous day's data)
+// Manual trigger for testing (queues previous day's emails)
 export const triggerDailyEmailReportManual = async () => {
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
@@ -145,12 +164,36 @@ export const triggerDailyEmailReportManual = async () => {
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-  console.log(`\n📧 Manual trigger: Sending reports for ${yesterdayStr}...`);
-  return await sendDailyReports(yesterdayStr);
+  console.log(`\n📧 Manual trigger: Queuing reports for ${yesterdayStr}...`);
+
+  let queuedCount = 0;
+  for (const building of BUILDINGS) {
+    try {
+      await queueEmailReport(building, yesterdayStr);
+      queuedCount++;
+    } catch (error) {
+      console.error(`❌ Failed to queue email for ${building}:`, error.message);
+    }
+  }
+
+  console.log(`✅ Queued ${queuedCount} emails for ${yesterdayStr}`);
+  return { queued: queuedCount, date: yesterdayStr };
 };
 
 // Manual trigger with specific date
 export const triggerEmailReportForDate = async (date) => {
-  console.log(`\n📧 Manual trigger: Sending reports for ${date}...`);
-  return await sendDailyReports(date);
+  console.log(`\n📧 Manual trigger: Queuing reports for ${date}...`);
+
+  let queuedCount = 0;
+  for (const building of BUILDINGS) {
+    try {
+      await queueEmailReport(building, date);
+      queuedCount++;
+    } catch (error) {
+      console.error(`❌ Failed to queue email for ${building}:`, error.message);
+    }
+  }
+
+  console.log(`✅ Queued ${queuedCount} emails for ${date}`);
+  return { queued: queuedCount, date };
 };
