@@ -250,8 +250,21 @@ app.post("/api/test-email/send-test", async (req, res) => {
     // Get today's date
     const today = new Date().toISOString().split("T")[0];
 
-    // Generate test PDF
-    const pdfBuffer = await generateSingleBuildingPDF(buildingName, today);
+    // Fetch actual logs for this building from database
+    const logs = await panelLogService.getPanelLogs({
+      building: buildingName,
+      date: today,
+    });
+
+    if (logs.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: `No logs found for ${buildingName} on ${today}. Cannot generate empty report.`,
+      });
+    }
+
+    // Generate test PDF with actual log data
+    const pdfBuffer = await generateSingleBuildingPDF(buildingName, logs);
 
     // Generate email template
     const htmlContent = generateEmailTemplate(buildingName, today);
