@@ -230,6 +230,52 @@ app.get("/api/test-email/connection", async (req, res) => {
   }
 });
 
+// NEW ENDPOINT: Send test email to a building admin
+app.post("/api/test-email/send-test", async (req, res) => {
+  try {
+    const { recipientEmail, buildingName } = req.body;
+
+    if (!recipientEmail || !buildingName) {
+      return res.status(400).json({
+        success: false,
+        error: "recipientEmail and buildingName required",
+      });
+    }
+
+    const { sendEmailWithPDF, generateEmailTemplate } = await import(
+      "./services/emailService.js"
+    );
+    const { generateSingleBuildingPDF } = await import("./exportService.js");
+
+    // Get today's date
+    const today = new Date().toISOString().split("T")[0];
+
+    // Generate test PDF
+    const pdfBuffer = await generateSingleBuildingPDF(buildingName, today);
+
+    // Generate email template
+    const htmlContent = generateEmailTemplate(buildingName, today);
+
+    // Send the email
+    const result = await sendEmailWithPDF(
+      recipientEmail,
+      buildingName,
+      `[TEST] Daily Panel Log Report - ${buildingName}`,
+      htmlContent,
+      pdfBuffer,
+      `test-report-${buildingName}-${today}.pdf`
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error("Test email error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 app.get("/api/panel-logs", async (req, res) => {
   try {
     const { building, date, dateFrom, dateTo, panelType, time } = req.query;
