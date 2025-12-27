@@ -544,7 +544,6 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             value={filterBuilding}
             onChange={(e) => setFilterBuilding(e.target.value)}
           >
-            <option value="">All Buildings</option>
             {accessibleBuildings.map((building) => (
               <option key={building} value={building}>
                 {building}

@@ -280,7 +280,6 @@ const ServiceLogManager = () => {
             onChange={(e) => setFilterBuilding(e.target.value)}
             className="filter-select"
           >
-            <option value="">All Buildings</option>
             {accessibleBuildings.map((building) => (
               <option key={building} value={building}>
                 {building}
