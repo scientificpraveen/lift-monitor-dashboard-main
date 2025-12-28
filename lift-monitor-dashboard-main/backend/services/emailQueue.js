@@ -88,24 +88,14 @@ const processEmailQueue = async () => {
           orderBy: { time: "asc" },
         });
 
-        if (logs.length === 0) {
-          console.warn(
-            `⚠️ No logs found for ${job.building} on ${job.date}. Marking as skipped.`
-          );
-          await prisma.emailQueue.update({
-            where: { id: job.id },
-            data: {
-              status: "skipped",
-              completedAt: new Date(),
-              errorMessage: "No logs found for this date",
-            },
-          });
-          continue;
-        }
+        let pdfBuffer;
 
-        // Generate PDF (with timeout)
+        // Generate PDF regardless of whether logs exist
         console.log(`📄 Generating PDF for ${job.building}...`);
-        const pdfPromise = generateSingleBuildingPDF(job.building, logs);
+        const pdfPromise = generateSingleBuildingPDF(
+          job.building,
+          logs.length > 0 ? logs : []
+        );
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(
             () => reject(new Error("PDF generation timeout")),
@@ -113,7 +103,6 @@ const processEmailQueue = async () => {
           )
         );
 
-        let pdfBuffer;
         try {
           pdfBuffer = await Promise.race([pdfPromise, timeoutPromise]);
         } catch (pdfError) {

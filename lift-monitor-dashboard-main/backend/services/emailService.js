@@ -21,11 +21,15 @@ export const initializeEmailTransporter = () => {
     }
 
     emailTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use STARTTLS
       auth: {
         user: EMAIL_CONFIG.senderEmail,
         pass: EMAIL_CONFIG.senderPassword,
       },
+      connectionTimeout: 5000,
+      socketTimeout: 5000,
     });
 
     console.log("✅ Email transporter initialized successfully");
@@ -66,7 +70,13 @@ export const sendEmailWithPDF = async (
       ],
     };
 
-    const result = await emailTransporter.sendMail(mailOptions);
+    // Add timeout for email sending (30 seconds)
+    const sendMailPromise = emailTransporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000)
+    );
+
+    const result = await Promise.race([sendMailPromise, timeoutPromise]);
 
     console.log(
       `✅ Email sent successfully to ${recipientEmail} (Message ID: ${result.messageId})`
