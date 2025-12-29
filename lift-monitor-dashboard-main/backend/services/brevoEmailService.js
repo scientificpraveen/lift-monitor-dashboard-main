@@ -13,16 +13,12 @@ export const initializeBrevoTransporter = () => {
       console.warn(
         "⚠️ BREVO_API_KEY not set in environment. Email service disabled."
       );
-      console.warn(
-        "Set BREVO_API_KEY environment variable to enable email sending."
-      );
       return false;
     }
 
     // Configure Brevo API client
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications["api-key"];
-    apiKey.apiKey = process.env.BREVO_API_KEY;
+    defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
 
     emailClient = new SibApiV3Sdk.TransactionalEmailsApi();
 
@@ -30,6 +26,7 @@ export const initializeBrevoTransporter = () => {
     return true;
   } catch (error) {
     console.error("❌ Failed to initialize Brevo transporter:", error.message);
+    console.error("Stack trace:", error.stack);
     return false;
   }
 };
