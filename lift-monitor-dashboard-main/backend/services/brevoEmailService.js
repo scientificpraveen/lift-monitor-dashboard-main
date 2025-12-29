@@ -1,4 +1,8 @@
-import * as SibApiV3Sdk from "@getbrevo/brevo";
+import {
+  TransactionalEmailsApi,
+  SendSmtpEmail,
+  TransactionalEmailsApiApiKeys,
+} from "@getbrevo/brevo";
 import { PrismaClient } from "@prisma/client";
 import { EMAIL_CONFIG } from "../config/buildingEmails.js";
 
@@ -16,11 +20,12 @@ export const initializeBrevoTransporter = () => {
       return false;
     }
 
-    // Configure Brevo API client
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
-
-    emailClient = new SibApiV3Sdk.TransactionalEmailsApi();
+    // Create Brevo API client with correct configuration (v3.0.0+)
+    emailClient = new TransactionalEmailsApi();
+    emailClient.setApiKey(
+      TransactionalEmailsApiApiKeys.apiKey,
+      process.env.BREVO_API_KEY
+    );
 
     console.log("✅ Brevo email transporter initialized successfully");
     return true;
@@ -47,7 +52,7 @@ export const sendEmailWithPDF = async (
       );
     }
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
     sendSmtpEmail.sender = {
