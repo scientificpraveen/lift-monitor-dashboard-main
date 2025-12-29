@@ -20,9 +20,9 @@ import {
   triggerEmailReportForDate,
 } from "./services/emailScheduler.js";
 import {
-  initializeEmailTransporter,
+  initializeBrevoTransporter,
   testEmailConnection,
-} from "./services/emailService.js";
+} from "./services/brevoEmailService.js";
 import {
   startEmailQueueProcessor,
   stopEmailQueueProcessor,
@@ -887,13 +887,13 @@ server.listen(PORT, "0.0.0.0", async () => {
   startAutoEntryScheduler();
 
   // Initialize and start email scheduler & queue processor
-  const emailReady = initializeEmailTransporter();
+  const emailReady = initializeBrevoTransporter();
   if (emailReady) {
     startEmailScheduler();
     startEmailQueueProcessor(); // Start the email queue processor
   } else {
     console.log(
-      "⚠️ Email scheduler not started - check GMAIL_PASSWORD environment variable"
+      "⚠️ Email scheduler not started - check BREVO_API_KEY environment variable"
     );
   }
 });

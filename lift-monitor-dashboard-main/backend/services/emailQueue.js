@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { generateSingleBuildingPDF } from "../exportService.js";
-import { sendEmailWithPDF, generateEmailTemplate } from "./emailService.js";
+import {
+  sendEmailWithPDF,
+  generateEmailTemplate,
+} from "./brevoEmailService.js";
 import { BUILDING_ADMIN_EMAILS } from "../config/buildingEmails.js";
 
 const prisma = new PrismaClient();
