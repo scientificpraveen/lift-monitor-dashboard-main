@@ -29,9 +29,11 @@ import {
   getEmailQueueStatus,
   getRecentEmailJobs,
 } from "./services/emailQueue.js";
+import { PrismaClient } from "@prisma/client";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const prisma = new PrismaClient();
 
 const defaultOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
@@ -240,6 +242,33 @@ app.get("/api/email/queue/jobs", async (req, res) => {
     const jobs = await getRecentEmailJobs(limit);
     res.json({ success: true, jobs });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Email logs endpoint
+app.get("/api/email/logs", async (req, res) => {
+  try {
+    const { building, status, days = 7 } = req.query;
+
+    const where = {};
+    if (building) where.building = building;
+    if (status) where.status = status;
+
+    // Get logs from last N days
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    where.createdAt = { gte: startDate };
+
+    const logs = await prisma.emailLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    res.json({ success: true, logs, count: logs.length });
+  } catch (error) {
+    console.error("Error fetching email logs:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
