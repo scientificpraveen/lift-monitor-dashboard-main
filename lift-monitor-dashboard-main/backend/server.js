@@ -9,6 +9,7 @@ import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
 import serviceLogRoutes from "./routes/serviceLogs.js";
 import userRoutes from "./routes/users.js";
+import { authMiddleware } from "./middleware/auth.js";
 import {
   startAutoEntryScheduler,
   stopAutoEntryScheduler,
@@ -344,12 +345,33 @@ app.post("/api/test-email/send-test", async (req, res) => {
   }
 });
 
-app.get("/api/panel-logs", async (req, res) => {
+app.get("/api/panel-logs", authMiddleware, async (req, res) => {
   try {
     const { building, date, dateFrom, dateTo, panelType, time } = req.query;
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
 
     const filters = {};
-    if (building) filters.building = building;
+
+    // If user has assigned buildings (restricted user), filter to those
+    if (userAssignedBuildings.length > 0) {
+      // If building is specified in query, check if user has access to it
+      if (building) {
+        if (!userAssignedBuildings.includes(building)) {
+          return res.status(403).json({
+            success: false,
+            error: "Access denied to this building",
+          });
+        }
+        filters.building = building;
+      } else {
+        // If no building specified, return logs only from assigned buildings
+        filters.buildings = userAssignedBuildings;
+      }
+    } else {
+      // Admin user can see all buildings
+      if (building) filters.building = building;
+    }
+
     if (date) filters.date = date;
     if (dateFrom || dateTo) {
       filters.dateRange = { from: dateFrom, to: dateTo };
@@ -374,15 +396,28 @@ app.get("/api/panel-logs", async (req, res) => {
   }
 });
 
-app.get("/api/panel-logs/:id", async (req, res) => {
+app.get("/api/panel-logs/:id", authMiddleware, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
+
     const log = await panelLogService.getPanelLogById(id);
 
     if (!log) {
       return res.status(404).json({
         success: false,
         error: "Panel log not found",
+      });
+    }
+
+    // Check if user has access to view this log's building
+    if (
+      userAssignedBuildings.length > 0 &&
+      !userAssignedBuildings.includes(log.building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied to view this building's logs",
       });
     }
 
@@ -400,14 +435,27 @@ app.get("/api/panel-logs/:id", async (req, res) => {
   }
 });
 
-app.post("/api/panel-logs", async (req, res) => {
+app.post("/api/panel-logs", authMiddleware, async (req, res) => {
   try {
     const logData = req.body;
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
 
     if (!logData.building || !logData.date || !logData.time) {
       return res.status(400).json({
         success: false,
         error: "Missing required fields: building, date, and time are required",
+      });
+    }
+
+    // Check if user has access to the building they're trying to create logs for
+    if (
+      userAssignedBuildings.length > 0 &&
+      !userAssignedBuildings.includes(logData.building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "Access denied. You can only create logs for your assigned buildings",
       });
     }
 
@@ -428,10 +476,24 @@ app.post("/api/panel-logs", async (req, res) => {
   }
 });
 
-app.put("/api/panel-logs/:id", async (req, res) => {
+app.put("/api/panel-logs/:id", authMiddleware, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const logData = req.body;
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
+
+    // Check if user has access to the building they're trying to update
+    if (
+      userAssignedBuildings.length > 0 &&
+      logData.building &&
+      !userAssignedBuildings.includes(logData.building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "Access denied. You can only update logs for your assigned buildings",
+      });
+    }
 
     const updatedLog = await panelLogService.updatePanelLog(id, logData);
 
@@ -457,17 +519,56 @@ app.put("/api/panel-logs/:id", async (req, res) => {
   }
 });
 
-app.get("/api/panel-logs/export/excel", async (req, res) => {
+app.get("/api/panel-logs/export/excel", authMiddleware, async (req, res) => {
   try {
     const { generateExcel } = await import("./services/panelExport.js");
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
+    let { building, date, dateFrom, dateTo, panelType, time } = req.query;
+
+    // If user is restricted and building is specified, check access
+    if (
+      userAssignedBuildings.length > 0 &&
+      building &&
+      !userAssignedBuildings.includes(building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied to export logs for this building",
+      });
+    }
+
+    // If user is restricted and no building specified, restrict to assigned buildings only
+    if (userAssignedBuildings.length > 0 && !building) {
+      // Pass the assigned buildings list to the export service
+      const filters = {
+        buildings: userAssignedBuildings,
+        date,
+        dateFrom,
+        dateTo,
+        panelType,
+        time,
+      };
+      const buffer = await generateExcel(filters);
+      const filename = `panel-logs-${dateFrom || date || "export"}.xlsx`;
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.send(buffer);
+      return;
+    }
 
     const filters = {
-      building: req.query.building,
-      date: req.query.date,
-      dateFrom: req.query.dateFrom,
-      dateTo: req.query.dateTo,
-      panelType: req.query.panelType,
-      time: req.query.time,
+      building,
+      date,
+      dateFrom,
+      dateTo,
+      panelType,
+      time,
     };
 
     const buffer = await generateExcel(filters);
@@ -491,17 +592,52 @@ app.get("/api/panel-logs/export/excel", async (req, res) => {
   }
 });
 
-app.get("/api/panel-logs/export/pdf", async (req, res) => {
+app.get("/api/panel-logs/export/pdf", authMiddleware, async (req, res) => {
   try {
     const { generatePDF } = await import("./services/panelExport.js");
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
+    let { building, date, dateFrom, dateTo, panelType, time } = req.query;
+
+    // If user is restricted and building is specified, check access
+    if (
+      userAssignedBuildings.length > 0 &&
+      building &&
+      !userAssignedBuildings.includes(building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied to export logs for this building",
+      });
+    }
+
+    // If user is restricted and no building specified, restrict to assigned buildings only
+    if (userAssignedBuildings.length > 0 && !building) {
+      const filters = {
+        buildings: userAssignedBuildings,
+        date,
+        dateFrom,
+        dateTo,
+        panelType,
+        time,
+      };
+      const buffer = await generatePDF(filters);
+      const filename = `panel-logs-${dateFrom || date || "export"}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.send(buffer);
+      return;
+    }
 
     const filters = {
-      building: req.query.building,
-      date: req.query.date,
-      dateFrom: req.query.dateFrom,
-      dateTo: req.query.dateTo,
-      panelType: req.query.panelType,
-      time: req.query.time,
+      building,
+      date,
+      dateFrom,
+      dateTo,
+      panelType,
+      time,
     };
 
     const buffer = await generatePDF(filters);
@@ -520,10 +656,25 @@ app.get("/api/panel-logs/export/pdf", async (req, res) => {
   }
 });
 
-app.delete("/api/panel-logs/:id", async (req, res) => {
+app.delete("/api/panel-logs/:id", authMiddleware, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { panelType } = req.query;
+    const userAssignedBuildings = req.user?.assignedBuildings || [];
+
+    // Get the log to check building access
+    const log = await panelLogService.getPanelLogById(id);
+    if (
+      log &&
+      userAssignedBuildings.length > 0 &&
+      !userAssignedBuildings.includes(log.building)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "Access denied. You can only delete logs for your assigned buildings",
+      });
+    }
 
     if (panelType && (panelType === "HT" || panelType === "LT")) {
       const result = await panelLogService.deletePanelType(id, panelType);
@@ -586,127 +737,84 @@ app.delete("/api/panel-logs", async (req, res) => {
   }
 });
 
-app.get("/api/panel-logs/export/excel", async (req, res) => {
-  try {
-    const { building, date, dateFrom, dateTo, panelType, time } = req.query;
-
-    const filters = {};
-    if (building) filters.building = building;
-    if (date) filters.date = date;
-    if (dateFrom || dateTo) {
-      filters.dateRange = { from: dateFrom, to: dateTo };
-    }
-    if (panelType) filters.panelType = panelType;
-    if (time) filters.time = time;
-
-    const logs = await panelLogService.getPanelLogs(filters);
-    const buffer = generateExcelReport(logs);
-
-    const filename = `Panel_Logs_${date || dateFrom || "export"}.xlsx`;
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(buffer);
-  } catch (error) {
-    console.error("Error exporting to Excel:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to export to Excel",
-      message: error.message,
-    });
-  }
-});
-
-app.get("/api/panel-logs/export/pdf", async (req, res) => {
-  try {
-    const { building, date, dateFrom, dateTo, panelType, time } = req.query;
-
-    const filters = {};
-    if (building) filters.building = building;
-    if (date) filters.date = date;
-    if (dateFrom || dateTo) {
-      filters.dateRange = { from: dateFrom, to: dateTo };
-    }
-    if (panelType) filters.panelType = panelType;
-    if (time) filters.time = time;
-
-    const logs = await panelLogService.getPanelLogs(filters);
-    const buffer = await generatePDFReport(logs);
-
-    const filename = `Panel_Logs_${date || dateFrom || "export"}.pdf`;
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.send(buffer);
-  } catch (error) {
-    console.error("Error exporting to PDF:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to export to PDF",
-      message: error.message,
-    });
-  }
-});
-
 // Export PDFs grouped by building
-app.get("/api/panel-logs/export/pdf/by-building", async (req, res) => {
-  try {
-    const { building, date, dateFrom, dateTo, panelType, time } = req.query;
+app.get(
+  "/api/panel-logs/export/pdf/by-building",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { building, date, dateFrom, dateTo, panelType, time } = req.query;
+      const userAssignedBuildings = req.user?.assignedBuildings || [];
 
-    const filters = {};
-    if (building) filters.building = building;
-    if (date) filters.date = date;
-    if (dateFrom || dateTo) {
-      filters.dateRange = { from: dateFrom, to: dateTo };
-    }
-    if (panelType) filters.panelType = panelType;
-    if (time) filters.time = time;
+      // If user is restricted and building is specified, check access
+      if (
+        userAssignedBuildings.length > 0 &&
+        building &&
+        !userAssignedBuildings.includes(building)
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied to export logs for this building",
+        });
+      }
 
-    const logs = await panelLogService.getPanelLogs(filters);
+      const filters = {};
+      if (building) filters.building = building;
+      // If user is restricted and no building specified, restrict to assigned buildings only
+      else if (userAssignedBuildings.length > 0) {
+        filters.buildings = userAssignedBuildings;
+      }
 
-    if (logs.length === 0) {
-      return res.status(400).json({
+      if (date) filters.date = date;
+      if (dateFrom || dateTo) {
+        filters.dateRange = { from: dateFrom, to: dateTo };
+      }
+      if (panelType) filters.panelType = panelType;
+      if (time) filters.time = time;
+
+      const logs = await panelLogService.getPanelLogs(filters);
+
+      if (logs.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "No data available for export",
+        });
+      }
+
+      const { generatePDFByBuilding } = await import("./exportService.js");
+      const pdfsByBuilding = await generatePDFByBuilding(logs);
+
+      // If single building requested, return single PDF
+      if (building && pdfsByBuilding[building]) {
+        const filename = `Panel_Logs_${building}_${
+          date || dateFrom || "export"
+        }.pdf`;
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${filename}"`
+        );
+        res.send(pdfsByBuilding[building]);
+      } else {
+        // Return JSON with building information
+        res.json({
+          success: true,
+          buildings: Object.keys(pdfsByBuilding),
+          message:
+            "PDFs generated for each building. Use individual endpoints to download.",
+          count: Object.keys(pdfsByBuilding).length,
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting PDFs by building:", error);
+      res.status(500).json({
         success: false,
-        error: "No data available for export",
+        error: "Failed to generate PDF files",
+        message: error.message,
       });
     }
-
-    const { generatePDFByBuilding } = await import("./exportService.js");
-    const pdfsByBuilding = await generatePDFByBuilding(logs);
-
-    // If single building requested, return single PDF
-    if (building && pdfsByBuilding[building]) {
-      const filename = `Panel_Logs_${building}_${
-        date || dateFrom || "export"
-      }.pdf`;
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`
-      );
-      res.send(pdfsByBuilding[building]);
-    } else {
-      // Return JSON with building information
-      res.json({
-        success: true,
-        buildings: Object.keys(pdfsByBuilding),
-        message:
-          "PDFs generated for each building. Use individual endpoints to download.",
-        count: Object.keys(pdfsByBuilding).length,
-      });
-    }
-  } catch (error) {
-    console.error("Error exporting PDFs by building:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to generate PDF files",
-      message: error.message,
-    });
   }
-});
+);
 
 // Download individual building PDF
 app.get(

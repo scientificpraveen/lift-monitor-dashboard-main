@@ -383,6 +383,15 @@ export const getPanelLogs = async (filters = {}) => {
 
   if (filters.building) {
     where.building = filters.building;
+  } else if (
+    filters.buildings &&
+    Array.isArray(filters.buildings) &&
+    filters.buildings.length > 0
+  ) {
+    // Filter by multiple buildings
+    where.building = {
+      in: filters.buildings,
+    };
   }
 
   if (filters.date) {
