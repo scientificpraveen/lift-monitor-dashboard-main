@@ -667,14 +667,9 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
               const dailyLogs = logs
                 .filter((log) => log.date === date)
                 .sort((a, b) => a.time.localeCompare(b.time));
-              const dailyPowerFailures = dailyLogs
-                .flatMap((log) =>
-                  parsePowerFailure(log.powerFailure).map((pf) => ({
-                    ...pf,
-                    logId: log.id,
-                  }))
-                )
-                .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+              const dailyPowerFailures = parsePowerFailure(
+                dailyLogs[0]?.powerFailure
+              ).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
               return (
                 <div key={date} className="daily-section">
                   <div className="daily-section-header">
