@@ -28,6 +28,7 @@ export const EMAIL_CONFIG = {
   senderEmail: process.env.GMAIL_USER || "atlanwa.logs@gmail.com",
   senderPassword: process.env.GMAIL_PASSWORD || "",
   senderName: "Atlanwa Lift Monitor",
+  ccEmails: ["atlanwa.logs@gmail.com"], // CC emails for all reports
 };
 
 // Function to get building email config

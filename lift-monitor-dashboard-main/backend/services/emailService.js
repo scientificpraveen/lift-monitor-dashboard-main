@@ -70,6 +70,11 @@ export const sendEmailWithPDF = async (
       ],
     };
 
+    // Add CC recipients from config
+    if (EMAIL_CONFIG.ccEmails && EMAIL_CONFIG.ccEmails.length > 0) {
+      mailOptions.cc = EMAIL_CONFIG.ccEmails.join(",");
+    }
+
     // Add timeout for email sending (30 seconds)
     const sendMailPromise = emailTransporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) =>

@@ -66,6 +66,13 @@ export const sendEmailWithPDF = async (
       },
     ];
 
+    // Add CC recipients from config
+    if (EMAIL_CONFIG.ccEmails && EMAIL_CONFIG.ccEmails.length > 0) {
+      sendSmtpEmail.cc = EMAIL_CONFIG.ccEmails.map((email) => ({
+        email: email,
+      }));
+    }
+
     // Add PDF attachment
     sendSmtpEmail.attachment = [
       {
