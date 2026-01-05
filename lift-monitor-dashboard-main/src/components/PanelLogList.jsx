@@ -1147,6 +1147,11 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                               `B: ${dailyLogs[0].shiftIncharge.bShift.name} | `}
                             {dailyLogs[0]?.shiftIncharge?.cShift?.name &&
                               `C: ${dailyLogs[0].shiftIncharge.cShift.name}`}
+                            {dailyLogs[0]?.shiftInchargeHistory &&
+                              dailyLogs[0].shiftInchargeHistory.length > 0 &&
+                              ` | Verified by: ${dailyLogs[0].shiftInchargeHistory
+                                .map((record) => record.verifiedBy)
+                                .join(", ")}`}
                           </p>
                         ) : (
                           <p className="not-set">Not verified</p>
