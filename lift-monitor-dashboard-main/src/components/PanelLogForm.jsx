@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import "./PanelLogForm.css";
 
 const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
-  const { user } = useAuth();
+  const { user, getAccessibleBuildings } = useAuth();
   const [formData, setFormData] = useState({
     building: buildings[0],
     date: new Date().toISOString().split("T")[0],
@@ -65,12 +65,16 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
     if (initialData) {
       setFormData(initialData);
     } else {
+      const accessibleBuildings = getAccessibleBuildings(buildings);
+      const defaultBuilding =
+        accessibleBuildings.length > 0 ? accessibleBuildings[0] : buildings[0];
       setFormData((prev) => ({
         ...prev,
+        building: defaultBuilding,
         time: getISTTimeSlot(),
       }));
     }
-  }, [initialData]);
+  }, [initialData, user]);
 
   const handleInputChange = (section, subsection, field, subfield, value) => {
     setFormData((prev) => {
@@ -186,7 +190,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                 }
                 required
               >
-                {buildings.map((building) => (
+                {getAccessibleBuildings(buildings).map((building) => (
                   <option key={building} value={building}>
                     {building}
                   </option>
