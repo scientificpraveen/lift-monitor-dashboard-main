@@ -37,10 +37,25 @@ model PanelLog {
   lastUpdatedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Relation to shift incharge history
+  shiftInchargeHistory ShiftInchargeHistory[]
 
   @@unique([building, date, time])
   @@map("panel_logs")
   @@index([building, date, panelType])
+}
+
+model ShiftInchargeHistory {
+  id            Int       @id @default(autoincrement())
+  panelLogId    Int
+  panelLog      PanelLog  @relation(fields: [panelLogId], references: [id], onDelete: Cascade)
+  verifiedBy    String    // Name of the person who verified
+  verifiedAt    DateTime  @default(now())
+  shiftData     Json      // Store the shift incharge data that was set
+
+  @@map("shift_incharge_history")
+  @@index([panelLogId, verifiedAt])
 }
 
 model ServiceLog {

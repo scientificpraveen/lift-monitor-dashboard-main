@@ -1583,6 +1583,38 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                     !modalLog.shiftIncharge?.cShift?.name &&
                     "-"}
                 </p>
+
+                {/* Shift Incharge Verification History */}
+                {modalLog.shiftInchargeHistory &&
+                  modalLog.shiftInchargeHistory.length > 0 && (
+                    <div className="verification-history">
+                      <p>
+                        <strong>Verification History:</strong>
+                      </p>
+                      <ul className="history-list">
+                        {modalLog.shiftInchargeHistory.map((record, index) => (
+                          <li key={index} className="history-item">
+                            <span className="history-name">
+                              {record.verifiedBy}
+                            </span>
+                            <span className="history-time">
+                              {new Date(record.verifiedAt).toLocaleString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                 <p>
                   <strong>Power Failure:</strong>
                   {modalLog.powerFailure?.fromHrs &&

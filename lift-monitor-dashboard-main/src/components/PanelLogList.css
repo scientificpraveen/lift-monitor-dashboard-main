@@ -1908,3 +1908,47 @@
     gap: 15px;
   }
 }
+/* Shift Incharge Verification History */
+.verification-history {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f9f7ff;
+  border-left: 4px solid #a076f9;
+  border-radius: 4px;
+}
+
+.verification-history p {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  padding: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0d9ff;
+  font-size: 0.9rem;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-name {
+  color: #6b2eff;
+  font-weight: 600;
+}
+
+.history-time {
+  color: #777;
+  font-size: 0.85rem;
+}

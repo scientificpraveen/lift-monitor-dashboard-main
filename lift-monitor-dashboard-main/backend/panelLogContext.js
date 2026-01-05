@@ -419,6 +419,11 @@ export const getPanelLogs = async (filters = {}) => {
   let logs = await prisma.panelLog.findMany({
     where,
     orderBy: [{ date: "desc" }, { time: "desc" }],
+    include: {
+      shiftInchargeHistory: {
+        orderBy: { verifiedAt: "desc" },
+      },
+    },
   });
 
   // Helper to check if HT panel has actual measurement values (not just default "EB")
@@ -509,6 +514,11 @@ export const getPanelLogs = async (filters = {}) => {
 export const getPanelLogById = async (id) => {
   return await prisma.panelLog.findUnique({
     where: { id: parseInt(id) },
+    include: {
+      shiftInchargeHistory: {
+        orderBy: { verifiedAt: "desc" },
+      },
+    },
   });
 };
 
@@ -516,6 +526,11 @@ export const getPanelLogsByBuilding = async (building) => {
   return await prisma.panelLog.findMany({
     where: { building },
     orderBy: { createdAt: "desc" },
+    include: {
+      shiftInchargeHistory: {
+        orderBy: { verifiedAt: "desc" },
+      },
+    },
   });
 };
 
@@ -668,10 +683,45 @@ export const updatePanelLog = async (id, logData) => {
       updateData.lastUpdatedBy = logData.lastUpdatedBy;
     }
 
-    return await prisma.panelLog.update({
+    // Track shift incharge verification history
+    let historyRecord = null;
+    if (logData.shiftIncharge && logData.lastUpdatedBy) {
+      // Check if this is a new verification (not just merging existing data)
+      const existingShiftIncharge = JSON.stringify(
+        existingLog.shiftIncharge || {}
+      );
+      const newShiftIncharge = JSON.stringify(logData.shiftIncharge || {});
+
+      if (existingShiftIncharge !== newShiftIncharge) {
+        historyRecord = {
+          verifiedBy: logData.lastUpdatedBy,
+          shiftData: logData.shiftIncharge,
+        };
+      }
+    }
+
+    const updatedLog = await prisma.panelLog.update({
       where: { id: parseInt(id) },
       data: updateData,
+      include: {
+        shiftInchargeHistory: {
+          orderBy: { verifiedAt: "desc" },
+        },
+      },
     });
+
+    // Create history record if there's a new verification
+    if (historyRecord) {
+      await prisma.shiftInchargeHistory.create({
+        data: {
+          panelLogId: parseInt(id),
+          verifiedBy: historyRecord.verifiedBy,
+          shiftData: historyRecord.shiftData,
+        },
+      });
+    }
+
+    return updatedLog;
   } catch (error) {
     console.error("Error updating panel log:", error);
     return null;
