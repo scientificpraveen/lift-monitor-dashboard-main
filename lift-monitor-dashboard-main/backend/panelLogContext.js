@@ -669,12 +669,8 @@ export const updatePanelLog = async (id, logData) => {
     if (!updateData.remarks && existingLog.remarks) {
       updateData.remarks = existingLog.remarks;
     }
-    if (
-      (!updateData.powerFailure ||
-        (Array.isArray(updateData.powerFailure) &&
-          updateData.powerFailure.length === 0)) &&
-      existingLog.powerFailure
-    ) {
+    // Only preserve powerFailure if it wasn't explicitly provided in the update
+    if (!logData.hasOwnProperty("powerFailure") && existingLog.powerFailure) {
       updateData.powerFailure = existingLog.powerFailure;
     }
 
