@@ -1,6 +1,7 @@
 import { queueEmailReport } from "./emailQueue.js";
 
 let emailSchedulerInterval = null;
+let lastEmailTriggerDate = null; // Track the last date emails were sent
 
 const BUILDINGS = [
   "PRESTIGE POLYGON",
@@ -79,6 +80,14 @@ const handleDailyEmailReport = async () => {
     const istTime = new Date(now.getTime() + istOffset);
     const istDateStr = istTime.toISOString().split("T")[0];
 
+    // Prevent duplicate emails on the same day
+    if (lastEmailTriggerDate === istDateStr) {
+      console.log(
+        `⚠️ Email already sent today (${istDateStr}). Skipping to prevent duplicates.`
+      );
+      return { queued: 0 };
+    }
+
     console.log(
       `\n📧 [${istTime.toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -102,6 +111,9 @@ const handleDailyEmailReport = async () => {
         );
       }
     }
+
+    // Update the last trigger date to prevent duplicates
+    lastEmailTriggerDate = istDateStr;
 
     console.log(
       `✅ Queued ${queuedCount} emails for processing (Date: ${yesterdayStr})`
