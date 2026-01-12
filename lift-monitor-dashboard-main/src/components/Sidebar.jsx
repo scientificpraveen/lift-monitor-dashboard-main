@@ -8,6 +8,7 @@ const Sidebar = ({
   onSelect,
   onServiceLogClick,
   onPanelLogClick,
+  onStpClick,
   onUserManagementClick,
   activePanel,
 }) => {
@@ -23,35 +24,38 @@ const Sidebar = ({
           {accessibleBuildings.map((building) => (
             <li
               key={building}
-              className={`building-item ${
-                selected === building && !activePanel ? "active" : ""
-              }`}
+              className={`building-item ${selected === building && !activePanel ? "active" : ""
+                }`}
               onClick={() => onSelect(building)}
             >
               {building}
             </li>
           ))}
           <li
-            className={`service-log-item ${
-              activePanel === "service" ? "active" : ""
-            }`}
+            className={`service-log-item ${activePanel === "service" ? "active" : ""
+              }`}
             onClick={onServiceLogClick}
           >
             OPERATOR LOG PANEL
           </li>
           <li
-            className={`service-log-item ${
-              activePanel === "panel" ? "active" : ""
-            }`}
+            className={`service-log-item ${activePanel === "panel" ? "active" : ""
+              }`}
             onClick={onPanelLogClick}
           >
             ⚡ HT/LT PANEL LOGS
           </li>
+          <li
+            className={`service-log-item ${activePanel === "stp" ? "active" : ""
+              }`}
+            onClick={onStpClick}
+          >
+            ⚙️ STP AUTOMATION
+          </li>
           {isAdmin() && (
             <li
-              className={`service-log-item admin-item ${
-                activePanel === "users" ? "active" : ""
-              }`}
+              className={`service-log-item admin-item ${activePanel === "users" ? "active" : ""
+                }`}
               onClick={onUserManagementClick}
             >
               👥 USER MANAGEMENT

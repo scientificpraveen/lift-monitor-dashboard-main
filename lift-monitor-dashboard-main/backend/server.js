@@ -55,6 +55,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/service-logs", serviceLogRoutes);
 app.use("/api/users", userRoutes);
 
+// Initialize STP - No external fetch needed, defaults are set.
+console.log("STP System Initialized with Defaults.");
+
 const server = createServer(app);
 
 const wss = new WebSocketServer({ server, path: "/ws" });
@@ -108,6 +111,75 @@ let liftData = {
     { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
     { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
   ],
+};
+
+// -- STP AUTOMATION STATE --
+let stpState = {
+  // Motors - Valid: 0 (Off), 1 (On), 2 (Trip)
+  M1: 2, M2: 2, M3: 2, M4: 2, M5: 2, M6: 2, M7: 2, M8: 2, M9: 2, M10: 2, M11: 2, M12: 2, M13: 2,
+  // Blowers/Fans - Valid: 0, 1, 2
+  B1: 2, B2: 2, FAF1: 2, FAF2: 2, EF1: 2, EF2: 2,
+  // Valves (Solenoid) - Valid: 0, 1, 2
+  AirSolenoid: 2, ClarifierValve: 1, UV: 2, DosingPump: 2, ARM: 2,
+  // 5-Way Valves - Valid: 1 (Filter), 2 (Backwash), 3 (Rinse), 4 (Bypass Drain), 5 (Bypass), 6 (Service)
+  PSFValve: 6, ACFValve: 6,
+  // Tank Levels - Valid: 0-100
+  CollectionTankLevel: 0, SBRTankLevel: 0, SludgeTankLevel: 0, FilterTankLevel: 0, TreatedWaterTankLevel: 0, SoftwaterTankLevel: 0,
+  // Sensors - Valid: Float
+  InletPressure: 0.0, OutletPressure: 0.0,
+  DO1: 0.0, DO2: 0.0, SoftnerTH: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0
+};
+
+// Keys categorization for validation
+const VALIDATION_RULES = {
+  MOTORS: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12', 'M13'],
+  BLOWERS_FANS: ['B1', 'B2', 'FAF1', 'FAF2', 'EF1', 'EF2'],
+  VALVES_SOLENOID: ['AirSolenoid', 'ClarifierValve', 'UV', 'DosingPump', 'ARM'],
+  VALVES_5WAY: ['PSFValve', 'ACFValve'],
+  SENSORS: ['InletPressure', 'OutletPressure', 'DO1', 'DO2', 'SoftnerTH', 'SBRTSS', 'ClarifierTSS'],
+  TANKS: ['CollectionTankLevel', 'SBRTankLevel', 'SludgeTankLevel', 'FilterTankLevel', 'TreatedWaterTankLevel', 'SoftwaterTankLevel']
+};
+
+// Helper: Process and validate updates
+// Helper: Process and validate updates
+const processStpData = (incomingData) => {
+  if (!incomingData || typeof incomingData !== 'object') return {};
+
+  const processed = {};
+
+  Object.keys(incomingData).forEach(key => {
+    // Safety: Ignore keys not in our state
+    if (!stpState.hasOwnProperty(key)) return;
+
+    const val = incomingData[key];
+
+    // 1. SENSORS or TANKS (Expect Number/Float)
+    if (VALIDATION_RULES.SENSORS.includes(key) || VALIDATION_RULES.TANKS.includes(key)) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        stpState[key] = num;
+        processed[key] = num;
+      }
+    }
+    // 2. 5-WAY VALVES (Expect 0-6)
+    else if (VALIDATION_RULES.VALVES_5WAY.includes(key)) {
+      const intVal = parseInt(val);
+      if ([0, 1, 2, 3, 4, 5, 6].includes(intVal)) {
+        stpState[key] = intVal;
+        processed[key] = intVal;
+      }
+    }
+    // 3. STANDARD MOTORS/DEVICES (Expect 0-2)
+    else if (VALIDATION_RULES.MOTORS.includes(key) || VALIDATION_RULES.BLOWERS_FANS.includes(key) || VALIDATION_RULES.VALVES_SOLENOID.includes(key)) {
+      const intVal = parseInt(val);
+      if ([0, 1, 2].includes(intVal)) {
+        stpState[key] = intVal;
+        processed[key] = intVal;
+      }
+    }
+  });
+
+  return processed;
 };
 
 const broadcastWS = (update) => {
@@ -181,6 +253,25 @@ app.post("/api/lifts", (req, res) => {
     console.error("Error updating lift data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// -- STP API ENDPOINTS --
+app.get('/api/stp', (req, res) => {
+  res.json(stpState);
+});
+
+app.post('/api/update-stp', (req, res) => {
+  const incomingData = req.body;
+  const processed = processStpData(incomingData); // Updates stpState in place and returns changes
+
+  // Broadcast via WS (Real-time update)
+  const message = JSON.stringify({ type: 'stpUpdate', data: stpState });
+  wss.clients.forEach(client => {
+    if (client.readyState === 1) client.send(message);
+  });
+
+  console.log("STP Update Processed", Object.keys(processed));
+  res.json({ success: true, currentState: stpState, updated: processed });
 });
 
 app.get("/health", (req, res) => {
@@ -573,9 +664,8 @@ app.get("/api/panel-logs/export/excel", authMiddleware, async (req, res) => {
 
     const buffer = await generateExcel(filters);
 
-    const filename = `panel-logs-${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
+    const filename = `panel-logs-${new Date().toISOString().split("T")[0]
+      }.xlsx`;
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -786,9 +876,8 @@ app.get(
 
       // If single building requested, return single PDF
       if (building && pdfsByBuilding[building]) {
-        const filename = `Panel_Logs_${building}_${
-          date || dateFrom || "export"
-        }.pdf`;
+        const filename = `Panel_Logs_${building}_${date || dateFrom || "export"
+          }.pdf`;
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
           "Content-Disposition",
@@ -847,9 +936,8 @@ app.get(
       const pdfsByBuilding = await generatePDFByBuilding(logs);
 
       if (pdfsByBuilding[buildingName]) {
-        const filename = `Panel_Logs_${buildingName}_${
-          date || dateFrom || "export"
-        }.pdf`;
+        const filename = `Panel_Logs_${buildingName}_${date || dateFrom || "export"
+          }.pdf`;
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
           "Content-Disposition",

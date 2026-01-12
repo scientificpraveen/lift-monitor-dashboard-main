@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import PanelLogManager from "./components/PanelLogManager";
 import ServiceLogManager from "./components/ServiceLogManager";
 import UserManagement from "./components/UserManagement";
+import StpAutomation from "./components/StpAutomation";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -16,7 +17,7 @@ import TopAlert from "./components/TopAlert";
 
 const App = () => {
   const { isAuthenticated, loading, getAccessibleBuildings } = useAuth();
-  const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', or 'users'
+  const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', 'stp', or 'users'
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [selectedBuilding, setSelectedBuilding] = useState(
     accessibleBuildings[0] || buildings[0]
@@ -184,6 +185,7 @@ const App = () => {
             }}
             onServiceLogClick={() => setActivePanel("service")}
             onPanelLogClick={() => setActivePanel("panel")}
+            onStpClick={() => setActivePanel("stp")}
             onUserManagementClick={() => setActivePanel("users")}
             activePanel={activePanel}
           />
@@ -197,6 +199,7 @@ const App = () => {
             <div className="panel-content">
               {activePanel === "service" && <ServiceLogManager />}
               {activePanel === "panel" && <PanelLogManager />}
+              {activePanel === "stp" && <StpAutomation />}
               {activePanel === "users" && <UserManagement />}
             </div>
           )}
