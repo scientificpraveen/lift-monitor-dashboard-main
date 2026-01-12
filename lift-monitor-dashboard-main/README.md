@@ -11,6 +11,7 @@ A comprehensive real-time monitoring and management system for lift operations a
 - **Interactive Dashboard**: Switch between lift monitoring and panel log management views
 - **Historical Data**: View and filter historical panel log data
 - **Shift Management**: Track shift incharge details and maintenance records
+- **STP Automation**: Real-time visualization of Sewage Treatment Plant operations (Motors, Valves, Tanks)
 
 ## Tech Stack
 
@@ -21,6 +22,7 @@ A comprehensive real-time monitoring and management system for lift operations a
 - Axios
 - React Icons
 - XLSX (for Excel exports)
+- Framer Motion (for animations)
 
 ### Backend
 - Node.js with Express
@@ -246,6 +248,20 @@ Frontend uses hardcoded API endpoints. To change:
 - `DELETE /api/panel-logs/:id` - Delete panel log
 - `DELETE /api/panel-logs` - Delete all panel logs
 
+### STP Automation
+
+- `GET /api/stp` - Get real-time STP state (motors, valves, sensors)
+- `POST /api/update-stp` - Update STP state (broadcasts to all clients)
+
+**Example POST Payload:**
+```json
+{
+  "M1": 1,          // Motor 1 ON
+  "PSFValve": 0,     // Filter Mode (0-6 allowed)
+  "InletPressure": 2.5 // Pressure Sensor
+}
+```
+
 ### Export
 
 - `GET /api/panel-logs/export/excel` - Export to Excel
@@ -287,6 +303,7 @@ The application uses WebSocket for real-time lift status updates:
 - **Message Types**:
   - `liftData` - Full lift data update
   - `liftUpdate` - Partial lift status update
+  - `stpUpdate` - Real-time STP automation state update
 
 ## Time Slots
 
