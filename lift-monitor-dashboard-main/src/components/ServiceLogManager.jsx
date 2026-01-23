@@ -6,6 +6,7 @@ import {
   deleteServiceLog,
 } from "../services/api";
 import { buildings } from "../config/buildings";
+import { getISTDate } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
@@ -25,7 +26,7 @@ const ServiceLogManager = () => {
   const [editingLog, setEditingLog] = useState(null);
   const [expandedLogId, setExpandedLogId] = useState(null);
   const [filterBuilding, setFilterBuilding] = useState(
-    accessibleBuildings[0] || ""
+    accessibleBuildings[0] || "",
   );
   const [sortConfig, setSortConfig] = useState({
     key: "date",
@@ -34,7 +35,7 @@ const ServiceLogManager = () => {
   const [formData, setFormData] = useState({
     sno: "",
     building: accessibleBuildings[0] || "",
-    date: new Date().toISOString().split("T")[0],
+    date: getISTDate(),
     time: new Date()
       .toLocaleTimeString("en-IN", {
         hour: "2-digit",
@@ -119,7 +120,7 @@ const ServiceLogManager = () => {
     setFormData({
       sno: "",
       building: filterBuilding || accessibleBuildings[0] || "",
-      date: new Date().toISOString().split("T")[0],
+      date: require("../utils/timeUtils").getISTDate(),
       time: new Date()
         .toLocaleTimeString("en-IN", {
           hour: "2-digit",
@@ -204,7 +205,7 @@ const ServiceLogManager = () => {
 
   const getSortedLogs = () => {
     const filtered = logs.filter(
-      (log) => !filterBuilding || log.building === filterBuilding
+      (log) => !filterBuilding || log.building === filterBuilding,
     );
 
     const sorted = [...filtered].sort((a, b) => {
@@ -494,12 +495,12 @@ const ServiceLogManager = () => {
                                         className="change-type-badge"
                                         style={{
                                           backgroundColor: getChangeTypeColor(
-                                            historyItem.changeType
+                                            historyItem.changeType,
                                           ),
                                         }}
                                       >
                                         {getChangeTypeLabel(
-                                          historyItem.changeType
+                                          historyItem.changeType,
                                         )}
                                       </span>
                                     </td>

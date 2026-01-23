@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { buildings } from "../config/buildings";
-import { getISTTimeSlot, formatTimeSlot } from "../utils/timeUtils";
+import { getISTTimeSlot, formatTimeSlot, getISTDate } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import "./PanelLogForm.css";
 
@@ -8,7 +8,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
   const { user, getAccessibleBuildings } = useAuth();
   const [formData, setFormData] = useState({
     building: buildings[0],
-    date: new Date().toISOString().split("T")[0],
+    date: getISTDate(),
     time: getISTTimeSlot(),
     panelType: "BOTH",
 
@@ -185,7 +185,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                     null,
                     null,
                     null,
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 required
@@ -225,7 +225,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                     null,
                     null,
                     null,
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 required
@@ -283,7 +283,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "icFromTneb",
                         null,
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                   >
@@ -310,7 +310,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "voltageFromWreb",
                         "volt",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     placeholder="Enter voltage in kV"
@@ -335,7 +335,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "currentAmp",
                         "r",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     required
@@ -353,7 +353,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "currentAmp",
                         "y",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     required
@@ -371,7 +371,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "currentAmp",
                         "b",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     required
@@ -389,7 +389,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "currentAmp",
                         "pf",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     required
@@ -407,7 +407,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                         "currentAmp",
                         "hz",
                         null,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     required
@@ -435,7 +435,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               tr,
                               "currentAmp",
                               "r",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -453,7 +453,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               tr,
                               "currentAmp",
                               "y",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -471,7 +471,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               tr,
                               "currentAmp",
                               "b",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -494,7 +494,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               tr,
                               "windingTemp",
                               null,
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -517,7 +517,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                               tr,
                               "oilTemp",
                               null,
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -556,7 +556,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "voltage",
                             "ry",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -574,7 +574,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "voltage",
                             "yb",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -592,7 +592,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "voltage",
                             "br",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -616,7 +616,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "currentAmp",
                             "r",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -634,7 +634,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "currentAmp",
                             "y",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -652,7 +652,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                             incomer,
                             "currentAmp",
                             "b",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -673,7 +673,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                           incomer,
                           "tap",
                           null,
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       required
@@ -691,7 +691,7 @@ const PanelLogForm = ({ initialData = null, onSubmit, onCancel }) => {
                           incomer,
                           "kwh",
                           null,
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       required
