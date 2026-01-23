@@ -62,13 +62,18 @@ const getSlotsTillNow = () => {
   });
 };
 
-// Helper to get today's date in YYYY-MM-DD format
+// Helper to get today's date in YYYY-MM-DD format (IST)
 const getTodayDate = () => {
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istTime = new Date(now.getTime() + istOffset);
 
-  return istTime.toISOString().split("T")[0];
+  // Use getUTC* methods directly since we've already added IST offset
+  const year = istTime.getUTCFullYear();
+  const month = String(istTime.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(istTime.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 };
 
 // Create empty panel log entry using upsert to prevent duplicates
