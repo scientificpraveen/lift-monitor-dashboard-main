@@ -143,11 +143,11 @@ const createEmptyEntry = async (building, date, timeSlot) => {
 
     if (isNew) {
       console.log(
-        `✓ Auto-created entry for ${building} at ${date} ${timeSlot}`
+        `✓ Auto-created entry for ${building} at ${date} ${timeSlot}`,
       );
     } else {
       console.log(
-        `ℹ Entry already exists for ${building} at ${date} ${timeSlot} (skipped)`
+        `ℹ Entry already exists for ${building} at ${date} ${timeSlot} (skipped)`,
       );
     }
 
@@ -155,7 +155,7 @@ const createEmptyEntry = async (building, date, timeSlot) => {
   } catch (error) {
     console.error(
       `✗ Failed to create auto-entry for ${building} at ${date} ${timeSlot}:`,
-      error.message
+      error.message,
     );
     return null;
   }
@@ -168,7 +168,7 @@ export const checkAndCreateMissingEntries = async () => {
     const today = getTodayDate();
 
     console.log(
-      `\n🔍 Checking for missing entries at ${new Date().toISOString()}`
+      `\n🔍 Checking for missing entries at ${new Date().toISOString()}`,
     );
     console.log(`Today's date: ${today}`);
     console.log(`Slots to check: ${slotsTillNow.join(", ")}`);
@@ -188,14 +188,14 @@ export const checkAndCreateMissingEntries = async () => {
         } catch (slotError) {
           console.error(
             `Error for ${building} at ${timeSlot}:`,
-            slotError.message
+            slotError.message,
           );
         }
       }
     }
 
     console.log(
-      `✅ Created: ${createdCount} entries | Skipped (existing): ${skippedCount} entries`
+      `✅ Created: ${createdCount} entries | Skipped (existing): ${skippedCount} entries`,
     );
 
     return createdCount;
@@ -205,20 +205,53 @@ export const checkAndCreateMissingEntries = async () => {
   }
 };
 
-// Start the auto-entry scheduler (runs every 2 hours)
+// Start the auto-entry scheduler (runs at exact 2-hour boundaries)
 export const startAutoEntryScheduler = () => {
   console.log("🚀 Auto-entry scheduler started");
   console.log("📋 Buildings monitored:", BUILDINGS.join(", "));
   console.log(
-    "⏰ Checking every 2 hours for missing entries (backfills all past slots)\n"
+    "⏰ Checking at start of every 2-hour slot (00:00, 02:00, 04:00, etc.)\n",
   );
 
   // Run immediately on start
   checkAndCreateMissingEntries();
 
-  // Schedule to run at the start of every 2-hour time slot
-  // Run every 2 hours (2 * 60 * 60 * 1000 ms)
-  setInterval(checkAndCreateMissingEntries, 2 * 60 * 60 * 1000);
+  // Calculate time until next 2-hour boundary
+  const getTimeUntilNextSlot = () => {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+
+    const currentHours = istTime.getUTCHours();
+    const currentMinutes = istTime.getUTCMinutes();
+    const currentSeconds = istTime.getUTCSeconds();
+
+    const nextSlotHour = Math.ceil(currentHours / 2) * 2;
+    const nextSlotTime = new Date(istTime);
+    nextSlotTime.setUTCHours(nextSlotHour % 24, 0, 0, 0);
+
+    if (nextSlotHour === 24) {
+      nextSlotTime.setUTCDate(nextSlotTime.getUTCDate() + 1);
+    }
+
+    return nextSlotTime.getTime() - istTime.getTime();
+  };
+
+  // Schedule first run at next 2-hour boundary
+  const timeUntilNextSlot = getTimeUntilNextSlot();
+  const nextRunTime = new Date(Date.now() + timeUntilNextSlot);
+
+  console.log(
+    `⏰ Next scheduled run: ${nextRunTime.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    })}\n`,
+  );
+
+  setTimeout(() => {
+    checkAndCreateMissingEntries();
+    // Then run every 2 hours at exact boundaries
+    setInterval(checkAndCreateMissingEntries, 2 * 60 * 60 * 1000);
+  }, timeUntilNextSlot);
 };
 
 // Stop the scheduler (for graceful shutdown)
