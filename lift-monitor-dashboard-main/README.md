@@ -11,6 +11,7 @@ A comprehensive real-time monitoring and management system for lift operations a
 - **Interactive Dashboard**: Switch between lift monitoring and panel log management views
 - **Historical Data**: View and filter historical panel log data
 - **Shift Management**: Track shift incharge details and maintenance records
+- **Parking Slot Vacancy**: Real-time tracking of parking slots (Prestige Polygon only)
 - **STP Automation**: Real-time visualization of Sewage Treatment Plant operations (Motors, Valves, Tanks)
 
 ## Tech Stack
@@ -247,6 +248,22 @@ Frontend uses hardcoded API endpoints. To change:
 - `PUT /api/panel-logs/:id` - Update panel log
 - `DELETE /api/panel-logs/:id` - Delete panel log
 - `DELETE /api/panel-logs` - Delete all panel logs
+
+### Parking Vacancy (Prestige Polygon)
+
+- `GET /api/parking-slots` - Get current parking status
+- `POST /api/update-parking-slots/` - Update parking status
+
+#### Update Payload Example (POST)
+```json
+{
+  "P1": 1,
+  "P2": 0,
+  "P3": 1,
+  "P4": 0
+}
+```
+*(1 = Occupied, 0 = Vacant)*
 
 ### STP Automation
 

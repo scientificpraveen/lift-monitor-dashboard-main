@@ -1,8 +1,7 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
-const WS_BASE_URL = `${
-  window.location.protocol === "https:" ? "wss" : "ws"
-}://${window.location.host}${import.meta.env.VITE_WS_PATH || "/ws"}`;
+const WS_BASE_URL = `${window.location.protocol === "https:" ? "wss" : "ws"
+  }://${window.location.host}${import.meta.env.VITE_WS_PATH || "/ws"}`;
 
 export const fetchLiftData = async () => {
   try {
@@ -116,10 +115,9 @@ export const fetchPanelLogs = async (filters = {}) => {
     if (filters.panelType) queryParams.append("panelType", filters.panelType);
     if (filters.time) queryParams.append("time", filters.time);
 
-    const url = `${API_BASE_URL}/panel-logs${
-      queryParams.toString() ? "?" + queryParams.toString() : ""
-    }`;
-    const response = await fetch(url);
+    const url = `${API_BASE_URL}/panel-logs${queryParams.toString() ? "?" + queryParams.toString() : ""
+      }`;
+    const response = await fetch(url, { credentials: "include" });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -135,7 +133,9 @@ export const fetchPanelLogs = async (filters = {}) => {
 
 export const fetchPanelLogById = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/panel-logs/${id}`);
+    const response = await fetch(`${API_BASE_URL}/panel-logs/${id}`, {
+      credentials: "include",
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -174,6 +174,7 @@ export const createPanelLog = async (logData) => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(logData),
     });
 
@@ -199,6 +200,7 @@ export const updatePanelLog = async (id, logData) => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(logData),
     });
 
@@ -225,6 +227,7 @@ export const deletePanelLog = async (id, panelType = null) => {
 
     const response = await fetch(url, {
       method: "DELETE",
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -246,6 +249,7 @@ export const deleteAllPanelLogs = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/panel-logs`, {
       method: "DELETE",
+      credentials: "include",
     });
 
     if (!response.ok) {

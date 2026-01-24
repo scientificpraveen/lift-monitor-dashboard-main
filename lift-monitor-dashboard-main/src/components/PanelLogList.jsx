@@ -5,7 +5,6 @@ import {
   updatePanelLog,
 } from "../services/api";
 import { buildings } from "../config/buildings";
-import { getISTDate } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import PowerFailureModal from "./PowerFailureModal";
 import "./PanelLogList.css";
@@ -13,7 +12,11 @@ import "./PanelLogList.css";
 // API base URL for production/development
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
 
-const PanelLogList = ({ onEdit, onCreateNew }) => {
+const PanelLogList = ({
+  onEdit,
+  onCreateNew,
+  filterBuilding: propFilterBuilding,
+}) => {
   const { user, canDeletePanelLog, getAccessibleBuildings, isAdmin } =
     useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
@@ -86,7 +89,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   };
 
   useEffect(() => {
-    const today = getISTDate();
+    const today = new Date().toISOString().split("T")[0];
     setFilterDateFrom(today);
     setFilterDateTo(today);
     // Set first accessible building as default if available
@@ -138,11 +141,10 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     }
 
     const confirmMessage = panelType
-      ? `Are you sure you want to delete the ${panelType} panel data? ${
-          logs.find((l) => l.id === id)?.panelType === "BOTH"
-            ? "The other panel data will be kept."
-            : "This will delete the entire entry."
-        }`
+      ? `Are you sure you want to delete the ${panelType} panel data? ${logs.find((l) => l.id === id)?.panelType === "BOTH"
+        ? "The other panel data will be kept."
+        : "This will delete the entire entry."
+      }`
       : "Are you sure you want to delete this panel log?";
 
     if (!window.confirm(confirmMessage)) {
@@ -200,7 +202,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
     if (!dailyViewDate) return [];
     const slots = logs
       .filter(
-        (log) => log.date === dailyViewDate && log.building === filterBuilding,
+        (log) => log.date === dailyViewDate && log.building === filterBuilding
       )
       .map((log) => log.time)
       .filter((value, index, self) => self.indexOf(value) === index)
@@ -226,7 +228,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`,
+        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -262,7 +264,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`,
+        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -300,8 +302,8 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       if (filterBuilding) {
         const response = await fetch(
           `${API_BASE_URL}/panel-logs/export/pdf/building/${encodeURIComponent(
-            filterBuilding,
-          )}?${params.toString()}`,
+            filterBuilding
+          )}?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -312,9 +314,8 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `Panel_Logs_${filterBuilding}_${
-          filterDateFrom || "export"
-        }.pdf`;
+        a.download = `Panel_Logs_${filterBuilding}_${filterDateFrom || "export"
+          }.pdf`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -322,7 +323,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
       } else {
         // Export all buildings
         const response = await fetch(
-          `${API_BASE_URL}/panel-logs/export/pdf/by-building?${params.toString()}`,
+          `${API_BASE_URL}/panel-logs/export/pdf/by-building?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -335,8 +336,8 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
           for (const building of data.buildings) {
             const pdfResponse = await fetch(
               `${API_BASE_URL}/panel-logs/export/pdf/building/${encodeURIComponent(
-                building,
-              )}?${params.toString()}`,
+                building
+              )}?${params.toString()}`
             );
 
             if (!pdfResponse.ok) {
@@ -348,9 +349,8 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Panel_Logs_${building}_${
-              filterDateFrom || "export"
-            }.pdf`;
+            a.download = `Panel_Logs_${building}_${filterDateFrom || "export"
+              }.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -397,7 +397,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
         const promises = dailyLogs.map((log) =>
           updatePanelLog(log.id, {
             powerFailure: failures.length > 0 ? failures : null,
-          }),
+          })
         );
 
         await Promise.all(promises);
@@ -424,12 +424,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
   };
 
   const handleCreatePowerFailureLog = () => {
-    const today = getISTDate();
+    const today = new Date().toISOString().split("T")[0];
     const todayLogs = logs.filter((log) => log.date === today);
 
     // Get existing power failure from today's logs if any
     const existingPowerFailure = parsePowerFailure(
-      todayLogs.find((log) => log.powerFailure)?.powerFailure,
+      todayLogs.find((log) => log.powerFailure)?.powerFailure
     );
 
     // Create a virtual log entry for daily power failure
@@ -531,7 +531,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
               const mode = e.target.value;
               setFilterMode(mode);
               if (mode === "today") {
-                const today = getISTDate();
+                const today = new Date().toISOString().split("T")[0];
                 setFilterDateFrom(today);
                 setFilterDateTo(today);
               } else {
@@ -546,10 +546,16 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
         </div>
 
         <div className="filter-group">
-          <label>Filter by Building:</label>
+          <label>Building Name:</label>
           <select
             value={filterBuilding}
             onChange={(e) => setFilterBuilding(e.target.value)}
+            disabled={!!propFilterBuilding}
+            style={
+              propFilterBuilding
+                ? { backgroundColor: "#f3f4f6", cursor: "not-allowed" }
+                : {}
+            }
           >
             {accessibleBuildings.map((building) => (
               <option key={building} value={building}>
@@ -636,7 +642,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
         <button
           className="btn btn-secondary"
           onClick={() => {
-            setFilterBuilding("");
+            if (!propFilterBuilding) setFilterBuilding("");
             setFilterDateFrom("");
             setFilterDateTo("");
             setFilterPanelType("");
@@ -669,7 +675,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                 .filter((log) => log.date === date)
                 .sort((a, b) => a.time.localeCompare(b.time));
               const dailyPowerFailures = parsePowerFailure(
-                dailyLogs[0]?.powerFailure,
+                dailyLogs[0]?.powerFailure
               ).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
               return (
                 <div key={date} className="daily-section">
@@ -707,7 +713,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                             id: `daily-${date}`,
                             date: date,
                             powerFailure: parsePowerFailure(
-                              dailyLogs[0]?.powerFailure,
+                              dailyLogs[0]?.powerFailure
                             ),
                             isDaily: true,
                           };
@@ -834,12 +840,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp,
+                                          log.htPanel.outgoingTr1?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeOilTemp(
-                                          log.htPanel.outgoingTr1?.oilTemp,
+                                          log.htPanel.outgoingTr1?.oilTemp
                                         )}
                                       </td>
                                       <td>
@@ -856,12 +862,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp,
+                                          log.htPanel.outgoingTr2?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeOilTemp(
-                                          log.htPanel.outgoingTr2?.oilTemp,
+                                          log.htPanel.outgoingTr2?.oilTemp
                                         )}
                                       </td>
                                       <td>
@@ -878,12 +884,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp,
+                                          log.htPanel.outgoingTr3?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeOilTemp(
-                                          log.htPanel.outgoingTr3?.oilTemp,
+                                          log.htPanel.outgoingTr3?.oilTemp
                                         )}
                                       </td>
                                       <td>
@@ -897,7 +903,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       <td>
                                         {formatDateTime24hr(
                                           log.htPanel._updatedAt ||
-                                            log.updatedAt,
+                                          log.updatedAt
                                         )}
                                       </td>
                                       <td>
@@ -923,7 +929,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                         </div>
                                       </td>
                                     </tr>
-                                  ),
+                                  )
                               )}
                             </tbody>
                           </table>
@@ -1100,7 +1106,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                       <td>
                                         {formatDateTime24hr(
                                           log.ltPanel._updatedAt ||
-                                            log.updatedAt,
+                                          log.updatedAt
                                         )}
                                       </td>
                                       <td>
@@ -1126,7 +1132,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                         </div>
                                       </td>
                                     </tr>
-                                  ),
+                                  )
                               )}
                             </tbody>
                           </table>
@@ -1275,12 +1281,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
               >
                 {(modalLog.panelType === "BOTH" ||
                   modalLog.panelType === "HT") && (
-                  <option value="HT">HT Panel Only</option>
-                )}
+                    <option value="HT">HT Panel Only</option>
+                  )}
                 {(modalLog.panelType === "BOTH" ||
                   modalLog.panelType === "LT") && (
-                  <option value="LT">LT Panel Only</option>
-                )}
+                    <option value="LT">LT Panel Only</option>
+                  )}
                 {modalLog.panelType === "BOTH" && (
                   <option value="BOTH">Both Panels</option>
                 )}
@@ -1407,47 +1413,47 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                           <tr>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr1?.windingTemp,
+                                modalLog.htPanel.outgoingTr1?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr1?.windingTemp,
+                                modalLog.htPanel.outgoingTr1?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr1?.windingTemp,
+                                modalLog.htPanel.outgoingTr1?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr2?.windingTemp,
+                                modalLog.htPanel.outgoingTr2?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr2?.windingTemp,
+                                modalLog.htPanel.outgoingTr2?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr2?.windingTemp,
+                                modalLog.htPanel.outgoingTr2?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr3?.windingTemp,
+                                modalLog.htPanel.outgoingTr3?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr3?.windingTemp,
+                                modalLog.htPanel.outgoingTr3?.windingTemp
                               )}
                             </td>
                             <td>
                               {getSafeWindingTemp(
-                                modalLog.htPanel.outgoingTr3?.windingTemp,
+                                modalLog.htPanel.outgoingTr3?.windingTemp
                               )}
                             </td>
                           </tr>
@@ -1612,7 +1618,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                   day: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                },
+                                }
                               )}
                             </span>
                           </li>
@@ -1624,14 +1630,12 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                 <p>
                   <strong>Power Failure:</strong>
                   {modalLog.powerFailure?.fromHrs &&
-                  modalLog.powerFailure?.toHrs
-                    ? `${modalLog.powerFailure.fromHrs} to ${
-                        modalLog.powerFailure.toHrs
-                      }${
-                        modalLog.powerFailure.reason
-                          ? ` (${modalLog.powerFailure.reason})`
-                          : ""
-                      }`
+                    modalLog.powerFailure?.toHrs
+                    ? `${modalLog.powerFailure.fromHrs} to ${modalLog.powerFailure.toHrs
+                    }${modalLog.powerFailure.reason
+                      ? ` (${modalLog.powerFailure.reason})`
+                      : ""
+                    }`
                     : "-"}
                 </p>
                 {modalLog.remarks && (
@@ -1818,52 +1822,52 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                     <tr>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp,
+                                          log.htPanel.outgoingTr1?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp,
+                                          log.htPanel.outgoingTr1?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp,
+                                          log.htPanel.outgoingTr1?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp,
+                                          log.htPanel.outgoingTr2?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp,
+                                          log.htPanel.outgoingTr2?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp,
+                                          log.htPanel.outgoingTr2?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp,
+                                          log.htPanel.outgoingTr3?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp,
+                                          log.htPanel.outgoingTr3?.windingTemp
                                         )}
                                       </td>
                                       <td>
                                         {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp,
+                                          log.htPanel.outgoingTr3?.windingTemp
                                         )}
                                       </td>
                                     </tr>
                                   </React.Fragment>
-                                ),
+                                )
                             )}
                           </tbody>
                         </table>
@@ -1996,7 +2000,7 @@ const PanelLogList = ({ onEdit, onCreateNew }) => {
                                     <td>{log.ltPanel.incomer3?.tap || "-"}</td>
                                     <td>{log.ltPanel.incomer3?.kwh || "-"}</td>
                                   </tr>
-                                ),
+                                )
                             )}
                           </tbody>
                         </table>

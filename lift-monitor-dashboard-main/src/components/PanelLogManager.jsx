@@ -9,9 +9,11 @@ import {
 import { useAuth } from "../context/AuthContext";
 import "./PanelLogManager.css";
 
-const PanelLogManager = () => {
+const PanelLogManager = ({ building }) => {
   const { canCreatePanelLog, canEditPanelLog } = useAuth();
   const [view, setView] = useState("list");
+  // If building prop is provided, we force filter by that building.
+  const [filterBuilding] = useState(building || "");
   const [editingLog, setEditingLog] = useState(null);
   const [message, setMessage] = useState(null);
 
@@ -109,6 +111,7 @@ const PanelLogManager = () => {
         <PanelLogList
           onEdit={canEditPanelLog() ? handleEdit : null}
           onCreateNew={canCreatePanelLog() ? handleCreateNew : null}
+          filterBuilding={building || filterBuilding} // Pass the enforced filter
         />
       )}
 

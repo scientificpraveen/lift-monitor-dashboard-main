@@ -127,7 +127,10 @@ let stpState = {
   CollectionTankLevel: 0, SBRTankLevel: 0, SludgeTankLevel: 0, FilterTankLevel: 0, TreatedWaterTankLevel: 0, SoftwaterTankLevel: 0,
   // Sensors - Valid: Float
   InletPressure: 0.0, OutletPressure: 0.0,
-  DO1: 0.0, DO2: 0.0, SoftnerTH: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0
+  InletPressure: 0.0, OutletPressure: 0.0,
+  DO1: 0.0, DO2: 0.0, SoftnerTH: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0,
+  // System Status
+  deviceOnline: false
 };
 
 // Keys categorization for validation
@@ -256,12 +259,21 @@ app.post("/api/lifts", (req, res) => {
 });
 
 // -- STP API ENDPOINTS --
+let lastStpUpdate = 0;
+
 app.get('/api/stp', (req, res) => {
   res.json(stpState);
 });
 
 app.post('/api/update-stp', (req, res) => {
   const incomingData = req.body;
+
+  // Update Tracking Logic
+  lastStpUpdate = Date.now();
+  if (!stpState.deviceOnline) {
+    stpState.deviceOnline = true;
+  }
+
   const processed = processStpData(incomingData); // Updates stpState in place and returns changes
 
   // Broadcast via WS (Real-time update)
@@ -272,6 +284,43 @@ app.post('/api/update-stp', (req, res) => {
 
   console.log("STP Update Processed", Object.keys(processed));
   res.json({ success: true, currentState: stpState, updated: processed });
+});
+
+// -- PARKING SLOT VACANCY API --
+let parkingSlots = { P1: 0, P2: 0, P3: 0, P4: 0 };
+
+app.get('/api/parking-slots', (req, res) => {
+  res.json(parkingSlots);
+});
+
+app.post('/api/update-parking-slots/', (req, res) => {
+  const incomingData = req.body;
+  if (!incomingData || typeof incomingData !== 'object') {
+    return res.status(400).json({ error: "Invalid data format" });
+  }
+
+  let updated = false;
+  Object.keys(incomingData).forEach(key => {
+    if (parkingSlots.hasOwnProperty(key)) {
+      const val = parseInt(incomingData[key]);
+      // Only allow 0 (Vacant) or 1 (Occupied)
+      if (val === 0 || val === 1) {
+        parkingSlots[key] = val;
+        updated = true;
+      }
+    }
+  });
+
+  if (updated) {
+    // Broadcast update via WebSocket just like STP/Lifts
+    // We can reuse the existing WSS or just let frontend poll as per plan.
+    // Plan said polling, so we stick to just updating state.
+    // But for better UX, let's also broadcast if possible?
+    // Plan said polling, sticking to polling for simplicity as per plan.
+    console.log("Parking Slots Updated:", parkingSlots);
+  }
+
+  res.json({ success: true, currentSlots: parkingSlots });
 });
 
 app.get("/health", (req, res) => {
@@ -1110,6 +1159,21 @@ server.listen(PORT, "0.0.0.0", async () => {
 
   // Start auto-entry scheduler
   startAutoEntryScheduler();
+
+  // Start STP Device Status Check (1 Minute Timeout)
+  setInterval(() => {
+    // If device is ONLINE and no update for > 60 seconds
+    if (stpState.deviceOnline && (Date.now() - lastStpUpdate > 60000)) {
+      console.log("STP Device Monitor: Device Offline (Timeout > 60s)");
+      stpState.deviceOnline = false;
+
+      // Broadcast update to all clients
+      const message = JSON.stringify({ type: 'stpUpdate', data: stpState });
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) client.send(message);
+      });
+    }
+  }, 10000); // Check every 10 seconds
 
   // Initialize and start email scheduler & queue processor
   const emailReady = initializeBrevoTransporter();

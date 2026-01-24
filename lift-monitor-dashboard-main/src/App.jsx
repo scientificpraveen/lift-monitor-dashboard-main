@@ -6,6 +6,7 @@ import PanelLogManager from "./components/PanelLogManager";
 import ServiceLogManager from "./components/ServiceLogManager";
 import UserManagement from "./components/UserManagement";
 import StpAutomation from "./components/StpAutomation";
+import ParkingVacancy from "./components/ParkingVacancy";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -186,20 +187,37 @@ const App = () => {
             onServiceLogClick={() => setActivePanel("service")}
             onPanelLogClick={() => setActivePanel("panel")}
             onStpClick={() => setActivePanel("stp")}
+            onParkingClick={() => setActivePanel("parking")}
             onUserManagementClick={() => setActivePanel("users")}
             activePanel={activePanel}
           />
           {activePanel === null ? (
-            <div className="main-content">
-              {visibleLifts.map((lift) => (
-                <LiftCard key={lift.ID} lift={lift} />
-              ))}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                <h1 style={{
+                  fontSize: '32px',
+                  fontWeight: 900,
+                  color: '#1e293b',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  margin: 0,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                }}>
+                  LIFT STATUS
+                </h1>
+              </div>
+              <div className="main-content">
+                {visibleLifts.map((lift) => (
+                  <LiftCard key={lift.ID} lift={lift} />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="panel-content">
-              {activePanel === "service" && <ServiceLogManager />}
-              {activePanel === "panel" && <PanelLogManager />}
+              {activePanel === "service" && <ServiceLogManager building={selectedBuilding} />}
+              {activePanel === "panel" && <PanelLogManager building={selectedBuilding} />}
               {activePanel === "stp" && <StpAutomation />}
+              {activePanel === "parking" && <ParkingVacancy />}
               {activePanel === "users" && <UserManagement />}
             </div>
           )}

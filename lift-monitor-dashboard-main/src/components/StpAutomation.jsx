@@ -377,7 +377,9 @@ const StpAutomation = () => {
         // Pressure (Default 0.0, Display unit Bar)
         InletPressure: 0.0, OutletPressure: 0.0,
         // DO, TSS, TH (Default 0.0, Display unit mg/l)
-        DO1: 0.0, DO2: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0, SoftnerTH: 0.0
+        DO1: 0.0, DO2: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0, SoftnerTH: 0.0,
+        // System Status
+        deviceOnline: false
     });
     const [isConnected, setIsConnected] = useState(false);
 
@@ -409,11 +411,22 @@ const StpAutomation = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
                     <div style={{
                         width: '10px', height: '10px', borderRadius: '50%',
-                        backgroundColor: isConnected ? '#22c55e' : '#f97316',
+                        backgroundColor: isConnected ? '#22c55e' : '#ef4444',
                         animation: !isConnected ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
                     }} />
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.05em' }}>
-                        {isConnected ? 'System Live' : 'Hardware Offline'}
+                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                        {isConnected ? 'Dashboard Live' : 'Dashboard Offline'}
+                    </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                    <div style={{
+                        width: '10px', height: '10px', borderRadius: '50%',
+                        backgroundColor: data.deviceOnline ? '#22c55e' : '#ef4444',
+                        animation: !data.deviceOnline ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                    }} />
+                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                        {data.deviceOnline ? 'Device Live' : 'Device Offline'}
                     </span>
                 </div>
             </div>
@@ -631,7 +644,7 @@ const StpAutomation = () => {
                         color="#ef4444" width="8" flowColor="#fee2e2" />
 
                     {/* From Merge (y=660) Left to x=40 (Margin) -> Up towards M5 (150) -> Tank Right (242) */}
-                    <Pipe points="M 600 800 L 600 730 L -30 730 L -30 150 L 242 150"
+                    <Pipe points="M 600 800 L 600 730 L -30 730 L -30 150 L 45 150"
                         isFlowing={((data.M10 === 1 || data.M11 === 1) && (data.PSFValve >= 2 && data.PSFValve <= 4)) ||
                             ((data.M10 === 1 || data.M11 === 1) && (data.ACFValve >= 2 && data.ACFValve <= 4))}
                         color="#ef4444" width="8" flowColor="#fee2e2" />

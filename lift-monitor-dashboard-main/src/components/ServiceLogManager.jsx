@@ -6,11 +6,10 @@ import {
   deleteServiceLog,
 } from "../services/api";
 import { buildings } from "../config/buildings";
-import { getISTDate } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import "./ServiceLogManager.css";
 
-const ServiceLogManager = () => {
+const ServiceLogManager = ({ building }) => {
   const {
     user,
     canCreateServiceLog,
@@ -25,17 +24,23 @@ const ServiceLogManager = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
   const [expandedLogId, setExpandedLogId] = useState(null);
+  // Prioritize prop, else default to first accessible
   const [filterBuilding, setFilterBuilding] = useState(
-    accessibleBuildings[0] || "",
+    building || accessibleBuildings[0] || ""
   );
+
+  // Update filter if prop changes
+  useEffect(() => {
+    if (building) setFilterBuilding(building);
+  }, [building]);
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
   });
   const [formData, setFormData] = useState({
     sno: "",
-    building: accessibleBuildings[0] || "",
-    date: getISTDate(),
+    building: building || accessibleBuildings[0] || "",
+    date: new Date().toISOString().split("T")[0],
     time: new Date()
       .toLocaleTimeString("en-IN", {
         hour: "2-digit",
@@ -120,7 +125,7 @@ const ServiceLogManager = () => {
     setFormData({
       sno: "",
       building: filterBuilding || accessibleBuildings[0] || "",
-      date: require("../utils/timeUtils").getISTDate(),
+      date: new Date().toISOString().split("T")[0],
       time: new Date()
         .toLocaleTimeString("en-IN", {
           hour: "2-digit",
@@ -205,7 +210,7 @@ const ServiceLogManager = () => {
 
   const getSortedLogs = () => {
     const filtered = logs.filter(
-      (log) => !filterBuilding || log.building === filterBuilding,
+      (log) => !filterBuilding || log.building === filterBuilding
     );
 
     const sorted = [...filtered].sort((a, b) => {
@@ -274,20 +279,23 @@ const ServiceLogManager = () => {
       {error && <div className="error-message">{error}</div>}
 
       <div className="filter-section">
-        <div className="filter-group">
-          <label>Building</label>
-          <select
-            value={filterBuilding}
-            onChange={(e) => setFilterBuilding(e.target.value)}
-            className="filter-select"
-          >
-            {accessibleBuildings.map((building) => (
-              <option key={building} value={building}>
-                {building}
-              </option>
-            ))}
-          </select>
-        </div>
+        {!building && (
+          <div className="filter-group">
+            <label>Building</label>
+            <select
+              value={filterBuilding}
+              onChange={(e) => setFilterBuilding(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">All Buildings</option>
+              {accessibleBuildings.map((building) => (
+                <option key={building} value={building}>
+                  {building}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {showForm && (
@@ -495,12 +503,12 @@ const ServiceLogManager = () => {
                                         className="change-type-badge"
                                         style={{
                                           backgroundColor: getChangeTypeColor(
-                                            historyItem.changeType,
+                                            historyItem.changeType
                                           ),
                                         }}
                                       >
                                         {getChangeTypeLabel(
-                                          historyItem.changeType,
+                                          historyItem.changeType
                                         )}
                                       </span>
                                     </td>

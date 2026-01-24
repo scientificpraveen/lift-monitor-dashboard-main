@@ -9,6 +9,7 @@ const Sidebar = ({
   onServiceLogClick,
   onPanelLogClick,
   onStpClick,
+  onParkingClick,
   onUserManagementClick,
   activePanel,
 }) => {
@@ -22,36 +23,83 @@ const Sidebar = ({
       <div className="building-list-container">
         <ul className="building-list">
           {accessibleBuildings.map((building) => (
-            <li
-              key={building}
-              className={`building-item ${selected === building && !activePanel ? "active" : ""
-                }`}
-              onClick={() => onSelect(building)}
-            >
-              {building}
-            </li>
+            <React.Fragment key={building}>
+              <li
+                className={`building-item ${selected === building ? "active" : ""
+                  }`}
+                onClick={() => onSelect(building)}
+              >
+                {building}
+              </li>
+              {selected === building && (
+                <div className="submenu" style={{ paddingLeft: "15px" }}>
+                  <li
+                    className={`building-item ${selected === building && !activePanel ? "active" : ""
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(building);
+                    }}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                  >
+                    📊 LIFT STATUS
+                  </li>
+                  <li
+                    className={`building-item ${activePanel === "service" ? "active" : ""
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(building);
+                      onServiceLogClick();
+                    }}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                  >
+                    📋 OPERATOR LOG PANEL
+                  </li>
+                  <li
+                    className={`building-item ${activePanel === "panel" ? "active" : ""
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(building);
+                      onPanelLogClick();
+                    }}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                  >
+                    ⚡ HT/LT PANEL LOGS
+                  </li>
+                  {building === "PRESTIGE POLYGON" && (
+                    <>
+                      <li
+                        className={`building-item ${activePanel === "stp" ? "active" : ""
+                          }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onStpClick();
+                        }}
+                        style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                      >
+                        ⚙️ STP AUTOMATION
+                      </li>
+                      <li
+                        className={`building-item ${activePanel === "parking" ? "active" : ""
+                          }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onParkingClick();
+                        }}
+                        style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                      >
+                        🚗 PARKING SLOT VACANCY
+                      </li>
+                    </>
+                  )}
+                </div>
+              )}
+            </React.Fragment>
           ))}
-          <li
-            className={`service-log-item ${activePanel === "service" ? "active" : ""
-              }`}
-            onClick={onServiceLogClick}
-          >
-            OPERATOR LOG PANEL
-          </li>
-          <li
-            className={`service-log-item ${activePanel === "panel" ? "active" : ""
-              }`}
-            onClick={onPanelLogClick}
-          >
-            ⚡ HT/LT PANEL LOGS
-          </li>
-          <li
-            className={`service-log-item ${activePanel === "stp" ? "active" : ""
-              }`}
-            onClick={onStpClick}
-          >
-            ⚙️ STP AUTOMATION
-          </li>
           {isAdmin() && (
             <li
               className={`service-log-item admin-item ${activePanel === "users" ? "active" : ""
