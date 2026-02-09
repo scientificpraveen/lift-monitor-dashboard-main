@@ -9,6 +9,7 @@ import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
 import serviceLogRoutes from "./routes/serviceLogs.js";
 import userRoutes from "./routes/users.js";
+import guardRoutes from "./routes/guardRoutes.js";
 import { authMiddleware } from "./middleware/auth.js";
 import {
   startAutoEntryScheduler,
@@ -54,6 +55,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/service-logs", serviceLogRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/guard", guardRoutes);
 
 // Initialize STP - No external fetch needed, defaults are set.
 console.log("STP System Initialized with Defaults.");

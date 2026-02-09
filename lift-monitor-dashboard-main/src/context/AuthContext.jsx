@@ -106,6 +106,13 @@ export const AuthProvider = ({ children }) => {
   const canEditServiceLog = () => hasServiceLogPrivilege("edit");
   const canDeleteServiceLog = () => hasServiceLogPrivilege("delete");
 
+  // Guard Touring Log Privileges (Simplified)
+  const hasGuardLogPrivilege = () => true;
+  const canViewGuardLog = () => true;
+  const canEnterGuardLog = () => true;
+  const canAddGuardTag = () => user?.role === "admin";
+  const canEditGuardTag = () => user?.role === "admin";
+
   // Legacy function names for backward compatibility (defaults to service logs)
   const hasPrivilege = (privilege) => hasServiceLogPrivilege(privilege);
   const canView = () => canViewServiceLog();
@@ -120,7 +127,6 @@ export const AuthProvider = ({ children }) => {
     if (!user) return [];
     // Admin or users with no assigned buildings can see all
     if (
-      user.role === "admin" ||
       !user.assignedBuildings ||
       user.assignedBuildings.length === 0
     ) {
@@ -133,7 +139,6 @@ export const AuthProvider = ({ children }) => {
   const hasAccessToBuilding = (building) => {
     if (!user) return false;
     if (
-      user.role === "admin" ||
       !user.assignedBuildings ||
       user.assignedBuildings.length === 0
     ) {
@@ -162,6 +167,12 @@ export const AuthProvider = ({ children }) => {
     canCreateServiceLog,
     canEditServiceLog,
     canDeleteServiceLog,
+    // Guard Touring Privileges
+    hasGuardLogPrivilege,
+    canViewGuardLog,
+    canEnterGuardLog,
+    canAddGuardTag,
+    canEditGuardTag,
     // Legacy (backward compatible - defaults to service logs)
     hasPrivilege,
     canView,

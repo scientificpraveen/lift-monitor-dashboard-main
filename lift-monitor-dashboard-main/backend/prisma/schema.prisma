@@ -15,6 +15,7 @@ model User {
   role              String   @default("user")  // admin, user
   panelLogPrivileges String[] @default(["view"])  // view, create, edit, delete for HT/LT panel logs
   serviceLogPrivileges String[] @default(["view"])  // view, create, edit, delete for operator/service logs
+
   assignedBuildings String[] @default([])  // empty means all buildings (for admin)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -130,4 +131,32 @@ model EmailQueue {
   @@index([building])
   @@index([date])
   @@index([createdAt])
+}
+
+// --- GUARD TOURING SYSTEM ---
+
+model GuardDataMapping {
+  id        Int      @id @default(autoincrement())
+  tagId     String   @unique
+  building  String
+  location  String
+  floor     String
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+  updatedAt DateTime @updatedAt @db.Timestamp(0)
+
+  @@map("guard_data_mapping")
+  @@index([building])
+}
+
+model GuardTouringLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now()) @db.Timestamp(0)
+  name      String
+  building  String
+  location  String
+  floor     String
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("guard_touring_log")
+  @@index([building, timestamp])
 }

@@ -7,6 +7,7 @@ import ServiceLogManager from "./components/ServiceLogManager";
 import UserManagement from "./components/UserManagement";
 import StpAutomation from "./components/StpAutomation";
 import ParkingVacancy from "./components/ParkingVacancy";
+import GuardTouringManager from "./components/GuardTouringManager";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
@@ -188,6 +189,7 @@ const App = () => {
             onPanelLogClick={() => setActivePanel("panel")}
             onStpClick={() => setActivePanel("stp")}
             onParkingClick={() => setActivePanel("parking")}
+            onGuardTouringClick={() => setActivePanel("guard")}
             onUserManagementClick={() => setActivePanel("users")}
             activePanel={activePanel}
           />
@@ -218,6 +220,7 @@ const App = () => {
               {activePanel === "panel" && <PanelLogManager building={selectedBuilding} />}
               {activePanel === "stp" && <StpAutomation />}
               {activePanel === "parking" && <ParkingVacancy />}
+              {activePanel === "guard" && <GuardTouringManager building={selectedBuilding} />}
               {activePanel === "users" && <UserManagement />}
             </div>
           )}

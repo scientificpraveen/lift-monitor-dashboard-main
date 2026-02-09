@@ -105,7 +105,11 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
                 <div style={{ color: '#1f2937', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.2 }}>
                     {label && label.split('\n').map((line, i) => <div key={i}>{line}</div>)}
                 </div>
-                {subLabel && (
+                {subLabel && subLabel.includes("Water Level:") ? (
+                    <div style={{ marginTop: '20px', color: '#1e3a8a', fontSize: '35px', fontWeight: '900', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
+                        {subLabel.replace("Water Level: ", "")}
+                    </div>
+                ) : subLabel && (
                     <div style={{ marginTop: '4px', color: subLabel.includes("Water Level") ? '#1e3a8a' : '#1f2937', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase' }}>
                         {subLabel}
                     </div>
@@ -125,23 +129,25 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
                     )}
                 </svg>
             </div>
-            {(specialLabel || indicatorValue) && (
-                <div style={{ position: 'absolute', bottom: `${8 + indicatorOffset}px`, right: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 30 }}>
-                    <div style={{
-                        width: '60px', height: '60px', borderRadius: '50%', backgroundColor: indicatorColor, border: '2px solid white',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', ...animationStyle
-                    }}>
-                        {indicatorValue ? (
-                            <span style={{ color: 'white', fontSize: '13px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1 }}>{indicatorValue}</span>
-                        ) : (labelPosition === 'inside' && specialLabel && (
-                            <span style={{ color: 'white', fontSize: '14px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1.1 }}>
-                                {specialLabel.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-                            </span>
-                        ))}
+            {
+                (specialLabel || indicatorValue) && (
+                    <div style={{ position: 'absolute', bottom: `${8 + indicatorOffset}px`, right: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 30 }}>
+                        <div style={{
+                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: indicatorColor, border: '2px solid white',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', ...animationStyle
+                        }}>
+                            {indicatorValue ? (
+                                <span style={{ color: 'white', fontSize: '13px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1 }}>{indicatorValue}</span>
+                            ) : (labelPosition === 'inside' && specialLabel && (
+                                <span style={{ color: 'white', fontSize: '14px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1.1 }}>
+                                    {specialLabel.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                                </span>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
@@ -759,14 +765,14 @@ const StpAutomation = () => {
 
                     {/* --- SCALE & LEGEND --- */}
                     <div style={{
-                        position: 'absolute', left: 1300, top: 100, width: 400, height: 360, 
+                        position: 'absolute', left: 1300, top: 100, width: 400, height: 360,
                         display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 10,
                         border: '2px solid #cbd5e1', borderRadius: '14px', padding: '20px',
                         backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ fontSize: '18px', fontWeight: '900', color: '#334155', textAlign: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>SCALE</div>
 
-                        
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <div style={{ width: '60px', height: '8px', backgroundColor: '#ef4444', borderRadius: '4px' }}></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#991b1b' }}>DRAIN PIPELINE OF VALVE</span>

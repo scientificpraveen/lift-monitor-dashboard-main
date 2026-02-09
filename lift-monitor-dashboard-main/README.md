@@ -284,6 +284,33 @@ Frontend uses hardcoded API endpoints. To change:
 - `GET /api/panel-logs/export/excel` - Export to Excel
 - `GET /api/panel-logs/export/pdf` - Export to PDF
 
+### Guard Touring System
+
+- `GET /api/guard/logs` - Get patrol logs (filtered by building)
+- `POST /api/guard/mobile-auth` - Mobile app login (Returns user buildings)
+- `POST /api/guard/guard-log-entry-mobile` - Submit patrol log (Auto IST timestamp)
+- `GET /api/guard/mapping` - Get NFC Tag mappings (Admin only)
+- `POST /api/guard/mapping` - Create new NFC Tag mapping (Admin only)
+- `PUT /api/guard/mapping/:id` - Update NFC Tag mapping (Admin only)
+- `DELETE /api/guard/mapping/:id` - Delete NFC Tag mapping (Admin only)
+
+**Mobile Login Payload Example:**
+```json
+{
+  "username": "user1",
+  "password": "password"
+}
+```
+
+**Guard Log Entry Payload Example:**
+```json
+{
+  "username": "User 1",
+  "building": "PRESTIGE POLYGON",
+  "tagId": "TAG-001"
+}
+```
+
 ## Query Parameters for Filtering
 
 Panel logs can be filtered using the following query parameters:
