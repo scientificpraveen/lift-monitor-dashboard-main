@@ -7,6 +7,7 @@ import ServiceLogManager from "./components/ServiceLogManager";
 import UserManagement from "./components/UserManagement";
 import StpAutomation from "./components/StpAutomation";
 import ParkingVacancy from "./components/ParkingVacancy";
+import FireLogManager from "./components/FireLogManager";
 import GuardTouringManager from "./components/GuardTouringManager";
 import Auth from "./components/Auth";
 import { buildings } from "./config/buildings";
@@ -187,6 +188,7 @@ const App = () => {
             }}
             onServiceLogClick={() => setActivePanel("service")}
             onPanelLogClick={() => setActivePanel("panel")}
+            onFireLogClick={() => setActivePanel("fire")}
             onStpClick={() => setActivePanel("stp")}
             onParkingClick={() => setActivePanel("parking")}
             onGuardTouringClick={() => setActivePanel("guard")}
@@ -218,6 +220,7 @@ const App = () => {
             <div className="panel-content">
               {activePanel === "service" && <ServiceLogManager building={selectedBuilding} />}
               {activePanel === "panel" && <PanelLogManager building={selectedBuilding} />}
+              {activePanel === "fire" && <FireLogManager building={selectedBuilding} />}
               {activePanel === "stp" && <StpAutomation />}
               {activePanel === "parking" && <ParkingVacancy />}
               {activePanel === "guard" && <GuardTouringManager building={selectedBuilding} />}

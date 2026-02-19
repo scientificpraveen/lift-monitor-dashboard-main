@@ -36,13 +36,13 @@ const GuardTouringManager = ({ building }) => {
         fetchLogs();
         const interval = setInterval(fetchLogs, 5000);
         return () => clearInterval(interval);
-    }, [building, user]); // Re-fetch when building or user changes (removed unstable function deps)
+    }, [building, user]);
 
     useEffect(() => {
         if ((isAdmin() || canEditGuardTag()) && showEditList) {
             fetchMappings();
         }
-    }, [user, building, showEditList]); // Removed unstable function deps
+    }, [user, building, showEditList]);
 
     const fetchLogs = async () => {
         try {
@@ -103,138 +103,151 @@ const GuardTouringManager = ({ building }) => {
         }
     };
 
-    // --- STYLES ---
+    // --- STYLES (Matching ServiceLogManager / Operator Log) ---
     const containerStyle = {
         padding: '20px',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#fff',
         minHeight: '100%',
         fontFamily: '"Inter", sans-serif',
-        fontSize: '16px'
+        fontSize: '16px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
     };
 
-    const headerBarStyle = {
-        background: 'linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%)',
-        padding: '18px 30px',
-        borderRadius: '12px',
-        marginBottom: '25px',
+    const headerStyle = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 4px 6px -1px rgba(124, 58, 237, 0.3)',
-        color: 'white'
+        marginBottom: '30px',
+        paddingBottom: '15px',
+        borderBottom: '3px solid #a076f9'
     };
 
-    const headerTitleBoxStyle = {
-        background: 'white',
-        padding: '10px 20px',
-        borderRadius: '8px'
-    };
-
-    const headerTitleStyle = {
+    const titleStyle = {
         margin: 0,
-        fontSize: '20px',
-        fontWeight: 'bold',
-        color: '#334155'
+        fontSize: '1.8rem',
+        fontWeight: '700',
+        color: '#1a1a1a'
     };
 
-    const actionButtonStyle = {
-        background: 'white',
+    // Main purple action button (Add Tag)
+    const primaryButtonStyle = {
         padding: '10px 20px',
-        borderRadius: '8px',
-        fontWeight: 'bold',
-        color: '#1e293b',
+        background: 'linear-gradient(135deg, #a076f9 0%, #6b2eff 100%)',
+        color: 'white',
         border: 'none',
+        borderRadius: '6px',
         cursor: 'pointer',
-        marginLeft: '15px',
-        fontSize: '16px',
+        fontWeight: '600',
+        fontSize: '14px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        transition: 'all 0.2s'
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        marginLeft: '10px'
     };
+
+    // Secondary button (Edit Tag Details) - maybe slightly different?
+    // Let's keep consistent style but maybe different gradient or same
+    const secondaryButtonStyle = {
+        ...primaryButtonStyle,
+        background: '#e0e0e0',
+        color: '#333',
+        boxShadow: 'none'
+    };
+
 
     const cardStyle = {
-        background: 'white',
-        borderRadius: '12px',
-        padding: '30px',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-        marginBottom: '25px'
+        background: '#f9f9f9',
+        borderRadius: '8px',
+        padding: '20px',
+        marginBottom: '25px',
+        borderLeft: '4px solid #a076f9'
     };
 
     const inputStyle = {
-        padding: '12px 18px',
-        borderRadius: '8px',
-        border: '1px solid #cbd5e1',
+        padding: '10px 12px',
+        borderRadius: '6px',
+        border: '2px solid #e0e0e0',
         marginRight: '15px',
         flex: 1,
-        fontSize: '16px'
+        fontSize: '14px',
+        transition: 'border-color 0.3s'
     };
 
     const saveButtonStyle = {
-        padding: '12px 25px',
-        borderRadius: '8px',
-        backgroundColor: '#ef4444',
-        color: 'white',
-        border: 'none',
-        cursor: 'pointer',
-        fontWeight: '600',
-        fontSize: '16px',
-        boxShadow: '0 2px 4px rgba(239, 68, 68, 0.3)'
+        ...primaryButtonStyle,
+        padding: '10px 25px'
     };
 
     // Table Styling
+    const tableContainerStyle = {
+        width: '100%',
+        overflowX: 'auto',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        border: '1px solid #e0e0e0'
+    };
+
     const tableStyle = {
         width: '100%',
         borderCollapse: 'collapse',
-        fontSize: '16px',
-        marginTop: '10px'
+        fontSize: '14px',
+        background: 'white'
+    };
+
+    // Header Row Gradient
+    const theadStyle = {
+        background: 'linear-gradient(135deg, #a076f9 0%, #6b2eff 100%)',
+        color: 'white'
     };
 
     const thStyle = {
+        padding: '15px',
         textAlign: 'left',
-        padding: '18px',
-        borderBottom: '2px solid #e2e8f0',
-        color: '#1e293b',
-        fontWeight: '800',
-        textTransform: 'uppercase',
-        fontSize: '14px',
-        letterSpacing: '0.05em'
+        fontWeight: '600',
+        fontSize: '16px',
+        letterSpacing: '0.5px',
+        borderBottom: '1px solid #e0e0e0',
+        color: 'white' // Override default dark text for header
     };
 
     const tdStyle = {
-        padding: '18px',
-        borderBottom: '1px solid #f1f5f9',
-        color: '#475569',
-        fontWeight: '500'
+        padding: '12px 15px',
+        borderBottom: '1px solid #f0f0f0',
+        color: '#333',
+        fontSize: '16px'
     };
 
     return (
         <div style={containerStyle}>
 
-            {/* HEADER BAR */}
-            <div style={headerBarStyle}>
-                <div style={headerTitleBoxStyle}>
-                    <h2 style={headerTitleStyle}>
-                        Guard Touring Log Dashboard
-                        <span style={{ marginLeft: '10px', fontWeight: 'normal', fontSize: '16px', color: '#64748b' }}>
-                            - Building Name: <strong>{building}</strong>
-                        </span>
-                    </h2>
+            {/* HEADER BAR (Clean White with Purple Underline) */}
+            <div style={headerStyle}>
+                <div>
+                    <h2 style={titleStyle}>Guard Touring Log Dashboard</h2>
+                    <span style={{ fontSize: '14px', color: '#666', marginTop: '5px', display: 'block' }}>
+                        Building Name: <strong>{building}</strong>
+                    </span>
                 </div>
 
                 <div style={{ display: 'flex' }}>
                     {(isAdmin() || canAddGuardTag()) && (
                         <button
-                            style={{ ...actionButtonStyle, backgroundColor: showAddForm ? '#e2e8f0' : 'white' }}
+                            style={primaryButtonStyle}
                             onClick={() => { setShowAddForm(!showAddForm); setShowEditList(false); }}
+                            onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(160, 118, 249, 0.3)'; }}
+                            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
                         >
-                            {showAddForm ? "Close Add Tag" : "Add Tag"}
+                            {showAddForm ? "Close Add Tag" : "+ Add Tag"}
                         </button>
                     )}
                     {(isAdmin() || canEditGuardTag()) && (
                         <button
-                            style={{ ...actionButtonStyle, backgroundColor: showEditList ? '#e2e8f0' : 'white' }}
+                            style={{ ...primaryButtonStyle, background: '#6c757d' }} // Different color to distinguish
                             onClick={() => { setShowEditList(!showEditList); setShowAddForm(false); }}
+                            onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(108, 117, 125, 0.3)'; }}
+                            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
                         >
-                            {showEditList ? "Close Edit Details" : "Edit Tag Details"}
+                            {showEditList ? "Close Edit Details" : "✎ Edit Tag Details"}
                         </button>
                     )}
                 </div>
@@ -242,23 +255,23 @@ const GuardTouringManager = ({ building }) => {
 
             {/* ADD TAG FORM (Toggle) */}
             {(isAdmin() || canAddGuardTag()) && showAddForm && (
-                <div style={{ ...cardStyle }}>
-                    <h3 style={{ marginBottom: '25px', color: '#334155', fontSize: '20px' }}>Add New Tag</h3>
-                    <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div style={cardStyle}>
+                    <h3 style={{ marginBottom: '20px', color: '#333', fontSize: '18px' }}>Add New Tag</h3>
+                    <form onSubmit={handleAddTag} style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Tag ID</label>
+                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: '600' }}>Tag ID</label>
                             <input type="text" placeholder="Scan/Enter Tag ID" value={formData.tagId} onChange={e => setFormData({ ...formData, tagId: e.target.value })} style={inputStyle} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Building</label>
-                            <input type="text" value={building} disabled style={{ ...inputStyle, background: '#f8fafc', color: '#94a3b8' }} />
+                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: '600' }}>Building</label>
+                            <input type="text" value={building} disabled style={{ ...inputStyle, background: '#f0f0f0', borderColor: '#ddd', color: '#777' }} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Location</label>
+                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: '600' }}>Location</label>
                             <input type="text" placeholder="Location Name" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} style={inputStyle} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
-                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Floor</label>
+                            <label style={{ marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: '600' }}>Floor</label>
                             <input type="text" placeholder="Floor" value={formData.floor} onChange={e => setFormData({ ...formData, floor: e.target.value })} style={inputStyle} />
                         </div>
                         <button type="submit" style={saveButtonStyle}>Save Tag</button>
@@ -268,18 +281,18 @@ const GuardTouringManager = ({ building }) => {
 
             {/* EDIT TAG DETAILS (Toggle) - TABLE VIEW */}
             {(isAdmin() || canEditGuardTag()) && showEditList && (
-                <div style={{ ...cardStyle, borderTop: '4px solid #10b981' }}>
-                    <h3 style={{ marginBottom: '25px', color: '#334155', fontSize: '20px' }}>Tag Details</h3>
-                    <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                <div style={{ ...cardStyle, borderLeft: '4px solid #10b981' }}>
+                    <h3 style={{ marginBottom: '20px', color: '#333', fontSize: '18px' }}>Tag Details</h3>
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                         <table style={tableStyle}>
-                            <thead>
-                                <tr style={{ background: '#f1f5f9' }}>
-                                    <th style={{ ...thStyle, width: '50px' }}>#</th>
-                                    <th style={thStyle}>Tag ID</th>
-                                    <th style={thStyle}>Building</th>
-                                    <th style={thStyle}>Location</th>
-                                    <th style={thStyle}>Floor</th>
-                                    <th style={{ ...thStyle, width: '100px' }}>Actions</th>
+                            <thead style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                                <tr>
+                                    <th style={{ ...thStyle, color: '#333' }}>#</th>
+                                    <th style={{ ...thStyle, color: '#333' }}>Tag ID</th>
+                                    <th style={{ ...thStyle, color: '#333' }}>Building</th>
+                                    <th style={{ ...thStyle, color: '#333' }}>Location</th>
+                                    <th style={{ ...thStyle, color: '#333' }}>Floor</th>
+                                    <th style={{ ...thStyle, color: '#333', width: '100px' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -294,63 +307,60 @@ const GuardTouringManager = ({ building }) => {
                                     />
                                 ))}
                                 {mapping.length === 0 && (
-                                    <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8', padding: '30px', fontSize: '18px' }}>No tags registered yet.</td></tr>
+                                    <tr><td colSpan="6" style={{ textAlign: 'center', color: '#999', padding: '30px' }}>No tags registered.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-                    {/* Close button removed as per user request */}
                 </div>
             )}
 
-            {/* LOG DASHBOARD TABLE (Always Visible) */}
-            <div style={cardStyle}>
-                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                    <table style={tableStyle}>
-                        <thead>
-                            <tr style={{ background: '#f8fafc' }}>
-                                <th style={{ ...thStyle, borderRight: '1px solid #e2e8f0', width: '80px' }}>SNo</th>
-                                <th style={{ ...thStyle, borderRight: '1px solid #e2e8f0' }}>Timestamp</th>
-                                <th style={{ ...thStyle, borderRight: '1px solid #e2e8f0' }}>Name</th>
-                                <th style={{ ...thStyle, borderRight: '1px solid #e2e8f0' }}>Location</th>
-                                <th style={thStyle}>Floor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {logs.map((log, index) => {
-                                // Format timestamp: yyyy-mm-dd hh:mm:ss
-                                const formatTimestamp = (isoString) => {
-                                    if (!isoString) return "";
-                                    const date = new Date(isoString);
-                                    const year = date.getFullYear();
-                                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                                    const day = String(date.getDate()).padStart(2, '0');
-                                    const hours = String(date.getHours()).padStart(2, '0');
-                                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                                    const seconds = String(date.getSeconds()).padStart(2, '0');
-                                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-                                };
+            {/* LOG DASHBOARD TABLE (Purple Header) */}
+            <div style={tableContainerStyle}>
+                <table style={tableStyle}>
+                    <thead style={theadStyle}>
+                        <tr>
+                            <th style={{ ...thStyle, width: '60px', textAlign: 'center' }}>SNo</th>
+                            <th style={thStyle}>Timestamp</th>
+                            <th style={thStyle}>Name</th>
+                            <th style={thStyle}>Location</th>
+                            <th style={thStyle}>Floor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {logs.map((log, index) => {
+                            // Format timestamp: yyyy-mm-dd hh:mm:ss
+                            const formatTimestamp = (isoString) => {
+                                if (!isoString) return "";
+                                const date = new Date(isoString);
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const hours = String(date.getHours()).padStart(2, '0');
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                const seconds = String(date.getSeconds()).padStart(2, '0');
+                                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                            };
 
-                                return (
-                                    <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ ...tdStyle, borderRight: '1px solid #f1f5f9', fontWeight: 'bold' }}>{index + 1}</td>
-                                        <td style={{ ...tdStyle, borderRight: '1px solid #f1f5f9' }}>{formatTimestamp(log.timestamp)}</td>
-                                        <td style={{ ...tdStyle, borderRight: '1px solid #f1f5f9' }}>{log.name}</td>
-                                        <td style={{ ...tdStyle, borderRight: '1px solid #f1f5f9' }}>{log.location}</td>
-                                        <td style={tdStyle}>{log.floor}</td>
-                                    </tr>
-                                );
-                            })}
-                            {logs.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" style={{ ...tdStyle, textAlign: 'center', padding: '50px', color: '#cbd5e1', fontSize: '18px' }}>
-                                        No logs available for {building}
-                                    </td>
+                            return (
+                                <tr key={log.id} style={{ borderBottom: '1px solid #f0f0f0', backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: '600' }}>{index + 1}</td>
+                                    <td style={tdStyle}>{formatTimestamp(log.timestamp)}</td>
+                                    <td style={{ ...tdStyle, fontWeight: '500' }}>{log.name}</td>
+                                    <td style={tdStyle}>{log.location}</td>
+                                    <td style={tdStyle}>{log.floor}</td>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            );
+                        })}
+                        {logs.length === 0 && (
+                            <tr>
+                                <td colSpan="5" style={{ ...tdStyle, textAlign: 'center', padding: '50px', color: '#999', fontSize: '16px' }}>
+                                    No logs available for {building}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
         </div>
@@ -373,32 +383,33 @@ const GuardMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
 
     const inputInline = {
         border: 'none',
-        borderBottom: '2px solid #94a3b8',
+        borderBottom: '2px solid #a076f9',
         background: 'transparent',
         padding: '2px 5px',
         width: '100%',
         color: '#0f172a',
         fontWeight: '500',
-        fontSize: '16px'
+        fontSize: '16px',
+        outline: 'none'
     };
 
     return (
-        <tr style={{ background: 'white', borderBottom: '1px solid #f1f5f9' }}>
-            <td style={{ ...tdStyle, fontWeight: 'bold', width: '50px' }}>{index + 1}</td>
+        <tr style={{ background: 'white', borderBottom: '1px solid #f0f0f0' }}>
+            <td style={{ ...tdStyle, fontWeight: 'bold' }}>{index + 1}</td>
 
             <td style={tdStyle}>
-                <span style={{ fontWeight: '600', color: '#64748b' }}>{data.tagId}</span>
+                <span style={{ fontWeight: '600', color: '#555' }}>{data.tagId}</span>
             </td>
 
             <td style={tdStyle}>
-                <span style={{ fontWeight: '600', color: '#64748b' }}>{data.building}</span>
+                <span style={{ fontWeight: '600', color: '#555' }}>{data.building}</span>
             </td>
 
             <td style={tdStyle}>
                 {isEditing ? (
-                    <input style={inputInline} value={editData.location} onChange={e => setEditData({ ...editData, location: e.target.value })} />
+                    <input style={inputInline} value={editData.location} onChange={e => setEditData({ ...editData, location: e.target.value })} autoFocus />
                 ) : (
-                    <span style={{ fontWeight: '600' }}>{data.location}</span>
+                    <span style={{ fontWeight: '500' }}>{data.location}</span>
                 )}
             </td>
 
@@ -406,7 +417,7 @@ const GuardMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 {isEditing ? (
                     <input style={inputInline} value={editData.floor} onChange={e => setEditData({ ...editData, floor: e.target.value })} />
                 ) : (
-                    <span style={{ fontWeight: '600' }}>{data.floor}</span>
+                    <span style={{ fontWeight: '500' }}>{data.floor}</span>
                 )}
             </td>
 
@@ -414,16 +425,16 @@ const GuardMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {isEditing ? (
                         <>
-                            <button onClick={handleSave} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}>✓</button>
-                            <button onClick={() => setIsEditing(false)} style={{ color: 'gray', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+                            <button onClick={handleSave} style={{ color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }} title="Save">✓</button>
+                            <button onClick={() => setIsEditing(false)} style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Cancel">✕</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Edit">
-                                ✏️
+                            <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Edit">
+                                ✎
                             </button>
-                            <button onClick={() => onDelete(data.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Delete">
-                                🗑️
+                            <button onClick={() => onDelete(data.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Delete">
+                                🗑
                             </button>
                         </>
                     )}

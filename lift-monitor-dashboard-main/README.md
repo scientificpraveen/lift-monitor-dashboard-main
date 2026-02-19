@@ -311,6 +311,44 @@ Frontend uses hardcoded API endpoints. To change:
 }
 ```
 
+### Fire Log System
+
+- `GET /api/fire/logs` - Get fire logs (filtered by building and type)
+- `POST /api/fire/mobile/fire-questions-scan` - Scan tag and fetch questions (Mobile)
+- `POST /api/fire/mobile/fire-log-submit` - Submit fire log entry (Mobile)
+- `GET /api/fire/mapping` - Get Tag mappings (Admin only)
+- `POST /api/fire/mapping` - Create new Tag mapping (Admin only)
+- `PUT /api/fire/mapping/:id` - Update Tag mapping (Admin only)
+- `DELETE /api/fire/mapping/:id` - Delete Tag mapping (Admin only)
+- `GET /api/fire/questions` - Get Questions (Admin only)
+- `POST /api/fire/questions` - Create new Question (Admin only)
+- `PUT /api/fire/questions/:id` - Update Question (Admin only)
+- `DELETE /api/fire/questions/:id` - Delete Question (Admin only)
+- `PUT /api/fire/logs/:id` - Update Log Entry (Admin only)
+- `DELETE /api/fire/logs/:id` - Delete Log Entry (Admin only)
+
+**Mobile Scan Tag Payload Example:**
+```json
+{
+  "tag_id": "TAG-001",
+  "building_name": "PRESTIGE POLYGON"
+}
+```
+
+**Mobile Submit Log Payload Example:**
+```json
+{
+  "tag_id": "TAG-001",
+  "building_name": "PRESTIGE POLYGON",
+  "username": "User 1",
+  "type": "Hose Reel Hose",
+  "questions": {
+    "Question 1?": "Answer 1"
+  },
+  "remarks": "Optional remarks"
+}
+```
+
 ## Query Parameters for Filtering
 
 Panel logs can be filtered using the following query parameters:

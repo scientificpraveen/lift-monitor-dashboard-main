@@ -8,6 +8,7 @@ const Sidebar = ({
   onSelect,
   onServiceLogClick,
   onPanelLogClick,
+  onFireLogClick,
   onStpClick,
   onParkingClick,
   onUserManagementClick,
@@ -65,6 +66,28 @@ const Sidebar = ({
                   >
                     ⚡ HT/LT PANEL LOGS
                   </li>
+                  <li
+                    className={`building-item ${activePanel === "fire" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(building);
+                      onFireLogClick();
+                    }}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                  >
+                    🔥 FIRE LOG PANEL
+                  </li>
+                  <li
+                    className={`building-item ${activePanel === "guard" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(building);
+                      onGuardTouringClick();
+                    }}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                  >
+                    🛡️ GUARD TOURING SYSTEM
+                  </li>
                   {building === "PRESTIGE POLYGON" && (
                     <>
                       <li
@@ -91,17 +114,6 @@ const Sidebar = ({
                       </li>
                     </>
                   )}
-                  <li
-                    className={`building-item ${activePanel === "guard" ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(building);
-                      onGuardTouringClick();
-                    }}
-                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
-                  >
-                    🛡️ GUARD TOURING SYSTEM
-                  </li>
                 </div>
               )}
             </React.Fragment>
