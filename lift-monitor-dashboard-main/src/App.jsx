@@ -196,24 +196,28 @@ const App = () => {
             activePanel={activePanel}
           />
           {activePanel === null ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px', marginBottom: '20px' }}>
-                <h1 style={{
-                  fontSize: '32px',
-                  fontWeight: 900,
-                  color: '#1e293b',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  margin: 0,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                }}>
-                  LIFT STATUS
-                </h1>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#f5f5f5", padding: "40px" }}>
+              <div className="standard-header">
+                <div>
+                  <h2>LIFT STATUS</h2>
+                  <span className="subtitle">
+                    Building Name: <strong>{selectedBuilding}</strong>
+                  </span>
+                </div>
               </div>
-              <div className="main-content">
-                {visibleLifts.map((lift) => (
-                  <LiftCard key={lift.ID} lift={lift} />
-                ))}
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+                overflowY: 'auto',
+                flex: 1
+              }}>
+                <div className="main-content" style={{ background: 'transparent', padding: 0 }}>
+                  {visibleLifts.map((lift) => (
+                    <LiftCard key={lift.ID} lift={lift} />
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
@@ -221,8 +225,8 @@ const App = () => {
               {activePanel === "service" && <ServiceLogManager building={selectedBuilding} />}
               {activePanel === "panel" && <PanelLogManager building={selectedBuilding} />}
               {activePanel === "fire" && <FireLogManager building={selectedBuilding} />}
-              {activePanel === "stp" && <StpAutomation />}
-              {activePanel === "parking" && <ParkingVacancy />}
+              {activePanel === "stp" && <StpAutomation building={selectedBuilding} />}
+              {activePanel === "parking" && <ParkingVacancy building={selectedBuilding} />}
               {activePanel === "guard" && <GuardTouringManager building={selectedBuilding} />}
               {activePanel === "users" && <UserManagement />}
             </div>

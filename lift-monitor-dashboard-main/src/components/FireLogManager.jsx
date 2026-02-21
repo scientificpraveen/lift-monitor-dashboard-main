@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { getISTDate, getISTTime } from '../utils/timeUtils';
 
 const FireLogManager = ({ building }) => {
     const { user, isAdmin } = useAuth();
@@ -257,7 +258,7 @@ const FireLogManager = ({ building }) => {
             {/* HEADER BAR */}
             <div style={headerStyle}>
                 <div>
-                    <h2 style={titleStyle}>Fire Log Dashboard</h2>
+                    <h2 style={titleStyle}>FIRE LOG PANEL</h2>
                     <span style={{ fontSize: '14px', color: '#666', marginTop: '5px', display: 'block' }}>
                         Building Name: <strong>{building}</strong>
                     </span>

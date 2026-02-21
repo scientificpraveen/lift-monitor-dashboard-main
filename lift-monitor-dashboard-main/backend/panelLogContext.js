@@ -427,7 +427,13 @@ export const getPanelLogs = async (filters = {}) => {
   });
 
   // Helper to check if HT panel has actual measurement values (not just default "EB")
-  const hasActualHTData = (htPanel) => {
+  const hasActualHTData = (log) => {
+    // Always show auto-generated night shift slots (00:00 to 06:00) so they can be filled
+    if (["00:00", "02:00", "04:00", "06:00"].includes(log.time)) {
+      return true;
+    }
+
+    const htPanel = log.htPanel;
     if (!htPanel || typeof htPanel !== "object") return false;
 
     // Check for actual voltage/current readings (the meaningful data)
@@ -464,7 +470,13 @@ export const getPanelLogs = async (filters = {}) => {
   };
 
   // Helper to check if LT panel has actual measurement values
-  const hasActualLTData = (ltPanel) => {
+  const hasActualLTData = (log) => {
+    // Always show auto-generated night shift slots (00:00 to 06:00) so they can be filled
+    if (["00:00", "02:00", "04:00", "06:00"].includes(log.time)) {
+      return true;
+    }
+
+    const ltPanel = log.ltPanel;
     if (!ltPanel || typeof ltPanel !== "object") return false;
 
     // Check incomer1 for actual readings
@@ -498,12 +510,12 @@ export const getPanelLogs = async (filters = {}) => {
   // Post-query filter by panel type (since Prisma can't filter JSON content)
   if (filters.panelType) {
     if (filters.panelType === "HT") {
-      logs = logs.filter((log) => hasActualHTData(log.htPanel));
+      logs = logs.filter((log) => hasActualHTData(log));
     } else if (filters.panelType === "LT") {
-      logs = logs.filter((log) => hasActualLTData(log.ltPanel));
+      logs = logs.filter((log) => hasActualLTData(log));
     } else if (filters.panelType === "BOTH") {
       logs = logs.filter(
-        (log) => hasActualHTData(log.htPanel) && hasActualLTData(log.ltPanel)
+        (log) => hasActualHTData(log) && hasActualLTData(log)
       );
     }
   }

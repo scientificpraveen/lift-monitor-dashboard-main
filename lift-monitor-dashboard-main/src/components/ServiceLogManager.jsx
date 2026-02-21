@@ -7,6 +7,7 @@ import {
 } from "../services/api";
 import { buildings } from "../config/buildings";
 import { useAuth } from "../context/AuthContext";
+import { getISTDate, getISTTime } from "../utils/timeUtils";
 import "./ServiceLogManager.css";
 
 const ServiceLogManager = ({ building }) => {
@@ -40,8 +41,8 @@ const ServiceLogManager = ({ building }) => {
   const [formData, setFormData] = useState({
     sno: "",
     building: building || accessibleBuildings[0] || "",
-    date: new Date().toISOString().split("T")[0],
-    time: new Date()
+    date: getISTDate(),
+    time: getISTTime()
       .toLocaleTimeString("en-IN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -87,7 +88,7 @@ const ServiceLogManager = ({ building }) => {
         await updateServiceLog(editingLog.id, {
           ...formData,
           lastUpdatedBy: user?.name || "",
-          lastUpdatedAt: new Date().toISOString(),
+          lastUpdatedAt: getISTTime().toISOString(),
         });
       } else {
         const nextSNo =
@@ -125,8 +126,8 @@ const ServiceLogManager = ({ building }) => {
     setFormData({
       sno: "",
       building: filterBuilding || accessibleBuildings[0] || "",
-      date: new Date().toISOString().split("T")[0],
-      time: new Date()
+      date: getISTDate(),
+      time: getISTTime()
         .toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
@@ -261,8 +262,13 @@ const ServiceLogManager = ({ building }) => {
 
   return (
     <div className="service-log-container">
-      <div className="service-log-header">
-        <h2>Operator Log Panel</h2>
+      <div className="standard-header">
+        <div>
+          <h2>OPERATOR LOG PANEL</h2>
+          <span className="subtitle">
+            Building Name: <strong>{building}</strong>
+          </span>
+        </div>
         {canCreateServiceLog() && (
           <button
             className="btn-add-log"

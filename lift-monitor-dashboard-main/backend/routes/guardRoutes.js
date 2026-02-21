@@ -308,16 +308,13 @@ router.post('/guard-log-entry-mobile', async (req, res) => {
             return res.status(200).json({ success: false, message: "Tag-id has been mapped with some other building" });
         }
 
-        // 3. IST Timestamp Conversion
-        // Adding 5.5 hours (330 minutes) to current UTC time
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const istTime = new Date(now.getTime() + istOffset);
+        // 3. Current Timestamp
+        const currentTime = new Date();
 
         // 4. Create Log
         await prisma.guardTouringLog.create({
             data: {
-                timestamp: istTime,
+                timestamp: currentTime,
                 name: username, // Using username as requested (or could fetch user.name)
                 building: mapping.building,
                 location: mapping.location,

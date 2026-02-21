@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { PrismaClient } from "@prisma/client";
 import { generateSingleBuildingPDF } from "../exportService.js";
+import { getISTDateString } from "../utils/timeUtils.js";
 import { EMAIL_CONFIG } from "../config/buildingEmails.js";
 
 const prisma = new PrismaClient();
@@ -210,7 +211,7 @@ export const generateEmailTemplate = (buildingName, date) => {
 // Send daily reports for all buildings
 export const sendDailyReports = async (date = null) => {
   try {
-    const reportDate = date || new Date().toISOString().split("T")[0];
+    const reportDate = date || getISTDateString();
 
     console.log(`\n📧 Starting email reports for ${reportDate}...`);
 

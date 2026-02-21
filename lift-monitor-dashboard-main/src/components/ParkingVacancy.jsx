@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
 
-const ParkingVacancy = () => {
+const ParkingVacancy = ({ building }) => {
     const [slots, setSlots] = useState({ P1: 0, P2: 0, P3: 0, P4: 0 });
     const [loading, setLoading] = useState(true);
 
@@ -27,16 +27,36 @@ const ParkingVacancy = () => {
     }, []);
 
     const renderSlot = (slotId) => {
-        const isOccupied = slots[slotId] === 1;
+        const slotData = slots[slotId];
+        // Handle both old (number) and new (object) data formats for robustness during transition
+        const isObject = typeof slotData === 'object' && slotData !== null;
+        const isOccupied = isObject ? slotData.value === 1 : slotData === 1;
+        const lastUpdated = isObject ? slotData.lastUpdated : Date.now(); // Default to now if legacy
+
+        const now = Date.now();
+        const timeDiff = now - lastUpdated;
+        const isOffline = timeDiff > 60000; // 1 minute timeout
+
+        // Determine Styles based on state
+        let bgColor = '#dcfce7'; // Default Vacant (Green)
+        let borderColor = '#16a34a';
+        if (isOffline) {
+            bgColor = '#ffedd5'; // Orange-50
+            borderColor = '#ea580c'; // Orange-600
+        } else if (isOccupied) {
+            bgColor = '#fee2e2'; // Red-50
+            borderColor = '#dc2626'; // Red-600
+        }
+
         return (
             <div
                 key={slotId}
                 style={{
                     width: '200px',
                     height: '300px',
-                    border: '4px solid #374151',
+                    border: `4px solid ${borderColor}`,
                     borderRadius: '12px',
-                    backgroundColor: isOccupied ? '#fee2e2' : '#dcfce7', // Red tint if occupied, Green tint if vacant
+                    backgroundColor: bgColor,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -57,7 +77,27 @@ const ParkingVacancy = () => {
                     {slotId}
                 </div>
 
-                {isOccupied ? (
+                {isOffline ? (
+                    <>
+                        <style>
+                            {`
+                                @keyframes pulseBgOrange {
+                                    0%, 100% { background-color: #ffedd5; } /* Light orange */
+                                    50% { background-color: #fdba74; } /* Lighter orange */
+                                }
+                            `}
+                        </style>
+                        <div style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            width: '100%', height: '100%', borderRadius: '8px',
+                            animation: 'pulseBgOrange 2s ease-in-out infinite',
+                        }}>
+                            <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#ea580c', textAlign: 'center' }}>
+                                SENSOR<br />DISCONNECTED
+                            </span>
+                        </div>
+                    </>
+                ) : isOccupied ? (
                     <>
                         <img
                             src="/car_top_view.png"
@@ -75,22 +115,21 @@ const ParkingVacancy = () => {
 
     return (
         <div style={{
-            padding: '40px',
+            padding: '25px',
             minHeight: '100vh',
             backgroundColor: '#f3f4f6',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
         }}>
-            <h1 style={{
-                fontSize: '36px',
-                fontWeight: '900',
-                color: '#1f2937',
-                marginBottom: '40px',
-                textAlign: 'center'
-            }}>
-                PARKING SLOT VACANCY
-            </h1>
+            <div className="standard-header" style={{ width: '100%', marginBottom: '40px' }}>
+                <div>
+                    <h2>PARKING SLOT VACANCY</h2>
+                    <span className="subtitle">
+                        Building Name: <strong>{building}</strong>
+                    </span>
+                </div>
+            </div>
 
             <div style={{
                 display: 'grid',

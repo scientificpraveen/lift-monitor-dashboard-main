@@ -11,14 +11,12 @@ const BUILDINGS = [
   "PRESTIGE CYBER TOWERS",
 ];
 
+import { getISTDateString, getISTTimeString } from "../utils/timeUtils.js";
+
 // Helper to get current IST time slot (00:00, 02:00, 04:00, etc.)
 const getCurrentTimeSlot = () => {
-  const now = new Date();
-  // Convert to IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-
-  const hours = istTime.getUTCHours();
+  const timeStr = getISTTimeString(); // e.g. "14:27"
+  const hours = parseInt(timeStr.split(':')[0], 10);
   const timeSlotHour = Math.floor(hours / 2) * 2;
 
   return `${String(timeSlotHour).padStart(2, "0")}:00`;
@@ -33,11 +31,8 @@ const getPreviousTimeSlot = (currentSlot) => {
 
 // Helper to get all time slots up to and including current slot
 const getSlotsTillNow = () => {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-
-  const currentHour = istTime.getUTCHours();
+  const timeStr = getISTTimeString();
+  const currentHour = parseInt(timeStr.split(':')[0], 10);
   const currentSlotHour = Math.floor(currentHour / 2) * 2;
 
   const allSlots = [
@@ -64,11 +59,7 @@ const getSlotsTillNow = () => {
 
 // Helper to get today's date in YYYY-MM-DD format
 const getTodayDate = () => {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-
-  return istTime.toISOString().split("T")[0];
+  return getISTDateString();
 };
 
 // Create empty panel log entry using upsert to prevent duplicates

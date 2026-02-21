@@ -331,7 +331,29 @@ Frontend uses hardcoded API endpoints. To change:
 ```json
 {
   "tag_id": "TAG-001",
-  "building_name": "PRESTIGE POLYGON"
+  "building_name": "PRESTIGE POLYGON",
+  "username": "User 1"
+}
+```
+
+**Mobile Scan Tag Response Example:**
+```json
+{
+  "success": true,
+  "message": "Success",
+  "building": "PRESTIGE POLYGON",
+  "username": "User 1",
+  "type": "Hose Reel Hose",
+  "floor": "Basement 2",
+  "location": "Near Pillar A1",
+  "questions": [
+    {
+      "question": "Is the hose reel intact?",
+      "option1": "Yes",
+      "option2": "No",
+      "option3": "N/A"
+    }
+  ]
 }
 ```
 
@@ -348,6 +370,13 @@ Frontend uses hardcoded API endpoints. To change:
   "remarks": "Optional remarks"
 }
 ```
+
+### Service/Operator Logs
+
+- `GET /api/service-logs` - Get all service logs
+- `POST /api/service-logs` - Create new service log (Mandatory: building, natureOfCall, workDescription, status, username. Auto-generates: date, time, sno)
+- `PUT /api/service-logs/:id` - Update service log
+- `DELETE /api/service-logs/:id` - Delete service log
 
 ## Query Parameters for Filtering
 

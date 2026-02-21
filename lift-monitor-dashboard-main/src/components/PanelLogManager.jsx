@@ -12,8 +12,8 @@ import "./PanelLogManager.css";
 const PanelLogManager = ({ building }) => {
   const { canCreatePanelLog, canEditPanelLog } = useAuth();
   const [view, setView] = useState("list");
-  // If building prop is provided, we force filter by that building.
-  const [filterBuilding] = useState(building || "");
+  // Use the building prop directly so it respects global App.jsx changes
+  const filterBuilding = building || "";
   const [editingLog, setEditingLog] = useState(null);
   const [message, setMessage] = useState(null);
 
@@ -118,6 +118,7 @@ const PanelLogManager = ({ building }) => {
       {(view === "create" || view === "edit") && (
         <PanelLogForm
           initialData={editingLog}
+          building={filterBuilding}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
         />

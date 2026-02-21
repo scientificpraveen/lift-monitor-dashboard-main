@@ -1,6 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth.js";
+import { getISTDateString, getISTTimeString } from "../utils/timeUtils.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -27,7 +28,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const {
+    let {
       sno,
       building,
       date,
@@ -38,17 +39,21 @@ router.post("/", async (req, res) => {
       username,
     } = req.body;
 
-    if (
-      !sno ||
-      !building ||
-      !date ||
-      !time ||
-      !natureOfCall ||
-      !workDescription ||
-      !status ||
-      !username
-    ) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (!building || !natureOfCall || !workDescription || !status || !username) {
+      return res.status(400).json({ error: "Building, natureOfCall, workDescription, status, and username are required" });
+    }
+
+    // Auto-generate date and time (IST) if missing
+    if (!date) date = getISTDateString();
+    if (!time) time = getISTTimeString();
+
+    // Auto-generate sno if missing
+    if (!sno) {
+      const lastLog = await prisma.serviceLog.findFirst({
+        orderBy: { id: 'desc' }
+      });
+      const nextSnoNum = lastLog && lastLog.sno ? parseInt(lastLog.sno) + 1 : 1;
+      sno = isNaN(nextSnoNum) ? "1" : nextSnoNum.toString();
     }
 
     const log = await prisma.serviceLog.create({
@@ -87,7 +92,7 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const {
+    let {
       sno,
       building,
       date,
@@ -107,6 +112,16 @@ router.put("/:id", async (req, res) => {
     if (!existingLog) {
       return res.status(404).json({ error: "Service log not found" });
     }
+
+    // Retain existing values for optional fields if not provided
+    sno = sno || existingLog.sno;
+    building = building || existingLog.building;
+    date = date || existingLog.date;
+    time = time || existingLog.time;
+    natureOfCall = natureOfCall || existingLog.natureOfCall;
+    workDescription = workDescription || existingLog.workDescription;
+    status = status || existingLog.status;
+    username = username || existingLog.username;
 
     // Build change descriptions and history entries
     const historyEntries = [];
@@ -162,9 +177,7 @@ router.put("/:id", async (req, res) => {
         status,
         username,
         lastUpdatedBy: lastUpdatedBy || null,
-        // Remove lastUpdatedAt - Prisma automatically updates updatedAt
         changeDescription,
-        // Create history entries for each change
         history: {
           create: historyEntries,
         },

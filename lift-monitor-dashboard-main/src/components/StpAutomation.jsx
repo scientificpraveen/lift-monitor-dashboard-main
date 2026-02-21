@@ -106,7 +106,7 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
                     {label && label.split('\n').map((line, i) => <div key={i}>{line}</div>)}
                 </div>
                 {subLabel && subLabel.includes("Water Level:") ? (
-                    <div style={{ marginTop: '20px', color: '#1e3a8a', fontSize: '35px', fontWeight: '900', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
+                    <div style={{ marginTop: '25px', marginLeft: '-45px', color: '#1e3a8a', fontSize: '35px', fontWeight: '900', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
                         {subLabel.replace("Water Level: ", "")}
                     </div>
                 ) : subLabel && (
@@ -133,13 +133,13 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
                 (specialLabel || indicatorValue) && (
                     <div style={{ position: 'absolute', bottom: `${8 + indicatorOffset}px`, right: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 30 }}>
                         <div style={{
-                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: indicatorColor, border: '2px solid white',
+                            width: '80px', height: '80px', borderRadius: '50%', backgroundColor: indicatorColor, border: '2px solid white',
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', ...animationStyle
                         }}>
                             {indicatorValue ? (
-                                <span style={{ color: 'white', fontSize: '13px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1 }}>{indicatorValue}</span>
+                                <span style={{ color: 'white', fontSize: '16px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1 }}>{indicatorValue}</span>
                             ) : (labelPosition === 'inside' && specialLabel && (
-                                <span style={{ color: 'white', fontSize: '14px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1.1 }}>
+                                <span style={{ color: 'white', fontSize: '15px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1.1 }}>
                                     {specialLabel.split('\n').map((line, i) => <div key={i}>{line}</div>)}
                                 </span>
                             ))}
@@ -364,7 +364,7 @@ const MonitorBox = ({ x, y, label, value, color = "#0ea5e9" }) => (
 
 // --- MAIN DASHBOARD ---
 
-const StpAutomation = () => {
+const StpAutomation = ({ building }) => {
     const [data, setData] = useState({
         // Motors (Default 2 - Orange)
         M1: 2, M2: 2, M3: 2, M4: 2, M5: 2, M6: 2, M7: 2, M8: 2, M9: 2, M10: 2, M11: 2, M12: 2, M13: 2,
@@ -405,35 +405,36 @@ const StpAutomation = () => {
         <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#f9fafb', paddingBottom: '100px', overflow: 'auto' }}>
 
             {/* Header Section */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', marginBottom: '32px', zIndex: 50, marginTop: '16px' }}>
-                <h1 style={{
-                    fontSize: '37px', fontWeight: 900, color: 'transparent',
-                    backgroundImage: 'linear-gradient(to right, #2563eb, #0891b2)',
-                    WebkitBackgroundClip: 'text', backgroundClip: 'text',
-                    letterSpacing: '0.2em', textTransform: 'uppercase', filter: 'drop-shadow(0 1px 1px rgb(0 0 0 / 0.05))'
-                }}>
-                    ATLANWA STP DASHBOARD
-                </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-                    <div style={{
-                        width: '10px', height: '10px', borderRadius: '50%',
-                        backgroundColor: isConnected ? '#22c55e' : '#ef4444',
-                        animation: !isConnected ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
-                    }} />
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-                        {isConnected ? 'Dashboard Live' : 'Dashboard Offline'}
+            <div className="standard-header" style={{ marginLeft: '20px', marginTop: '25px' }}>
+                <div>
+                    <h2>STP AUTOMATION</h2>
+                    <span className="subtitle">
+                        Building Name: <strong>{building}</strong>
                     </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-                    <div style={{
-                        width: '10px', height: '10px', borderRadius: '50%',
-                        backgroundColor: data.deviceOnline ? '#22c55e' : '#ef4444',
-                        animation: !data.deviceOnline ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
-                    }} />
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-                        {data.deviceOnline ? 'Device Live' : 'Device Offline'}
-                    </span>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                        <div style={{
+                            width: '10px', height: '10px', borderRadius: '50%',
+                            backgroundColor: isConnected ? '#22c55e' : '#ef4444',
+                            animation: !isConnected ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                        }} />
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                            {isConnected ? 'Dashboard Live' : 'Dashboard Offline'}
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '9999px', border: '1px solid #d1d5db', backgroundColor: 'white', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                        <div style={{
+                            width: '10px', height: '10px', borderRadius: '50%',
+                            backgroundColor: data.deviceOnline ? '#22c55e' : '#ef4444',
+                            animation: !data.deviceOnline ? 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                        }} />
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                            {data.deviceOnline ? 'Device Live' : 'Device Offline'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -626,7 +627,7 @@ const StpAutomation = () => {
                     <Pipe points="M 920 1250 L 1060 1250" isFlowing={data.M12 === 1} width="8" />
 
                     <StaticArrow x="920px" y="1210px" rotate={-45} color="#c026d3" />
-                    <MonitorBox x={950} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${(data.SoftnerTH ?? 0.0).toFixed(1)} mg/l`} color="#c026d3" />
+                    <MonitorBox x={950} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${(data.SoftnerTH ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
 
                     <Tank label={"SOFT WATER\nTANK"} subLabel={`Water Level: ${data.SoftwaterTankLevel ?? 0}%`} x="1060px" y="1190px" />
 
@@ -688,20 +689,20 @@ const StpAutomation = () => {
                     {/* Inlet Pressure: Line from T-Junction (1046, 750) to Arrow */}
                     <Pipe points="M 1040 820 L 960 820" width="3" color="#0891b2" />
                     <StaticArrow x="925px" y="800px" rotate={-180} color="#0891b2" />
-                    <MonitorBox x={820} y={800} label={"INLET PRESSURE"} value={`${(data.InletPressure ?? 0.0).toFixed(1)} Bar`} color="#0891b2" />
+                    <MonitorBox x={820} y={800} label={"INLET PRESSURE"} value={`${(data.InletPressure ?? 0.0).toFixed(2)} Bar`} color="#0891b2" />
 
                     {/* Outlet Pressure: Line from PSF Out (1046, 950) to Arrow (Left side) */}
                     <Pipe points="M 1040 970 L 960 970" width="3" color="#0891b2" />
                     <StaticArrow x="925px" y="950px" rotate={-180} color="#0891b2" />
-                    <MonitorBox x={810} y={950} label={"OUTLET PRESSURE"} value={`${(data.OutletPressure ?? 0.0).toFixed(1)} Bar`} color="#0891b2" />
+                    <MonitorBox x={810} y={950} label={"OUTLET PRESSURE"} value={`${(data.OutletPressure ?? 0.0).toFixed(2)} Bar`} color="#0891b2" />
 
                     {/* SBR TSS */}
                     <StaticArrow x="238px" y="548px" rotate={45} color="#c026d3" />
-                    <MonitorBox x={272} y={565} label="SBR TSS" value={`${(data.SBRTSS ?? 0.0).toFixed(1)} mg/l`} color="#c026d3" />
+                    <MonitorBox x={272} y={565} label="SBR TSS" value={`${(data.SBRTSS ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
 
                     {/* Clarifier TSS */}
                     <StaticArrow x="1040px" y="240px" rotate={0} color="#c026d3" />
-                    <MonitorBox x={1070} y={240} label="CLARIFIER TSS" value={`${(data.ClarifierTSS ?? 0.0).toFixed(1)} mg/l`} color="#c026d3" />
+                    <MonitorBox x={1070} y={240} label="CLARIFIER TSS" value={`${(data.ClarifierTSS ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
 
                     {/* --- TANKS LAYER --- */}
                     <Tank label="Collection Tank" subLabel={`Water Level: ${data.CollectionTankLevel ?? 0}%`} x="50px" y="80px" />
@@ -710,7 +711,7 @@ const StpAutomation = () => {
                         label={"MBBR AERATION\nTANK"}
                         x="500px" y="80px"
                         specialLabel="DO1"
-                        indicatorValue={`${(data.DO1 ?? 0.0).toFixed(1)} mg/l`}
+                        indicatorValue={`${(data.DO1 ?? 0.0).toFixed(2)} mg/l`}
                         indicatorColor="#0891b2"
                         indicatorOffset={-10}
                         showBubbles={true}
@@ -726,7 +727,7 @@ const StpAutomation = () => {
                         subLabel={`Water Level: ${data.SBRTankLevel ?? 0}%`}
                         x="50px" y="480px"
                         specialLabel="DO2"
-                        indicatorValue={`${(data.DO2 ?? 0.0).toFixed(1)} mg/l`}
+                        indicatorValue={`${(data.DO2 ?? 0.0).toFixed(2)} mg/l`}
                         indicatorColor="#0891b2"
                         indicatorOffset={-10}
                         showBubbles={true}

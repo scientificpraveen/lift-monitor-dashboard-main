@@ -223,7 +223,7 @@ const GuardTouringManager = ({ building }) => {
             {/* HEADER BAR (Clean White with Purple Underline) */}
             <div style={headerStyle}>
                 <div>
-                    <h2 style={titleStyle}>Guard Touring Log Dashboard</h2>
+                    <h2 style={titleStyle}>GUARD TOURING LOG PANEL</h2>
                     <span style={{ fontSize: '14px', color: '#666', marginTop: '5px', display: 'block' }}>
                         Building Name: <strong>{building}</strong>
                     </span>

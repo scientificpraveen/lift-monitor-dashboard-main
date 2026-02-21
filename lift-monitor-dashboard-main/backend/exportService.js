@@ -940,7 +940,7 @@ export const generateSingleBuildingPDF = (building, logs) => {
       const doc = new PDFDocument({
         size: "A4",
         layout: "landscape",
-        margins: { top: 20, bottom: 20, left: 15, right: 15 },
+        margins: { top: 30, bottom: 30, left: 30, right: 30 },
       });
       const chunks = [];
 
@@ -985,13 +985,13 @@ export const generateSingleBuildingPDF = (building, logs) => {
             hour12: false,
           });
 
-          // Title with building and timestamp - REDUCED SIZE
+          // Title with building and timestamp
           doc
-            .fontSize(11)
+            .fontSize(12)
             .font("Helvetica-Bold")
             .text(building, { align: "center" });
           doc
-            .fontSize(9)
+            .fontSize(10)
             .font("Helvetica")
             .text(
               `Panel Log Sheet - ${new Date(date).toLocaleDateString("en-US", {
@@ -1003,67 +1003,68 @@ export const generateSingleBuildingPDF = (building, logs) => {
               { align: "center" }
             );
           doc
-            .fontSize(7)
+            .fontSize(8)
             .font("Helvetica")
             .text(`Generated on: ${istTime} (IST)`, { align: "center" });
-          doc.moveDown(0.4);
+          doc.moveDown(1);
 
           // HT Panel Table
           if (hasHT) {
-            doc.fontSize(8).font("Helvetica-Bold").text("HT PANEL");
-            doc.moveDown(0.2);
+            doc.fontSize(10).font("Helvetica-Bold").text("HT PANEL");
+            doc.moveDown(0.3);
 
             const htTableTop = doc.y;
-            const rowHeight = 14; // INCREASED from 12
-            const smallCell = 26; // INCREASED from 22
-            const timeCell = 32; // INCREASED from 28
-            const icCell = 32; // INCREASED from 28
-            const htStartX = 12;
+            const rowHeight = 12;
+            const smallCell = 22;
+            const timeCell = 28;
+            const icCell = 28;
+            const htStartX = 15;
 
             let currentX = htStartX;
             let currentY = htTableTop;
 
             // Draw HT table with 3-row headers
-            doc.fontSize(6).font("Helvetica-Bold");
+            doc.fontSize(5.5).font("Helvetica-Bold");
 
             // Time (merged 3 rows)
             doc.rect(currentX, currentY, timeCell, rowHeight * 3).stroke();
-            doc.text("Time\n(Hrs)", currentX + 2, currentY + rowHeight + 2, {
-              width: timeCell - 4,
+            doc.text("Time\n(Hrs)", currentX + 1, currentY + rowHeight, {
+              width: timeCell - 2,
               align: "center",
-              fontSize: 6,
             });
             currentX += timeCell;
 
             // I/C From TNEB (merged 3 rows)
             doc.rect(currentX, currentY, icCell, rowHeight * 3).stroke();
-            doc.text("I/C\nFrom\nTNEB", currentX + 2, currentY + rowHeight, {
-              width: icCell - 4,
-              align: "center",
-              fontSize: 6,
-            });
+            doc.text(
+              "I/C\nFrom\nTNEB",
+              currentX + 1,
+              currentY + rowHeight - 2,
+              {
+                width: icCell - 2,
+                align: "center",
+              }
+            );
             currentX += icCell;
 
-            // Main Incomer Supply header
+            // Main Incomer Supply header (row 1 - spans Volt + 5 current amp cells = 6 cells)
             const mainIncomerWidth = smallCell * 6;
             doc.rect(currentX, currentY, mainIncomerWidth, rowHeight).stroke();
-            doc.text("Main Incomer Supply", currentX + 2, currentY + 4, {
-              width: mainIncomerWidth - 4,
+            doc.text("Main Incomer Supply", currentX + 1, currentY + 3, {
+              width: mainIncomerWidth - 2,
               align: "center",
-              fontSize: 6,
             });
 
             // Volt (merged rows 2-3)
             doc
               .rect(currentX, currentY + rowHeight, smallCell, rowHeight * 2)
               .stroke();
-            doc.text("Volt\n(kv)", currentX + 2, currentY + rowHeight + 4, {
-              width: smallCell - 4,
+            doc.text("Volt\n(kv)", currentX + 1, currentY + rowHeight + 3, {
+              width: smallCell - 2,
               align: "center",
-              fontSize: 6,
             });
 
-            // Current Amp header (row 2)
+            // Current Amp header (row 2 - spans 5 cells)
             doc
               .rect(
                 currentX + smallCell,
@@ -1074,12 +1075,11 @@ export const generateSingleBuildingPDF = (building, logs) => {
               .stroke();
             doc.text(
               "Current Amp",
-              currentX + smallCell + 2,
-              currentY + rowHeight + 4,
+              currentX + smallCell + 1,
+              currentY + rowHeight + 3,
               {
-                width: smallCell * 5 - 4,
+                width: smallCell * 5 - 2,
                 align: "center",
-                fontSize: 6,
               }
             );
 
@@ -1095,12 +1095,11 @@ export const generateSingleBuildingPDF = (building, logs) => {
                 .stroke();
               doc.text(
                 lbl,
-                currentX + smallCell + smallCell * idx + 2,
-                currentY + rowHeight * 2 + 4,
+                currentX + smallCell + smallCell * idx + 1,
+                currentY + rowHeight * 2 + 3,
                 {
-                  width: smallCell - 4,
+                  width: smallCell - 2,
                   align: "center",
-                  fontSize: 6,
                 }
               );
             });
@@ -1114,12 +1113,12 @@ export const generateSingleBuildingPDF = (building, logs) => {
               doc.rect(currentX, currentY, trWidth, rowHeight).stroke();
               doc.text(
                 `Out Going to ${tr}\n(2000 Kva)`,
-                currentX + 2,
-                currentY + 2,
+                currentX + 1,
+                currentY + 1,
                 {
-                  width: trWidth - 4,
+                  width: trWidth - 2,
                   align: "center",
-                  fontSize: 5,
+                  lineBreak: false,
                 }
               );
 
@@ -1128,13 +1127,13 @@ export const generateSingleBuildingPDF = (building, logs) => {
                 .rect(currentX, currentY + rowHeight, trWidth, rowHeight)
                 .stroke();
               doc.text(
-                "Current Amp &\nWinding Temp",
-                currentX + 2,
-                currentY + rowHeight + 2,
+                "Current Amp &\nwinding Temp",
+                currentX + 1,
+                currentY + rowHeight + 1,
                 {
-                  width: trWidth - 4,
+                  width: trWidth - 2,
                   align: "center",
-                  fontSize: 5,
+                  lineBreak: false,
                 }
               );
 
@@ -1150,15 +1149,15 @@ export const generateSingleBuildingPDF = (building, logs) => {
                   .stroke();
                 doc.text(
                   lbl,
-                  currentX + smallCell * idx + 2,
-                  currentY + rowHeight * 2 + 4,
+                  currentX + smallCell * idx + 1,
+                  currentY + rowHeight * 2 + 3,
                   {
-                    width: smallCell - 4,
+                    width: smallCell - 2,
                     align: "center",
-                    fontSize: 6,
                   }
                 );
               });
+
               currentX += trWidth;
             });
 
@@ -1166,17 +1165,14 @@ export const generateSingleBuildingPDF = (building, logs) => {
             currentY += rowHeight * 3;
             const htLogs = dailyLogs.filter((log) => log.htPanel);
 
-            doc.fontSize(6).font("Helvetica");
-
             htLogs.forEach((log) => {
               currentX = htStartX;
 
               // Time
               doc.rect(currentX, currentY, timeCell, rowHeight).stroke();
-              doc.text(log.time, currentX + 2, currentY + 3, {
-                width: timeCell - 4,
+              doc.text(log.time, currentX + 1, currentY + 3, {
+                width: timeCell - 2,
                 align: "center",
-                fontSize: 6,
               });
               currentX += timeCell;
 
@@ -1184,12 +1180,11 @@ export const generateSingleBuildingPDF = (building, logs) => {
               doc.rect(currentX, currentY, icCell, rowHeight).stroke();
               doc.text(
                 log.htPanel.icFromTneb || "EB",
-                currentX + 2,
+                currentX + 1,
                 currentY + 3,
                 {
-                  width: icCell - 4,
+                  width: icCell - 2,
                   align: "center",
-                  fontSize: 6,
                 }
               );
               currentX += icCell;
@@ -1198,17 +1193,15 @@ export const generateSingleBuildingPDF = (building, logs) => {
               doc.rect(currentX, currentY, smallCell, rowHeight).stroke();
               doc.text(
                 log.htPanel.voltageFromWreb?.volt || "-",
-                currentX + 2,
+                currentX + 1,
                 currentY + 3,
                 {
-                  width: smallCell - 4,
+                  width: smallCell - 2,
                   align: "center",
-                  fontSize: 6,
                 }
               );
               currentX += smallCell;
 
-              // Current Amp values
               [
                 log.htPanel.currentAmp?.r,
                 log.htPanel.currentAmp?.y,
@@ -1217,16 +1210,10 @@ export const generateSingleBuildingPDF = (building, logs) => {
                 log.htPanel.currentAmp?.hz,
               ].forEach((val) => {
                 doc.rect(currentX, currentY, smallCell, rowHeight).stroke();
-                doc.text(
-                  String(val || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: smallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(val || "-", currentX + 1, currentY + 3, {
+                  width: smallCell - 2,
+                  align: "center",
+                });
                 currentX += smallCell;
               });
 
@@ -1236,46 +1223,25 @@ export const generateSingleBuildingPDF = (building, logs) => {
                 log.htPanel.outgoingTr2,
                 log.htPanel.outgoingTr3,
               ].forEach((tr) => {
-                // Current Amp R
                 doc.rect(currentX, currentY, smallCell, rowHeight).stroke();
-                doc.text(
-                  String(tr?.currentAmp?.r || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: smallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(tr?.currentAmp?.r || "-", currentX + 1, currentY + 3, {
+                  width: smallCell - 2,
+                  align: "center",
+                });
                 currentX += smallCell;
 
-                // Winding Temp
                 doc.rect(currentX, currentY, smallCell, rowHeight).stroke();
-                doc.text(
-                  String(tr?.windingTemp || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: smallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(tr?.windingTemp || "-", currentX + 1, currentY + 3, {
+                  width: smallCell - 2,
+                  align: "center",
+                });
                 currentX += smallCell;
 
-                // Oil Temp
                 doc.rect(currentX, currentY, smallCell, rowHeight).stroke();
-                doc.text(
-                  String(tr?.oilTemp || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: smallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(tr?.oilTemp || "-", currentX + 1, currentY + 3, {
+                  width: smallCell - 2,
+                  align: "center",
+                });
                 currentX += smallCell;
               });
 
@@ -1288,162 +1254,142 @@ export const generateSingleBuildingPDF = (building, logs) => {
 
           // LT Panel Table
           if (hasLT) {
-            doc.fontSize(8).font("Helvetica-Bold").text("LT PANEL");
-            doc.moveDown(0.2);
+            doc.fontSize(10).font("Helvetica-Bold").text("LT PANEL");
+            doc.moveDown(0.3);
 
             const ltTableTop = doc.y;
-            const ltRowHeight = 14; // INCREASED from 12
-            const ltTimeCell = 32; // INCREASED from 28
-            const ltSmallCell = 26; // INCREASED from 22
-            const ltStartX = 12;
+            const ltRowHeight = 12;
+            const ltTimeCell = 28;
+            const ltSmallCell = 22;
+            const ltStartX = 15;
 
             let currentX = ltStartX;
             let currentY = ltTableTop;
 
             // Draw LT table with 3-row headers
-            doc.fontSize(6).font("Helvetica-Bold");
+            doc.fontSize(5).font("Helvetica-Bold");
 
             // Time (merged 3 rows)
             doc.rect(currentX, currentY, ltTimeCell, ltRowHeight * 3).stroke();
-            doc.text("Time\n(Hrs)", currentX + 2, currentY + ltRowHeight, {
-              width: ltTimeCell - 4,
+            doc.text("Time\n(Hrs)", currentX + 1, currentY + ltRowHeight, {
+              width: ltTimeCell - 2,
               align: "center",
-              fontSize: 6,
             });
             currentX += ltTimeCell;
 
-            // Incomer sections
-            ["Inc-1\n(Tr-1)", "Inc-2\n(Tr-2)", "Inc-3\n(Tr-3)"].forEach(
-              (incLabel) => {
-                const incomerWidth = ltSmallCell * 8;
+            // Incomer sections (3 incomers, each with 8 cells)
+            [
+              "Incomer-1 (From Tr-1)",
+              "Incomer-2 (From Tr-2)",
+              "Incomer-3 (From Tr-3)",
+            ].forEach((incLabel) => {
+              const incomerWidth = ltSmallCell * 8;
+              const incomerStartX = currentX;
 
-                // Row 1 - Incomer label
-                doc
-                  .rect(currentX, currentY, incomerWidth, ltRowHeight)
-                  .stroke();
-                doc.text(incLabel, currentX + 2, currentY + 3, {
-                  width: incomerWidth - 4,
-                  align: "center",
-                  fontSize: 6,
-                });
+              // Row 1 - Incomer label
+              doc.rect(currentX, currentY, incomerWidth, ltRowHeight).stroke();
+              doc.text(incLabel, currentX + 1, currentY + 3, {
+                width: incomerWidth - 2,
+                align: "center",
+              });
 
-                // Row 2 - Voltage, Current Amp, TAP, KWH
-                // Voltage header
+              // Row 2 - Voltage, Current Amp, TAP, KWH
+              // Voltage (3 cells)
+              doc
+                .rect(
+                  currentX,
+                  currentY + ltRowHeight,
+                  ltSmallCell * 3,
+                  ltRowHeight
+                )
+                .stroke();
+              doc.text("Voltage", currentX + 1, currentY + ltRowHeight + 3, {
+                width: ltSmallCell * 3 - 2,
+                align: "center",
+              });
+
+              // Current Amp (3 cells)
+              doc
+                .rect(
+                  currentX + ltSmallCell * 3,
+                  currentY + ltRowHeight,
+                  ltSmallCell * 3,
+                  ltRowHeight
+                )
+                .stroke();
+              doc.text(
+                "Current Amp",
+                currentX + ltSmallCell * 3 + 1,
+                currentY + ltRowHeight + 3,
+                { width: ltSmallCell * 3 - 2, align: "center" }
+              );
+
+              // TAP (merged 2 rows)
+              doc
+                .rect(
+                  currentX + ltSmallCell * 6,
+                  currentY + ltRowHeight,
+                  ltSmallCell,
+                  ltRowHeight * 2
+                )
+                .stroke();
+              doc.text(
+                "TAP\nNo.",
+                currentX + ltSmallCell * 6 + 1,
+                currentY + ltRowHeight + 3,
+                { width: ltSmallCell - 2, align: "center" }
+              );
+
+              // KWH (merged 2 rows)
+              doc
+                .rect(
+                  currentX + ltSmallCell * 7,
+                  currentY + ltRowHeight,
+                  ltSmallCell,
+                  ltRowHeight * 2
+                )
+                .stroke();
+              doc.text(
+                "KWH",
+                currentX + ltSmallCell * 7 + 1,
+                currentY + ltRowHeight + 5,
+                { width: ltSmallCell - 2, align: "center" }
+              );
+
+              // Row 3 - Voltage phases (RY, YB, BR) and Current Amp phases (R, Y, B)
+              ["RY", "YB", "BR", "R", "Y", "B"].forEach((lbl, idx) => {
                 doc
                   .rect(
-                    currentX,
-                    currentY + ltRowHeight,
-                    ltSmallCell * 3,
+                    currentX + ltSmallCell * idx,
+                    currentY + ltRowHeight * 2,
+                    ltSmallCell,
                     ltRowHeight
                   )
                   .stroke();
-                doc.text("Voltage", currentX + 2, currentY + ltRowHeight + 3, {
-                  width: ltSmallCell * 3 - 4,
-                  align: "center",
-                  fontSize: 6,
-                });
-
-                // Current Amp header
-                doc
-                  .rect(
-                    currentX + ltSmallCell * 3,
-                    currentY + ltRowHeight,
-                    ltSmallCell * 3,
-                    ltRowHeight
-                  )
-                  .stroke();
                 doc.text(
-                  "Current Amp",
-                  currentX + ltSmallCell * 3 + 2,
-                  currentY + ltRowHeight + 3,
-                  {
-                    width: ltSmallCell * 3 - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
+                  lbl,
+                  currentX + ltSmallCell * idx + 1,
+                  currentY + ltRowHeight * 2 + 3,
+                  { width: ltSmallCell - 2, align: "center" }
                 );
+              });
 
-                // TAP header
-                doc
-                  .rect(
-                    currentX + ltSmallCell * 6,
-                    currentY + ltRowHeight,
-                    ltSmallCell,
-                    ltRowHeight * 2
-                  )
-                  .stroke();
-                doc.text(
-                  "TAP\nNo.",
-                  currentX + ltSmallCell * 6 + 2,
-                  currentY + ltRowHeight + 3,
-                  {
-                    width: ltSmallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
-
-                // KWH header
-                doc
-                  .rect(
-                    currentX + ltSmallCell * 7,
-                    currentY + ltRowHeight,
-                    ltSmallCell,
-                    ltRowHeight * 2
-                  )
-                  .stroke();
-                doc.text(
-                  "KWH",
-                  currentX + ltSmallCell * 7 + 2,
-                  currentY + ltRowHeight + 5,
-                  {
-                    width: ltSmallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
-
-                // Row 3 - Phase labels
-                ["RY", "YB", "BR", "R", "Y", "B"].forEach((lbl, idx) => {
-                  doc
-                    .rect(
-                      currentX + ltSmallCell * idx,
-                      currentY + ltRowHeight * 2,
-                      ltSmallCell,
-                      ltRowHeight
-                    )
-                    .stroke();
-                  doc.text(
-                    lbl,
-                    currentX + ltSmallCell * idx + 2,
-                    currentY + ltRowHeight * 2 + 4,
-                    {
-                      width: ltSmallCell - 4,
-                      align: "center",
-                      fontSize: 6,
-                    }
-                  );
-                });
-
-                currentX += incomerWidth;
-              }
-            );
+              currentX += incomerWidth;
+            });
 
             currentY += ltRowHeight * 3;
 
             const ltLogs = dailyLogs.filter((log) => log.ltPanel);
 
-            doc.fontSize(6).font("Helvetica");
+            doc.fontSize(5.5).font("Helvetica");
 
             ltLogs.forEach((log) => {
               currentX = ltStartX;
 
-              // Time cell
               doc.rect(currentX, currentY, ltTimeCell, ltRowHeight).stroke();
-              doc.text(log.time, currentX + 2, currentY + 3, {
-                width: ltTimeCell - 4,
+              doc.text(log.time, currentX + 1, currentY + 3, {
+                width: ltTimeCell - 2,
                 align: "center",
-                fontSize: 6,
               });
               currentX += ltTimeCell;
 
@@ -1458,16 +1404,19 @@ export const generateSingleBuildingPDF = (building, logs) => {
                   doc
                     .rect(currentX, currentY, ltSmallCell, ltRowHeight)
                     .stroke();
+                  const voltText = String(incomer?.voltage?.[phase] || "-");
+                  const fontSize = voltText.length > 4 ? 4.5 : 5.5;
+                  doc.fontSize(fontSize);
                   doc.text(
-                    String(incomer?.voltage?.[phase] || "-").substring(0, 6),
-                    currentX + 2,
+                    voltText.substring(0, 5),
+                    currentX + 1,
                     currentY + 3,
                     {
-                      width: ltSmallCell - 4,
+                      width: ltSmallCell - 2,
                       align: "center",
-                      fontSize: 6,
                     }
                   );
+                  doc.fontSize(5.5);
                   currentX += ltSmallCell;
                 });
 
@@ -1476,45 +1425,36 @@ export const generateSingleBuildingPDF = (building, logs) => {
                   doc
                     .rect(currentX, currentY, ltSmallCell, ltRowHeight)
                     .stroke();
+                  const ampText = String(incomer?.currentAmp?.[phase] || "-");
+                  const fontSize = ampText.length > 4 ? 4.5 : 5.5;
+                  doc.fontSize(fontSize);
                   doc.text(
-                    String(incomer?.currentAmp?.[phase] || "-").substring(0, 6),
-                    currentX + 2,
+                    ampText.substring(0, 5),
+                    currentX + 1,
                     currentY + 3,
                     {
-                      width: ltSmallCell - 4,
+                      width: ltSmallCell - 2,
                       align: "center",
-                      fontSize: 6,
                     }
                   );
+                  doc.fontSize(5.5);
                   currentX += ltSmallCell;
                 });
 
-                // TAP
+                // TAP cell
                 doc.rect(currentX, currentY, ltSmallCell, ltRowHeight).stroke();
-                doc.text(
-                  String(incomer?.tap || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: ltSmallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(incomer?.tap || "-", currentX + 1, currentY + 3, {
+                  width: ltSmallCell - 2,
+                  align: "center",
+                });
                 currentX += ltSmallCell;
 
-                // KWH
+                // KWH cell
                 doc.rect(currentX, currentY, ltSmallCell, ltRowHeight).stroke();
-                doc.text(
-                  String(incomer?.kwh || "-").substring(0, 6),
-                  currentX + 2,
-                  currentY + 3,
-                  {
-                    width: ltSmallCell - 4,
-                    align: "center",
-                    fontSize: 6,
-                  }
-                );
+                doc.text(incomer?.kwh || "-", currentX + 1, currentY + 3, {
+                  width: ltSmallCell - 2,
+                  align: "center",
+                });
                 currentX += ltSmallCell;
               });
 

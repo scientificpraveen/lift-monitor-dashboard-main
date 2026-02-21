@@ -33,6 +33,7 @@ import {
   getRecentEmailJobs,
 } from "./services/emailQueue.js";
 import { PrismaClient } from "@prisma/client";
+import { getISTDateString, getISTTimeString } from "./utils/timeUtils.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -291,7 +292,12 @@ app.post('/api/update-stp', (req, res) => {
 });
 
 // -- PARKING SLOT VACANCY API --
-let parkingSlots = { P1: 0, P2: 0, P3: 0, P4: 0 };
+let parkingSlots = {
+  P1: { value: 0, lastUpdated: Date.now() },
+  P2: { value: 0, lastUpdated: Date.now() },
+  P3: { value: 0, lastUpdated: Date.now() },
+  P4: { value: 0, lastUpdated: Date.now() }
+};
 
 app.get('/api/parking-slots', (req, res) => {
   res.json(parkingSlots);
@@ -309,18 +315,13 @@ app.post('/api/update-parking-slots/', (req, res) => {
       const val = parseInt(incomingData[key]);
       // Only allow 0 (Vacant) or 1 (Occupied)
       if (val === 0 || val === 1) {
-        parkingSlots[key] = val;
+        parkingSlots[key] = { value: val, lastUpdated: Date.now() };
         updated = true;
       }
     }
   });
 
   if (updated) {
-    // Broadcast update via WebSocket just like STP/Lifts
-    // We can reuse the existing WSS or just let frontend poll as per plan.
-    // Plan said polling, so we stick to just updating state.
-    // But for better UX, let's also broadcast if possible?
-    // Plan said polling, sticking to polling for simplicity as per plan.
     console.log("Parking Slots Updated:", parkingSlots);
   }
 
@@ -448,7 +449,7 @@ app.post("/api/test-email/send-test", async (req, res) => {
     const { generateSingleBuildingPDF } = await import("./exportService.js");
 
     // Get today's date
-    const today = new Date().toISOString().split("T")[0];
+    const today = getISTDateString();
 
     // Fetch actual logs for this building from database
     const logs = await panelLogService.getPanelLogs({
@@ -584,11 +585,17 @@ app.post("/api/panel-logs", authMiddleware, async (req, res) => {
     const logData = req.body;
     const userAssignedBuildings = req.user?.assignedBuildings || [];
 
-    if (!logData.building || !logData.date || !logData.time) {
+    if (!logData.building) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: building, date, and time are required",
+        error: "Missing required fields: building is required",
       });
+    }
+
+    // Auto-generate date and time (IST) if missing (for mobile)
+    if (!logData.date || !logData.time) {
+      if (!logData.date) logData.date = getISTDateString();
+      if (!logData.time) logData.time = getISTTimeString();
     }
 
     // Check if user has access to the building they're trying to create logs for
@@ -717,8 +724,7 @@ app.get("/api/panel-logs/export/excel", authMiddleware, async (req, res) => {
 
     const buffer = await generateExcel(filters);
 
-    const filename = `panel-logs-${new Date().toISOString().split("T")[0]
-      }.xlsx`;
+    const filename = `panel-logs-${getISTDateString()}.xlsx`;
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -785,7 +791,7 @@ app.get("/api/panel-logs/export/pdf", authMiddleware, async (req, res) => {
 
     const buffer = await generatePDF(filters);
 
-    const filename = `panel-logs-${new Date().toISOString().split("T")[0]}.pdf`;
+    const filename = `panel-logs-${getISTDateString()}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(buffer);
@@ -880,139 +886,7 @@ app.delete("/api/panel-logs", async (req, res) => {
   }
 });
 
-// Export PDFs grouped by building
-app.get(
-  "/api/panel-logs/export/pdf/by-building",
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { building, date, dateFrom, dateTo, panelType, time } = req.query;
-      const userAssignedBuildings = req.user?.assignedBuildings || [];
-
-      // If user is restricted and building is specified, check access
-      if (
-        userAssignedBuildings.length > 0 &&
-        building &&
-        !userAssignedBuildings.includes(building)
-      ) {
-        return res.status(403).json({
-          success: false,
-          error: "Access denied to export logs for this building",
-        });
-      }
-
-      const filters = {};
-      if (building) filters.building = building;
-      // If user is restricted and no building specified, restrict to assigned buildings only
-      else if (userAssignedBuildings.length > 0) {
-        filters.buildings = userAssignedBuildings;
-      }
-
-      if (date) filters.date = date;
-      if (dateFrom || dateTo) {
-        filters.dateRange = { from: dateFrom, to: dateTo };
-      }
-      if (panelType) filters.panelType = panelType;
-      if (time) filters.time = time;
-
-      const logs = await panelLogService.getPanelLogs(filters);
-
-      if (logs.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: "No data available for export",
-        });
-      }
-
-      const { generatePDFByBuilding } = await import("./exportService.js");
-      const pdfsByBuilding = await generatePDFByBuilding(logs);
-
-      // If single building requested, return single PDF
-      if (building && pdfsByBuilding[building]) {
-        const filename = `Panel_Logs_${building}_${date || dateFrom || "export"
-          }.pdf`;
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${filename}"`
-        );
-        res.send(pdfsByBuilding[building]);
-      } else {
-        // Return JSON with building information
-        res.json({
-          success: true,
-          buildings: Object.keys(pdfsByBuilding),
-          message:
-            "PDFs generated for each building. Use individual endpoints to download.",
-          count: Object.keys(pdfsByBuilding).length,
-        });
-      }
-    } catch (error) {
-      console.error("Error exporting PDFs by building:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to generate PDF files",
-        message: error.message,
-      });
-    }
-  }
-);
-
-// Download individual building PDF
-app.get(
-  "/api/panel-logs/export/pdf/building/:buildingName",
-  async (req, res) => {
-    try {
-      const buildingName = decodeURIComponent(req.params.buildingName);
-      const { date, dateFrom, dateTo, panelType, time } = req.query;
-
-      const filters = {
-        building: buildingName,
-      };
-      if (date) filters.date = date;
-      if (dateFrom || dateTo) {
-        filters.dateRange = { from: dateFrom, to: dateTo };
-      }
-      if (panelType) filters.panelType = panelType;
-      if (time) filters.time = time;
-
-      const logs = await panelLogService.getPanelLogs(filters);
-
-      if (logs.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: "No data found for this building",
-        });
-      }
-
-      const { generatePDFByBuilding } = await import("./exportService.js");
-      const pdfsByBuilding = await generatePDFByBuilding(logs);
-
-      if (pdfsByBuilding[buildingName]) {
-        const filename = `Panel_Logs_${buildingName}_${date || dateFrom || "export"
-          }.pdf`;
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${filename}"`
-        );
-        res.send(pdfsByBuilding[buildingName]);
-      } else {
-        res.status(404).json({
-          success: false,
-          error: "PDF generation failed for this building",
-        });
-      }
-    } catch (error) {
-      console.error("Error exporting PDF for building:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to generate PDF file",
-        message: error.message,
-      });
-    }
-  }
-);
+// Removed unused export PDF by building endpoints
 
 // Email API Routes
 

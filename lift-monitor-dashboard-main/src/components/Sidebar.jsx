@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { buildings } from "../config/buildings";
 import { useAuth } from "../context/AuthContext";
 import "./Sidebar.css";
@@ -17,6 +17,12 @@ const Sidebar = ({
 }) => {
   const { getAccessibleBuildings, isAdmin } = useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
+  const [expandedLogsBuilding, setExpandedLogsBuilding] = useState(null);
+
+  const toggleLogsMenu = (building, e) => {
+    e.stopPropagation();
+    setExpandedLogsBuilding(expandedLogsBuilding === building ? null : building);
+  };
 
   return (
     <div className="sidebar">
@@ -44,50 +50,66 @@ const Sidebar = ({
                   >
                     📊 LIFT STATUS
                   </li>
+
+                  {/* Nesting all Logs under a single top-level "LOGS" collapsible menu */}
                   <li
-                    className={`building-item ${activePanel === "service" ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(building);
-                      onServiceLogClick();
-                    }}
-                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
+                    className={`building-item ${expandedLogsBuilding === building || ["service", "panel", "fire", "guard"].includes(activePanel) ? "active-parent" : ""}`}
+                    onClick={(e) => toggleLogsMenu(building, e)}
+                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                   >
-                    📋 OPERATOR LOG PANEL
+                    <span>📋 LOGS</span>
+                    <span>{expandedLogsBuilding === building ? "▲" : "▼"}</span>
                   </li>
-                  <li
-                    className={`building-item ${activePanel === "panel" ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(building);
-                      onPanelLogClick();
-                    }}
-                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
-                  >
-                    ⚡ HT/LT PANEL LOGS
-                  </li>
-                  <li
-                    className={`building-item ${activePanel === "fire" ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(building);
-                      onFireLogClick();
-                    }}
-                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
-                  >
-                    🔥 FIRE LOG PANEL
-                  </li>
-                  <li
-                    className={`building-item ${activePanel === "guard" ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(building);
-                      onGuardTouringClick();
-                    }}
-                    style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
-                  >
-                    🛡️ GUARD TOURING SYSTEM
-                  </li>
+
+                  {/* Render the inside logs only if expanded */}
+                  {expandedLogsBuilding === building && (
+                    <div className="nested-logs-menu" style={{ paddingLeft: "20px" }}>
+                      <li
+                        className={`building-item ${activePanel === "service" ? "active" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onServiceLogClick();
+                        }}
+                        style={{ fontSize: "0.85em", borderLeft: "2px solid #888" }}
+                      >
+                        📋 OPERATOR LOG
+                      </li>
+                      <li
+                        className={`building-item ${activePanel === "panel" ? "active" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onPanelLogClick();
+                        }}
+                        style={{ fontSize: "0.85em", borderLeft: "2px solid #888" }}
+                      >
+                        ⚡ HT/LT LOG
+                      </li>
+                      <li
+                        className={`building-item ${activePanel === "fire" ? "active" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onFireLogClick();
+                        }}
+                        style={{ fontSize: "0.85em", borderLeft: "2px solid #888" }}
+                      >
+                        🔥 FIRE LOG
+                      </li>
+                      <li
+                        className={`building-item ${activePanel === "guard" ? "active" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(building);
+                          onGuardTouringClick();
+                        }}
+                        style={{ fontSize: "0.85em", borderLeft: "2px solid #888" }}
+                      >
+                        🛡️ GUARD LOG
+                      </li>
+                    </div>
+                  )}
                   {building === "PRESTIGE POLYGON" && (
                     <>
                       <li
@@ -110,7 +132,7 @@ const Sidebar = ({
                         }}
                         style={{ fontSize: "0.9em", borderLeft: "2px solid #ccc" }}
                       >
-                        🚗 PARKING SLOT VACANCY
+                        🚗 PARKING VACANCY
                       </li>
                     </>
                   )}

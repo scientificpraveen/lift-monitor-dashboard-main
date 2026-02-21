@@ -226,7 +226,7 @@ import bcrypt from 'bcryptjs';
 // 1. Mobile Scan Tag & Fetch Questions (fire-questions-scan)
 router.post('/mobile/fire-questions-scan', async (req, res) => {
     try {
-        const { tag_id, building_name } = req.body;
+        const { tag_id, building_name, username } = req.body; // Added username
 
         if (!tag_id || !building_name) {
             return res.status(200).json({ success: false, message: "Tag ID and Building Name are required" });
@@ -259,10 +259,15 @@ router.post('/mobile/fire-questions-scan', async (req, res) => {
             }
         });
 
-        // 4. Return Response
+        // 4. Return Response with additional mapping details
         res.json({
             success: true,
             message: "Success",
+            building: mapping.building,
+            username: username || "",
+            type: mapping.type,
+            floor: mapping.floor,
+            location: mapping.location,
             questions: questions
         });
 
@@ -291,10 +296,9 @@ router.post('/mobile/fire-log-submit', async (req, res) => {
             return res.status(200).json({ success: false, message: "Tag mapped with other building" });
         }
 
-        // IST Timestamp Conversion
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const istTime = new Date(now.getTime() + istOffset);
+        // Current Timestamp
+        // The server natively handles IST, so a raw Date object is correctly stored
+        const currentTime = new Date();
 
         // Create Log Entry
         const newLog = await prisma.fireLogEntry.create({
@@ -306,7 +310,7 @@ router.post('/mobile/fire-log-submit', async (req, res) => {
                 type: type,
                 answers: questions || {}, // JSON of "Question": "Answer"
                 remarks: req.body.remarks || "-",
-                timestamp: istTime
+                timestamp: currentTime
             }
         });
 

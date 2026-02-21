@@ -1,4 +1,5 @@
 import { queueEmailReport } from "./emailQueue.js";
+import { getISTDateString } from "../utils/timeUtils.js";
 
 let emailSchedulerInterval = null;
 let lastEmailTriggerDate = null; // Track the last date emails were sent
@@ -75,10 +76,7 @@ const isNoonTimeWindow = () => {
 // Send reports and handle scheduling
 const handleDailyEmailReport = async () => {
   try {
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset);
-    const istDateStr = istTime.toISOString().split("T")[0];
+    const istDateStr = getISTDateString();
 
     // Prevent duplicate emails on the same day
     if (lastEmailTriggerDate === istDateStr) {
@@ -89,15 +87,15 @@ const handleDailyEmailReport = async () => {
     }
 
     console.log(
-      `\n📧 [${istTime.toLocaleString("en-IN", {
+      `\n📧 [${new Date().toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
       })}] Running daily email report scheduler...`
     );
 
-    // Queue emails for yesterday (non-blocking)
-    const yesterday = new Date(istTime);
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    // Queue emails for yesterday
+    const todayDate = new Date();
+    todayDate.setDate(todayDate.getDate() - 1);
+    const yesterdayStr = getISTDateString(todayDate);
 
     let queuedCount = 0;
     for (const building of BUILDINGS) {
@@ -168,13 +166,9 @@ export const stopEmailScheduler = () => {
 
 // Manual trigger for testing (queues previous day's emails)
 export const triggerDailyEmailReportManual = async () => {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-
-  const yesterday = new Date(istTime);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const todayDate = new Date();
+  todayDate.setDate(todayDate.getDate() - 1);
+  const yesterdayStr = getISTDateString(todayDate);
 
   console.log(`\n📧 Manual trigger: Queuing reports for ${yesterdayStr}...`);
 
