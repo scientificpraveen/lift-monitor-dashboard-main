@@ -188,40 +188,42 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
           <div className="form-row">
             <div className="form-group">
               <label>Building *</label>
-              <select
+              <input
+                type="text"
                 value={formData.building}
-                onChange={(e) =>
-                  handleInputChange(
-                    "building",
-                    null,
-                    null,
-                    null,
-                    e.target.value
-                  )
-                }
-                required
-              >
-                {getAccessibleBuildings(buildings).map((building) => (
-                  <option key={building} value={building}>
-                    {building}
-                  </option>
-                ))}
-              </select>
+                disabled
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: "6px",
+                  border: "2px solid #e0e0e0",
+                  fontSize: "14px",
+                  height: "45px",
+                  boxSizing: "border-box",
+                  width: "100%",
+                  background: "#f8fafc",
+                  color: "#94a3b8",
+                  cursor: "not-allowed"
+                }}
+              />
             </div>
 
             <div className="form-group">
               <label>Date *</label>
               <input
-                type="date"
+                type="text"
                 value={formData.date}
-                readOnly
                 disabled
-                title="Date is automatically set to today"
                 style={{
-                  background: "#e8f5e9",
-                  cursor: "not-allowed",
-                  fontWeight: "500",
-                  color: "#2e7d32",
+                  padding: "10px 12px",
+                  borderRadius: "6px",
+                  border: "2px solid #e0e0e0",
+                  fontSize: "14px",
+                  height: "45px",
+                  boxSizing: "border-box",
+                  width: "100%",
+                  background: "#f8fafc",
+                  color: "#94a3b8",
+                  cursor: "not-allowed"
                 }}
               />
             </div>
@@ -252,14 +254,18 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
               <input
                 type="text"
                 value={`${formData.time} (${formatTimeSlot(formData.time)})`}
-                readOnly
                 disabled
-                title="Time is automatically calculated based on IST timezone in 2-hour intervals"
                 style={{
-                  background: "#e8f5e9",
-                  cursor: "not-allowed",
-                  fontWeight: "500",
-                  color: "#2e7d32",
+                  padding: "10px 12px",
+                  borderRadius: "6px",
+                  border: "2px solid #e0e0e0",
+                  fontSize: "14px",
+                  height: "45px",
+                  boxSizing: "border-box",
+                  width: "100%",
+                  background: "#f8fafc",
+                  color: "#94a3b8",
+                  cursor: "not-allowed"
                 }}
               />
               <small
@@ -282,7 +288,7 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
             <h3>HT Panel - Main Incomer Supply</h3>
 
             <div className="subsection">
-              <h4>I/C From TNEB</h4>
+              <h4>I/C From TNEB/DG</h4>
               <div className="form-row">
                 <div className="form-group">
                   <label>Source</label>
@@ -431,7 +437,7 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
               .filter((tr, index) => index < 2 || config.hasTr3)
               .map((tr, index) => (
                 <div key={tr} className="subsection">
-                  <h4>Outgoing to Tr-{index + 1} (2000 Kva)</h4>
+                  <h4>Outgoing to Tr-{index + 1}</h4>
                   <div className="transformer-readings">
                     <div className="reading-group">
                       <label>Current Amp</label>

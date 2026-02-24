@@ -281,8 +281,8 @@ Frontend uses hardcoded API endpoints. To change:
 
 ### Export
 
-- `GET /api/panel-logs/export/excel` - Export to Excel
-- `GET /api/panel-logs/export/pdf` - Export to PDF
+- `GET /api/panel-logs/export/excel` - Export to Excel (Query: `building`, `date`, `dateFrom`, `dateTo`, `panelType`, `time`). Filename includes building name when specified. Columns are dynamically adjusted per-building (e.g., Tr-3/Inc-3 omitted, Tap/OilTemp columns toggled based on building config).
+- `GET /api/panel-logs/export/pdf` - Export to PDF (Same query params). Filename includes building name. PDF columns are building-specific matching the Excel export layout.
 
 ### Guard Touring System
 

@@ -207,13 +207,13 @@ const App = () => {
               </div>
               <div style={{
                 backgroundColor: 'white',
-                borderRadius: '16px',
-                padding: '24px',
+                borderRadius: '15px',
+                padding: '30px',
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
                 overflowY: 'auto',
                 flex: 1
               }}>
-                <div className="main-content" style={{ background: 'transparent', padding: 0 }}>
+                <div className="main-content" style={{ background: 'transparent', padding: '15px 10px' }}>
                   {visibleLifts.map((lift) => (
                     <LiftCard key={lift.ID} lift={lift} />
                   ))}

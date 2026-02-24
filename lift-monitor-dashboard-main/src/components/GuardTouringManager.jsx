@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const GuardTouringManager = ({ building }) => {
     const {
@@ -24,6 +25,10 @@ const GuardTouringManager = ({ building }) => {
         location: '',
         floor: ''
     });
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
 
     const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
     const apiBase = `${API_BASE}/guard`;
@@ -101,6 +106,37 @@ const GuardTouringManager = ({ building }) => {
         } catch (error) {
             alert("Error deleting mapping");
         }
+    };
+
+    const handleExportToExcel = () => {
+        if (logs.length === 0) {
+            alert("No logs available to export.");
+            return;
+        }
+
+        const exportData = logs.map((log, index) => {
+            const date = new Date(log.timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+            return {
+                "S.No": index + 1,
+                "Timestamp": formattedTime,
+                "Name": log.name,
+                "Location": log.location,
+                "Floor": log.floor
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Guard Logs");
+        XLSX.writeFile(workbook, `Guard_Logs_${building}.xlsx`);
     };
 
     // --- STYLES (Matching ServiceLogManager / Operator Log) ---
@@ -250,6 +286,14 @@ const GuardTouringManager = ({ building }) => {
                             {showEditList ? "Close Edit Details" : "✎ Edit Tag Details"}
                         </button>
                     )}
+                    <button
+                        style={{ ...secondaryButtonStyle, marginLeft: '10px' }}
+                        onClick={handleExportToExcel}
+                        onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)'; }}
+                        onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = 'none'; }}
+                    >
+                        Export Log as Excel
+                    </button>
                 </div>
             </div>
 
@@ -328,7 +372,7 @@ const GuardTouringManager = ({ building }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {logs.map((log, index) => {
+                        {logs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((log, index) => {
                             // Format timestamp: yyyy-mm-dd hh:mm:ss
                             const formatTimestamp = (isoString) => {
                                 if (!isoString) return "";
@@ -344,7 +388,7 @@ const GuardTouringManager = ({ building }) => {
 
                             return (
                                 <tr key={log.id} style={{ borderBottom: '1px solid #f0f0f0', backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: '600' }}>{index + 1}</td>
+                                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: '600' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td style={tdStyle}>{formatTimestamp(log.timestamp)}</td>
                                     <td style={{ ...tdStyle, fontWeight: '500' }}>{log.name}</td>
                                     <td style={tdStyle}>{log.location}</td>
@@ -362,6 +406,29 @@ const GuardTouringManager = ({ building }) => {
                     </tbody>
                 </table>
             </div>
+
+            {Math.ceil(logs.length / itemsPerPage) > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px', gap: '15px' }}>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === 1 ? '#f5f5f5' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        Previous
+                    </button>
+                    <span style={{ fontSize: '14px', color: '#555' }}>
+                        Page <strong>{currentPage}</strong> of <strong>{Math.ceil(logs.length / itemsPerPage)}</strong>
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(logs.length / itemsPerPage)))}
+                        disabled={currentPage === Math.ceil(logs.length / itemsPerPage)}
+                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === Math.ceil(logs.length / itemsPerPage) ? '#f5f5f5' : 'white', cursor: currentPage === Math.ceil(logs.length / itemsPerPage) ? 'not-allowed' : 'pointer' }}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
+
 
         </div>
     );
@@ -391,6 +458,33 @@ const GuardMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
         fontWeight: '500',
         fontSize: '16px',
         outline: 'none'
+    };
+
+    const actionBtnStyle = {
+        padding: '6px 10px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        minWidth: '32px'
+    };
+
+    const editBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#e3f2fd',
+        color: '#1976d2',
+        border: '1px solid #bbdefb'
+    };
+
+    const deleteBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#ffebee',
+        color: '#d32f2f',
+        border: '1px solid #ffcdd2'
     };
 
     return (
@@ -425,15 +519,15 @@ const GuardMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {isEditing ? (
                         <>
-                            <button onClick={handleSave} style={{ color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }} title="Save">✓</button>
-                            <button onClick={() => setIsEditing(false)} style={{ color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Cancel">✕</button>
+                            <button onClick={handleSave} style={editBtnStyle} title="Save">✓</button>
+                            <button onClick={() => setIsEditing(false)} style={deleteBtnStyle} title="Cancel">✕</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Edit">
+                            <button onClick={() => setIsEditing(true)} style={editBtnStyle} title="Edit">
                                 ✎
                             </button>
-                            <button onClick={() => onDelete(data.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title="Delete">
+                            <button onClick={() => onDelete(data.id)} style={deleteBtnStyle} title="Delete">
                                 🗑
                             </button>
                         </>

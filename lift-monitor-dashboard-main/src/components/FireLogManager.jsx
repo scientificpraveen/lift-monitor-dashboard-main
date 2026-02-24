@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import { getISTDate, getISTTime } from '../utils/timeUtils';
 
 const FireLogManager = ({ building }) => {
@@ -137,6 +138,49 @@ const FireLogManager = ({ building }) => {
         }
     };
 
+    const handleExportToExcel = async () => {
+        try {
+            const res = await axios.get(`${apiBase}/logs?building=${building}&type=${questionType}`, { withCredentials: true });
+            const qRes = await axios.get(`${apiBase}/questions?building=${building}&type=${questionType}`, { withCredentials: true });
+
+            if (res.data.success && qRes.data.success) {
+                const fetchedLogs = res.data.data;
+                const fetchedQuestions = qRes.data.data;
+
+                if (fetchedLogs.length === 0) {
+                    alert("No logs available to export.");
+                    return;
+                }
+
+                const exportData = fetchedLogs.map((log, index) => {
+                    const row = {
+                        "S.No": index + 1,
+                        "Timestamp": new Date(log.timestamp).toLocaleString(),
+                        "Location": log.location,
+                        "Floor": log.floor,
+                    };
+
+                    fetchedQuestions.forEach(q => {
+                        row[q.question] = log.answers?.[q.question] || "-";
+                    });
+
+                    row["Remarks"] = log.remarks || "";
+                    row["Update By"] = log.userName;
+
+                    return row;
+                });
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Fire Logs");
+                XLSX.writeFile(workbook, `Fire_Logs_${building}_${questionType}.xlsx`);
+            }
+        } catch (error) {
+            console.error("Export error", error);
+            alert("Error exporting logs");
+        }
+    };
+
 
     // --- STYLES ---
     // --- STYLES (Matching GuardTouringManager) ---
@@ -264,26 +308,36 @@ const FireLogManager = ({ building }) => {
                     </span>
                 </div>
 
-                {isAdmin() && (
-                    <div style={{ display: 'flex' }}>
-                        <button
-                            style={primaryButtonStyle}
-                            onClick={() => { setShowTagDetails(!showTagDetails); setShowQuestionDetails(false); }}
-                            onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(160, 118, 249, 0.3)'; }}
-                            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
-                        >
-                            {showTagDetails ? "Close Tag Details" : "Tag Details"}
-                        </button>
-                        <button
-                            style={{ ...primaryButtonStyle, background: '#6c757d' }}
-                            onClick={() => { setShowQuestionDetails(!showQuestionDetails); setShowTagDetails(false); }}
-                            onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(108, 117, 125, 0.3)'; }}
-                            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
-                        >
-                            {showQuestionDetails ? "Close Question Details" : "Question Details"}
-                        </button>
-                    </div>
-                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {isAdmin() && (
+                        <>
+                            <button
+                                style={primaryButtonStyle}
+                                onClick={() => { setShowTagDetails(!showTagDetails); setShowQuestionDetails(false); }}
+                                onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(160, 118, 249, 0.3)'; }}
+                                onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
+                            >
+                                {showTagDetails ? "Close Tag Details" : "Tag Details"}
+                            </button>
+                            <button
+                                style={{ ...primaryButtonStyle, background: '#6c757d' }}
+                                onClick={() => { setShowQuestionDetails(!showQuestionDetails); setShowTagDetails(false); }}
+                                onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(108, 117, 125, 0.3)'; }}
+                                onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; }}
+                            >
+                                {showQuestionDetails ? "Close Question Details" : "Question Details"}
+                            </button>
+                        </>
+                    )}
+                    <button
+                        style={{ ...primaryButtonStyle, background: '#e0e0e0', color: '#333', boxShadow: 'none' }}
+                        onClick={handleExportToExcel}
+                        onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)'; }}
+                        onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = 'none'; }}
+                    >
+                        Export Log as Excel
+                    </button>
+                </div>
             </div>
 
             {/* TAG DETAILS SECTION (Admin Only) */}
@@ -313,7 +367,7 @@ const FireLogManager = ({ building }) => {
                                 <label style={{ marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Type</label>
                                 <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} style={selectStyle}>
                                     <option value="Hose Reel Hose">Hose Reel Hose</option>
-                                    <option value="Fire Hydrant cabinet">Fire Hydrant cabinet</option>
+                                    <option value="Fire Hydrant cabinet">Fire Hydrant Cabinet</option>
                                     <option value="External Yard Hydrant">External Yard Hydrant</option>
                                 </select>
                             </div>
@@ -372,7 +426,7 @@ const FireLogManager = ({ building }) => {
                                 style={{ ...selectStyle, maxWidth: '250px', margin: 0 }}
                             >
                                 <option value="Hose Reel Hose">Hose Reel Hose</option>
-                                <option value="Fire Hydrant cabinet">Fire Hydrant cabinet</option>
+                                <option value="Fire Hydrant cabinet">Fire Hydrant Cabinet</option>
                                 <option value="External Yard Hydrant">External Yard Hydrant</option>
                             </select>
                         </div>
@@ -467,7 +521,7 @@ const FireLogManager = ({ building }) => {
                             style={{ ...selectStyle, maxWidth: '250px', margin: 0 }}
                         >
                             <option value="Hose Reel Hose">Hose Reel Hose</option>
-                            <option value="Fire Hydrant cabinet">Fire Hydrant cabinet</option>
+                            <option value="Fire Hydrant cabinet">Fire Hydrant Cabinet</option>
                             <option value="External Yard Hydrant">External Yard Hydrant</option>
                         </select>
                     </div>
@@ -514,6 +568,33 @@ const FireMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
         borderBottom: '2px solid #a076f9',
     }
 
+    const actionBtnStyle = {
+        padding: '6px 10px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        minWidth: '32px'
+    };
+
+    const editBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#e3f2fd',
+        color: '#1976d2',
+        border: '1px solid #bbdefb'
+    };
+
+    const deleteBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#ffebee',
+        color: '#d32f2f',
+        border: '1px solid #ffcdd2'
+    };
+
     return (
         <tr style={{ background: 'white', borderBottom: '1px solid #f1f5f9' }}>
             <td style={{ ...tdStyle, fontWeight: 'bold', width: '50px' }}>{index + 1}</td>
@@ -536,7 +617,7 @@ const FireMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 {isEditing ? (
                     <select style={selectInline} value={editData.type} onChange={e => setEditData({ ...editData, type: e.target.value })}>
                         <option value="Hose Reel Hose">Hose Reel Hose</option>
-                        <option value="Fire Hydrant cabinet">Fire Hydrant cabinet</option>
+                        <option value="Fire Hydrant cabinet">Fire Hydrant Cabinet</option>
                         <option value="External Yard Hydrant">External Yard Hydrant</option>
                     </select>
                 ) : <span style={{ fontWeight: '600', color: '#ea580c' }}>{data.type}</span>}
@@ -546,13 +627,13 @@ const FireMappingRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {isEditing ? (
                         <>
-                            <button onClick={handleSave} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}>✓</button>
-                            <button onClick={() => setIsEditing(false)} style={{ color: 'gray', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+                            <button onClick={handleSave} style={editBtnStyle} title="Save">✓</button>
+                            <button onClick={() => setIsEditing(false)} style={deleteBtnStyle} title="Cancel">✕</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Edit">✏️</button>
-                            <button onClick={() => onDelete(data.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Delete">🗑️</button>
+                            <button onClick={() => setIsEditing(true)} style={editBtnStyle} title="Edit">✎</button>
+                            <button onClick={() => onDelete(data.id)} style={deleteBtnStyle} title="Delete">🗑</button>
                         </>
                     )}
                 </div>
@@ -590,6 +671,33 @@ const FireQuestionRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
         ...inputInline,
         minHeight: '50px',
         resize: 'vertical'
+    };
+
+    const actionBtnStyle = {
+        padding: '6px 10px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        minWidth: '32px'
+    };
+
+    const editBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#e3f2fd',
+        color: '#1976d2',
+        border: '1px solid #bbdefb'
+    };
+
+    const deleteBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#ffebee',
+        color: '#d32f2f',
+        border: '1px solid #ffcdd2'
     };
 
     return (
@@ -648,13 +756,13 @@ const FireQuestionRow = ({ index, data, onUpdate, onDelete, tdStyle }) => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {isEditing ? (
                         <>
-                            <button onClick={handleSave} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}>✓</button>
-                            <button onClick={() => setIsEditing(false)} style={{ color: 'gray', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+                            <button onClick={handleSave} style={editBtnStyle} title="Save">✓</button>
+                            <button onClick={() => setIsEditing(false)} style={deleteBtnStyle} title="Cancel">✕</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }} title="Edit">✏️</button>
-                            <button onClick={() => onDelete(data.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }} title="Delete">🗑️</button>
+                            <button onClick={() => setIsEditing(true)} style={editBtnStyle} title="Edit">✎</button>
+                            <button onClick={() => onDelete(data.id)} style={deleteBtnStyle} title="Delete">🗑</button>
                         </>
                     )}
                 </div>
@@ -668,9 +776,14 @@ const FireLogViewer = ({ building, type, apiBase, isAdmin }) => {
     const [logs, setLogs] = useState([]);
     const [questions, setQuestions] = useState([]);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
+
     useEffect(() => {
         fetchLogs();
         fetchQuestions();
+        const interval = setInterval(fetchLogs, 2000);
+        return () => clearInterval(interval);
     }, [building, type]);
 
     const fetchLogs = async () => {
@@ -768,11 +881,11 @@ const FireLogViewer = ({ building, type, apiBase, isAdmin }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {logs.map((log, index) => (
+                    {logs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((log, index) => (
                         <EditableFireLog
                             key={log.id}
                             log={log}
-                            index={index}
+                            index={(currentPage - 1) * itemsPerPage + index}
                             questions={questions}
                             isAdmin={isAdmin}
                             onUpdate={handleUpdateLog}
@@ -789,6 +902,28 @@ const FireLogViewer = ({ building, type, apiBase, isAdmin }) => {
                     )}
                 </tbody>
             </table>
+
+            {Math.ceil(logs.length / itemsPerPage) > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '20px 0', gap: '15px' }}>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === 1 ? '#f5f5f5' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                        Previous
+                    </button>
+                    <span style={{ fontSize: '14px', color: '#555' }}>
+                        Page <strong>{currentPage}</strong> of <strong>{Math.ceil(logs.length / itemsPerPage)}</strong>
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(logs.length / itemsPerPage)))}
+                        disabled={currentPage === Math.ceil(logs.length / itemsPerPage)}
+                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === Math.ceil(logs.length / itemsPerPage) ? '#f5f5f5' : 'white', cursor: currentPage === Math.ceil(logs.length / itemsPerPage) ? 'not-allowed' : 'pointer' }}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -821,6 +956,33 @@ const EditableFireLog = ({ log, index, questions, isAdmin, onUpdate, onDelete, t
         width: '100%',
         color: '#0f172a',
         fontSize: '14px'
+    };
+
+    const actionBtnStyle = {
+        padding: '6px 10px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        minWidth: '32px'
+    };
+
+    const editBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#e3f2fd',
+        color: '#1976d2',
+        border: '1px solid #bbdefb'
+    };
+
+    const deleteBtnStyle = {
+        ...actionBtnStyle,
+        backgroundColor: '#ffebee',
+        color: '#d32f2f',
+        border: '1px solid #ffcdd2'
     };
 
     return (
@@ -876,13 +1038,13 @@ const EditableFireLog = ({ log, index, questions, isAdmin, onUpdate, onDelete, t
                     <div style={{ display: 'flex', gap: '10px' }}>
                         {isEditing ? (
                             <>
-                                <button onClick={handleSave} style={{ color: 'green', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Save">✓</button>
-                                <button onClick={() => setIsEditing(false)} style={{ color: 'gray', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Cancel">✕</button>
+                                <button onClick={handleSave} style={editBtnStyle} title="Save">✓</button>
+                                <button onClick={() => setIsEditing(false)} style={deleteBtnStyle} title="Cancel">✕</button>
                             </>
                         ) : (
                             <>
-                                <button onClick={() => setIsEditing(true)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Edit">✏️</button>
-                                <button onClick={() => onDelete(log.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Delete">🗑️</button>
+                                <button onClick={() => setIsEditing(true)} style={editBtnStyle} title="Edit">✎</button>
+                                <button onClick={() => onDelete(log.id)} style={deleteBtnStyle} title="Delete">🗑</button>
                             </>
                         )}
                     </div>

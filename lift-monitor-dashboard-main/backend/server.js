@@ -700,7 +700,10 @@ app.get("/api/panel-logs/export/excel", authMiddleware, async (req, res) => {
         time,
       };
       const buffer = await generateExcel(filters);
-      const filename = `panel-logs-${dateFrom || date || "export"}.xlsx`;
+      const buildingTag = userAssignedBuildings.length === 1
+        ? userAssignedBuildings[0].replace(/\s+/g, '-') + '-'
+        : 'multiple-buildings-';
+      const filename = `panel-logs-${buildingTag}${dateFrom || date || "export"}.xlsx`;
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -724,7 +727,9 @@ app.get("/api/panel-logs/export/excel", authMiddleware, async (req, res) => {
 
     const buffer = await generateExcel(filters);
 
-    const filename = `panel-logs-${getISTDateString()}.xlsx`;
+    const filename = building
+      ? `panel-logs-${building.replace(/\s+/g, '-')}-${getISTDateString()}.xlsx`
+      : `panel-logs-${getISTDateString()}.xlsx`;
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -770,7 +775,10 @@ app.get("/api/panel-logs/export/pdf", authMiddleware, async (req, res) => {
         time,
       };
       const buffer = await generatePDF(filters);
-      const filename = `panel-logs-${dateFrom || date || "export"}.pdf`;
+      const buildingTag = userAssignedBuildings.length === 1
+        ? userAssignedBuildings[0].replace(/\s+/g, '-') + '-'
+        : 'multiple-buildings-';
+      const filename = `panel-logs-${buildingTag}${dateFrom || date || "export"}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -791,7 +799,9 @@ app.get("/api/panel-logs/export/pdf", authMiddleware, async (req, res) => {
 
     const buffer = await generatePDF(filters);
 
-    const filename = `panel-logs-${getISTDateString()}.pdf`;
+    const filename = building
+      ? `panel-logs-${building.replace(/\s+/g, '-')}-${getISTDateString()}.pdf`
+      : `panel-logs-${getISTDateString()}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(buffer);

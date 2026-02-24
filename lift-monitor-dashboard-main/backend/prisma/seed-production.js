@@ -31,7 +31,7 @@ async function main() {
 
   console.log("✅ Default admin user created:");
   console.log("   Username: atlanwabms");
-  console.log("   Password: Atlanwa@20");
+  console.log("   Password: Airlanwa@20");
   console.log("   Role: admin");
 
   console.log("\n🎉 Production database setup complete!");

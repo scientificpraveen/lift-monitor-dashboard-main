@@ -7,8 +7,9 @@ import {
 } from "../services/api";
 import { buildings } from "../config/buildings";
 import { useAuth } from "../context/AuthContext";
-import { getISTDate, getISTTime } from "../utils/timeUtils";
+import { getISTDate, getISTTime, getISTTimeString } from "../utils/timeUtils";
 import "./ServiceLogManager.css";
+import * as XLSX from "xlsx";
 
 const ServiceLogManager = ({ building }) => {
   const {
@@ -42,18 +43,23 @@ const ServiceLogManager = ({ building }) => {
     sno: "",
     building: building || accessibleBuildings[0] || "",
     date: getISTDate(),
-    time: getISTTime()
-      .toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-      .slice(0, 5),
+    time: getISTTimeString(),
     natureOfCall: "Client call - oral",
     workDescription: "",
     status: "open",
     username: user?.name || "",
   });
+
+  // Operator Logs Filters
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterUsername, setFilterUsername] = useState("");
+  const [filterNature, setFilterNature] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   useEffect(() => {
     loadLogs();
@@ -65,6 +71,7 @@ const ServiceLogManager = ({ building }) => {
       setError(null);
       const data = await fetchServiceLogs();
       setLogs(data || []);
+      setCurrentPage(1); // Reset page on data refetch
     } catch (err) {
       setError("Failed to load service logs: " + err.message);
       console.error(err);
@@ -127,13 +134,7 @@ const ServiceLogManager = ({ building }) => {
       sno: "",
       building: filterBuilding || accessibleBuildings[0] || "",
       date: getISTDate(),
-      time: getISTTime()
-        .toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-        .slice(0, 5),
+      time: getISTTimeString(),
       natureOfCall: "Client call - oral",
       workDescription: "",
       status: "open",
@@ -187,19 +188,56 @@ const ServiceLogManager = ({ building }) => {
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-    return `${date.toLocaleDateString("en-IN", {
+    const formatterDate = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    })} ${date.toLocaleTimeString("en-IN", {
+    });
+    const formatterTime = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    })}`;
+    });
+    return `${formatterDate.format(date)} ${formatterTime.format(date)}`;
   };
 
   const toggleExpand = (logId) => {
     setExpandedLogId(expandedLogId === logId ? null : logId);
+  };
+
+  const handleExportToExcel = () => {
+    const logsToExport = getSortedLogs();
+    if (logsToExport.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+
+    const exportData = logsToExport.map((log, index) => {
+      return {
+        "S.No": index + 1,
+        Building: log.building,
+        Date: new Date(log.date).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        Time: log.time,
+        Username: log.username,
+        "Nature of Call": log.natureOfCall,
+        "Work Description": log.workDescription,
+        Status: log.status,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Operator Logs");
+    XLSX.writeFile(
+      workbook,
+      `Operator_Logs_${filterBuilding}.xlsx`
+    );
   };
 
   const handleSort = (key) => {
@@ -211,7 +249,23 @@ const ServiceLogManager = ({ building }) => {
 
   const getSortedLogs = () => {
     const filtered = logs.filter(
-      (log) => !filterBuilding || log.building === filterBuilding
+      (log) => {
+        const passBuilding = !filterBuilding || log.building === filterBuilding;
+        const passUsername = !filterUsername || log.username.toLowerCase().includes(filterUsername.toLowerCase());
+        const passNature = !filterNature || log.natureOfCall === filterNature;
+        const passStatus = !filterStatus || log.status === filterStatus;
+
+        let passDate = true;
+        if (filterDateFrom && filterDateTo) {
+          const logDate = new Date(log.date);
+          const fromDate = new Date(filterDateFrom);
+          const toDate = new Date(filterDateTo);
+          toDate.setHours(23, 59, 59);
+          passDate = logDate >= fromDate && logDate <= toDate;
+        }
+
+        return passBuilding && passUsername && passNature && passStatus && passDate;
+      }
     );
 
     const sorted = [...filtered].sort((a, b) => {
@@ -224,15 +278,16 @@ const ServiceLogManager = ({ building }) => {
         bVal = new Date(b.date).getTime();
       }
 
-      // Handle numeric sorting for sno and time
-      if (sortConfig.key === "sno") {
-        aVal = parseInt(a.sno);
-        bVal = parseInt(b.sno);
-      }
-
+      // Handle numeric sorting for time
       if (sortConfig.key === "time") {
         aVal = a.time;
         bVal = b.time;
+      }
+
+      // Handle custom incremented SNO visual sort mapping if required
+      if (sortConfig.key === "sno") {
+        aVal = parseInt(a.sno);
+        bVal = parseInt(b.sno);
       }
 
       if (aVal === bVal) return 0;
@@ -244,6 +299,13 @@ const ServiceLogManager = ({ building }) => {
 
     return sorted;
   };
+
+  const sortedFilteredLogs = getSortedLogs();
+  const totalPages = Math.ceil(sortedFilteredLogs.length / itemsPerPage);
+  const currentLogs = sortedFilteredLogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const SortHeader = ({ field, label }) => (
     <th onClick={() => handleSort(field)} className="sortable-header">
@@ -269,78 +331,88 @@ const ServiceLogManager = ({ building }) => {
             Building Name: <strong>{building}</strong>
           </span>
         </div>
-        {canCreateServiceLog() && (
-          <button
-            className="btn-add-log"
-            onClick={() => {
-              resetForm();
-              setShowForm(!showForm);
-            }}
-          >
-            {showForm ? "✕ Cancel" : "+ Add Log"}
+        <div className="header-actions">
+          {canCreateServiceLog() && (
+            <button
+              className="btn-add-log"
+              onClick={() => {
+                resetForm();
+                setShowForm(!showForm);
+              }}
+            >
+              {showForm ? "✕ Cancel" : "+ Add Log"}
+            </button>
+          )}
+          <button className="btn btn-secondary" onClick={handleExportToExcel} style={{ marginLeft: "10px" }}>
+            Export Log as Excel
           </button>
-        )}
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
-
-      <div className="filter-section">
-        {!building && (
-          <div className="filter-group">
-            <label>Building</label>
-            <select
-              value={filterBuilding}
-              onChange={(e) => setFilterBuilding(e.target.value)}
-              className="filter-select"
-            >
-              <option value="">All Buildings</option>
-              {accessibleBuildings.map((building) => (
-                <option key={building} value={building}>
-                  {building}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
 
       {showForm && (
         <div className="service-log-form-container">
           <form onSubmit={handleSubmit} className="service-log-form">
             <div className="form-group">
               <label>Building *</label>
-              <select
-                name="building"
+              <input
+                type="text"
                 value={formData.building}
-                onChange={handleInputChange}
-                required
-              >
-                {accessibleBuildings.map((building) => (
-                  <option key={building} value={building}>
-                    {building}
-                  </option>
-                ))}
-              </select>
+                disabled
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: "6px",
+                  border: "2px solid #e0e0e0",
+                  fontSize: "14px",
+                  height: "45px",
+                  boxSizing: "border-box",
+                  width: "100%",
+                  background: "#f8fafc",
+                  color: "#94a3b8",
+                  cursor: "not-allowed"
+                }}
+              />
             </div>
 
             <div className="form-group">
               <label>Nature of Call *</label>
-              <select
-                name="natureOfCall"
-                value={formData.natureOfCall}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="Client call - oral">Client call - oral</option>
-                <option value="Client call - mail/portal">
-                  Client call - mail/portal
-                </option>
-                <option value="AMC call">AMC call</option>
-                <option value="Routine activity">Routine activity</option>
-                <option value="Non routine activity">
-                  Non routine activity
-                </option>
-              </select>
+              {editingLog ? (
+                <input
+                  type="text"
+                  value={formData.natureOfCall}
+                  disabled
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "2px solid #e0e0e0",
+                    fontSize: "14px",
+                    height: "45px",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    background: "#f8fafc",
+                    color: "#94a3b8",
+                    cursor: "not-allowed"
+                  }}
+                />
+              ) : (
+                <select
+                  name="natureOfCall"
+                  value={formData.natureOfCall}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="Client call - oral">Client call - oral</option>
+                  <option value="Client call - mail/portal">
+                    Client call - mail/portal
+                  </option>
+                  <option value="AMC call">AMC call</option>
+                  <option value="Routine activity">Routine activity</option>
+                  <option value="Non routine activity">
+                    Non routine activity
+                  </option>
+                </select>
+              )}
             </div>
 
             <div className="form-group">
@@ -357,16 +429,36 @@ const ServiceLogManager = ({ building }) => {
 
             <div className="form-group">
               <label>Status *</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-                <option value="pending">Pending</option>
-              </select>
+              {!editingLog ? (
+                <input
+                  type="text"
+                  value={formData.status.toUpperCase()}
+                  disabled
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "2px solid #e0e0e0",
+                    fontSize: "14px",
+                    height: "45px",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    background: "#f8fafc",
+                    color: "#94a3b8",
+                    cursor: "not-allowed"
+                  }}
+                />
+              ) : (
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                  <option value="pending">Pending</option>
+                </select>
+              )}
             </div>
 
             <div className="form-actions">
@@ -388,12 +480,84 @@ const ServiceLogManager = ({ building }) => {
         </div>
       )}
 
+      <div className="filter-section">
+        <div className="filter-group">
+          <label>From Date:</label>
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+          />
+        </div>
+
+        <div className="filter-group">
+          <label>To Date:</label>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+          />
+        </div>
+
+        <div className="filter-group">
+          <label>Nature of Call:</label>
+          <select
+            value={filterNature}
+            onChange={(e) => setFilterNature(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Types</option>
+            <option value="Client call - oral">Client call - oral</option>
+            <option value="Client call - mail/portal">Client call - mail/portal</option>
+            <option value="AMC call">AMC call</option>
+            <option value="Routine activity">Routine activity</option>
+            <option value="Non routine activity">Non routine activity</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Status:</label>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Status</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Username:</label>
+          <input
+            type="text"
+            placeholder="Search username"
+            value={filterUsername}
+            onChange={(e) => setFilterUsername(e.target.value)}
+            style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+          />
+        </div>
+
+        <button
+          className="btn btn-secondary"
+          onClick={() => {
+            setFilterBuilding(building || accessibleBuildings[0] || "");
+            setFilterDateFrom("");
+            setFilterDateTo("");
+            setFilterNature("");
+            setFilterStatus("");
+            setFilterUsername("");
+            setCurrentPage(1);
+          }}
+        >
+          Clear Filters
+        </button>
+      </div>
+
       {loading ? (
         <div className="loading">Loading service logs...</div>
-      ) : logs.length === 0 ? (
-        <div className="empty-state">
-          No service logs yet. Add one to get started!
-        </div>
       ) : (
         <div className="service-logs-table">
           <table>
@@ -401,7 +565,6 @@ const ServiceLogManager = ({ building }) => {
               <tr>
                 <th style={{ width: "40px" }}></th>
                 <SortHeader field="sno" label="S.NO" />
-                <SortHeader field="building" label="Building" />
                 <SortHeader field="date" label="Date" />
                 <SortHeader field="time" label="Time" />
                 <SortHeader field="username" label="Username" />
@@ -412,131 +575,164 @@ const ServiceLogManager = ({ building }) => {
               </tr>
             </thead>
             <tbody>
-              {getSortedLogs().map((log) => (
-                <React.Fragment key={log.id}>
-                  {/* Main log row */}
-                  <tr
-                    className={expandedLogId === log.id ? "expanded-row" : ""}
-                  >
-                    <td>
-                      {log.history && log.history.length > 0 && (
-                        <button
-                          className="btn-expand"
-                          onClick={() => toggleExpand(log.id)}
-                          title={
-                            expandedLogId === log.id
-                              ? "Hide History"
-                              : "Show History"
-                          }
+              {currentLogs.length === 0 ? (
+                <tr>
+                  <td colSpan="10" style={{ textAlign: "center", padding: "20px" }}>
+                    No logs found for this selection
+                  </td>
+                </tr>
+              ) : currentLogs.map((log, index) => {
+                const pageSNO = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <React.Fragment key={log.id}>
+                    {/* Main log row */}
+                    <tr
+                      className={expandedLogId === log.id ? "expanded-row" : ""}
+                    >
+                      <td>
+                        {log.history && log.history.length > 0 && (
+                          <button
+                            className="btn-expand"
+                            onClick={() => toggleExpand(log.id)}
+                            title={
+                              expandedLogId === log.id
+                                ? "Hide History"
+                                : "Show History"
+                            }
+                          >
+                            {expandedLogId === log.id ? "▼" : "▶"}
+                          </button>
+                        )}
+                      </td>
+                      <td>{pageSNO}</td>
+                      <td>
+                        {new Date(log.date).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td>{log.time}</td>
+                      <td>{log.username}</td>
+                      <td>
+                        <span className="nature-badge">{log.natureOfCall}</span>
+                      </td>
+                      <td className="description">{log.workDescription}</td>
+                      <td>
+                        <span
+                          className="status-badge"
+                          style={{ backgroundColor: getStatusColor(log.status) }}
                         >
-                          {expandedLogId === log.id ? "▼" : "▶"}
-                        </button>
-                      )}
-                    </td>
-                    <td>{log.sno}</td>
-                    <td>{log.building}</td>
-                    <td>
-                      {new Date(log.date).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td>{log.time}</td>
-                    <td>{log.username}</td>
-                    <td>
-                      <span className="nature-badge">{log.natureOfCall}</span>
-                    </td>
-                    <td className="description">{log.workDescription}</td>
-                    <td>
-                      <span
-                        className="status-badge"
-                        style={{ backgroundColor: getStatusColor(log.status) }}
-                      >
-                        {log.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="actions">
-                      {canEditServiceLog() && (
-                        <button
-                          className="btn-edit"
-                          onClick={() => handleEdit(log)}
-                          title="Edit"
-                        >
-                          ✎
-                        </button>
-                      )}
-                      {canDeleteServiceLog() && (
-                        <button
-                          className="btn-delete"
-                          onClick={() => handleDelete(log.id)}
-                          title="Delete"
-                        >
-                          🗑
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                          {log.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        {canEditServiceLog() && (
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleEdit(log)}
+                            title="Edit"
+                          >
+                            ✎
+                          </button>
+                        )}
+                        {canDeleteServiceLog() && (
+                          <button
+                            className="btn-delete"
+                            onClick={() => handleDelete(log.id)}
+                            title="Delete"
+                          >
+                            🗑
+                          </button>
+                        )}
+                      </td>
+                    </tr>
 
-                  {/* History rows */}
-                  {expandedLogId === log.id &&
-                    log.history &&
-                    log.history.length > 0 && (
-                      <tr className="history-container-row">
-                        <td colSpan="11">
-                          <div className="history-container">
-                            <div className="history-header">
-                              <span className="history-icon">📋</span> Change
-                              History
-                            </div>
-                            <table className="history-table">
-                              <thead>
-                                <tr>
-                                  <th>Change Type</th>
-                                  <th>Change Details</th>
-                                  <th>Changed By</th>
-                                  <th>Changed At</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {log.history.map((historyItem) => (
-                                  <tr
-                                    key={historyItem.id}
-                                    className="history-row"
-                                  >
-                                    <td>
-                                      <span
-                                        className="change-type-badge"
-                                        style={{
-                                          backgroundColor: getChangeTypeColor(
-                                            historyItem.changeType
-                                          ),
-                                        }}
-                                      >
-                                        {getChangeTypeLabel(
-                                          historyItem.changeType
-                                        )}
-                                      </span>
-                                    </td>
-                                    <td className="history-change-description">
-                                      {historyItem.changeDescription}
-                                    </td>
-                                    <td>{historyItem.changedBy}</td>
-                                    <td>
-                                      {formatDateTime(historyItem.changedAt)}
-                                    </td>
+                    {/* History Rows expansion handling ... */}
+
+                    {/* History rows */}
+                    {expandedLogId === log.id &&
+                      log.history &&
+                      log.history.length > 0 && (
+                        <tr className="history-container-row">
+                          <td colSpan="11">
+                            <div className="history-container">
+                              <div className="history-header">
+                                <span className="history-icon">📋</span> Change
+                                History
+                              </div>
+                              <table className="history-table">
+                                <thead>
+                                  <tr>
+                                    <th>Change Type</th>
+                                    <th>Change Details</th>
+                                    <th>Changed By</th>
+                                    <th>Changed At</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                </React.Fragment>
-              ))}
+                                </thead>
+                                <tbody>
+                                  {log.history.map((historyItem) => (
+                                    <tr
+                                      key={historyItem.id}
+                                      className="history-row"
+                                    >
+                                      <td>
+                                        <span
+                                          className="change-type-badge"
+                                          style={{
+                                            backgroundColor: getChangeTypeColor(
+                                              historyItem.changeType
+                                            ),
+                                          }}
+                                        >
+                                          {getChangeTypeLabel(
+                                            historyItem.changeType
+                                          )}
+                                        </span>
+                                      </td>
+                                      <td className="history-change-description">
+                                        {historyItem.changeDescription}
+                                      </td>
+                                      <td>{historyItem.changedBy}</td>
+                                      <td>
+                                        {formatDateTime(historyItem.changedAt)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px', padding: '10px' }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #ddd', background: currentPage === 1 ? '#f5f5f5' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                Previous
+              </button>
+              <span style={{ fontWeight: '600', color: '#4b5563' }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #ddd', background: currentPage === totalPages ? '#f5f5f5' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

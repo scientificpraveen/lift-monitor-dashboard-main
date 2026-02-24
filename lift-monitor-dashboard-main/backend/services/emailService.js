@@ -159,7 +159,7 @@ export const generateEmailTemplate = (buildingName, date) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>📊 Daily Panel Log Report</h1>
+            <h1>📊 HT/LT LOG PANEL REPORT</h1>
             <p>${buildingName}</p>
           </div>
 
@@ -173,15 +173,15 @@ export const generateEmailTemplate = (buildingName, date) => {
               • Building: ${buildingName}<br/>
               • Date: ${istDate}<br/>
               • Report Generated: ${new Date().toLocaleString("en-IN", {
-                timeZone: "Asia/Kolkata",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false,
-              })} IST
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  })} IST
             </div>
 
             <p>Please review the attached PDF document which contains:</p>
@@ -271,7 +271,7 @@ export const sendDailyReports = async (date = null) => {
         }
 
         // Generate email content
-        const subject = `Daily Panel Log Report - ${building} - ${new Date(
+        const subject = `HT/LT LOG PANEL REPORT - ${building} - ${new Date(
           reportDate
         ).toLocaleDateString("en-IN")}`;
         const htmlContent = generateEmailTemplate(building, reportDate);

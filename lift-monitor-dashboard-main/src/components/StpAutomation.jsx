@@ -405,7 +405,7 @@ const StpAutomation = ({ building }) => {
         <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#f9fafb', paddingBottom: '100px', overflow: 'auto' }}>
 
             {/* Header Section */}
-            <div className="standard-header" style={{ marginLeft: '20px', marginTop: '25px' }}>
+            <div className="standard-header" style={{ marginLeft: '20px', marginRight: '20px', marginTop: '25px' }}>
                 <div>
                     <h2>STP AUTOMATION</h2>
                     <span className="subtitle">
@@ -440,11 +440,12 @@ const StpAutomation = ({ building }) => {
 
             {/* Main Diagram Container */}
             <div style={{
-                position: 'relative', width: '1900px', height: '1500px', backgroundColor: 'white', margin: '0 auto',
+                position: 'relative', minWidth: '2200px', height: '1500px', backgroundColor: 'white', margin: '0 auto',
                 borderRadius: '40px', border: '1px solid #e5e7eb', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                padding: '16px', transform: 'scale(0.70)', transformOrigin: 'top center'
+                padding: '16px', transform: 'scale(0.70)', transformOrigin: 'top center',
+                display: 'flex', justifyContent: 'center', alignItems: 'flex-start'
             }}>
-                <div style={{ position: 'absolute', top: 50, left: 50, width: '100%', height: '100%' }}>
+                <div style={{ position: 'relative', width: '1800px', height: '100%', marginTop: '50px' }}>
 
                     {/* --- PIPES LAYER --- */}
 
@@ -735,10 +736,10 @@ const StpAutomation = ({ building }) => {
                     <Tank label="Filter Feed Tank" subLabel={`Water Level: ${data.FilterTankLevel ?? 0}%`} x="950px" y="480px" />
 
                     {/* --- FANS --- */}
-                    <Fan x="1350px" y="500px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
-                    <Fan x="1550px" y="500px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
-                    <Fan x="1350px" y="620px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
-                    <Fan x="1550px" y="620px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
+                    <Fan x="1450px" y="550px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
+                    <Fan x="1650px" y="550px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
+                    <Fan x="1450px" y="670px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
+                    <Fan x="1650px" y="670px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
 
                     {/* --- CENTRAL BLOWER SYSTEM --- */}
                     <Fan id="B1" label="BLOWER 1" status={data.B1} x="620px" y="340px" />
@@ -766,7 +767,7 @@ const StpAutomation = ({ building }) => {
 
                     {/* --- SCALE & LEGEND --- */}
                     <div style={{
-                        position: 'absolute', left: 1300, top: 100, width: 400, height: 360,
+                        position: 'absolute', left: 1400, top: 100, width: 400, height: 360,
                         display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 10,
                         border: '2px solid #cbd5e1', borderRadius: '14px', padding: '20px',
                         backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
@@ -780,7 +781,7 @@ const StpAutomation = ({ building }) => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ width: '30px', height: '30px', borderRadius: '15px', backgroundColor: '#0891b2', border: '2px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transform: 'scale(0.4)', transformOrigin: 'left center' }}></div>
-                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2'}}>DO SENSOR (in mg/l)</span>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2' }}>DO SENSOR (in mg/l)</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ width: '24px', height: '24px', backgroundColor: '#22c55e', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>

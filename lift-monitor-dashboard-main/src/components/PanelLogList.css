@@ -1,10 +1,8 @@
 .panel-log-list-container {
   max-width: 1600px;
-  margin: 0 auto;
+  margin: 25px auto;
   background: #f5f7fa;
   min-height: 100vh;
-  margin-left: 25px;
-  margin-top: 25px;
 }
 
 .list-header {
@@ -331,6 +329,7 @@
     max-height: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     max-height: 2000px;
@@ -597,6 +596,7 @@
 }
 
 @media print {
+
   .list-header .btn,
   .filters-section,
   .log-actions {
@@ -840,6 +840,7 @@
     opacity: 0;
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -935,6 +936,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   background: white;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ht-table-section,
@@ -991,6 +995,12 @@
 
 .daily-view-container {
   padding: 20px;
+  max-width: 1800px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .date-list {
@@ -1053,6 +1063,10 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #e0e0e0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .daily-section-header {
@@ -1909,6 +1923,7 @@
     gap: 15px;
   }
 }
+
 /* Shift Incharge Verification History */
 .verification-history {
   margin-top: 15px;

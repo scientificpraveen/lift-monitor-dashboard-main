@@ -80,3 +80,18 @@ export const getISTDate = () => {
   const day = String(istTime.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+/**
+ * Returns the current time as an HH:mm string (24-hour), guaranteed to be evaluated
+ * within the Asia/Kolkata timezone independent of browser locale.
+ */
+export const getISTTimeString = () => {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return formatter.format(now);
+};

@@ -5,6 +5,7 @@ import {
   updatePanelLog,
 } from "../services/api";
 import { buildings, getBuildingConfig } from "../config/buildings";
+import { getAllTimeSlots } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import PowerFailureModal from "./PowerFailureModal";
 import "./PanelLogList.css";
@@ -34,8 +35,6 @@ const PanelLogList = ({
   const [viewMode, setViewMode] = useState("daily");
   const [modalLog, setModalLog] = useState(null);
   const [modalPanelType, setModalPanelType] = useState("BOTH");
-  const [dailyViewDate, setDailyViewDate] = useState(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("all");
   const [filterMode, setFilterMode] = useState("today");
   const [powerFailureLog, setPowerFailureLog] = useState(null);
   const [showPowerFailureModal, setShowPowerFailureModal] = useState(false);
@@ -43,17 +42,24 @@ const PanelLogList = ({
   const [remarksText, setRemarksText] = useState("");
   const [showRemarksModal, setShowRemarksModal] = useState(false);
 
-  // Helper function to format date/time in 24hr format (compact: 2 lines instead of 3)
+  // Helper function to format date/time in IST explicitly
   const formatDateTime24hr = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
-    const dateStr = date.toLocaleDateString("en-GB"); // DD/MM/YYYY
-    const timeStr = date.toLocaleTimeString("en-GB", {
+
+    // Convert UTC String timestamp strictly to IST formatted block
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    }); // HH:MM
-    return `${dateStr} ${timeStr}`;
+    });
+
+    // Outputs "DD/MM/YYYY, HH:MM"
+    return formatter.format(date).replace(',', '');
   };
 
   // Helper function to safely get winding temp - handles both old (object) and new (string) formats
@@ -187,39 +193,18 @@ const PanelLogList = ({
     setModalPanelType("BOTH");
   };
 
-  const handleDailyView = (date) => {
-    setDailyViewDate(date);
-    setSelectedTimeSlot("all");
-  };
 
-  const closeDailyView = () => {
-    setDailyViewDate(null);
-    setSelectedTimeSlot("all");
-  };
-
-  const getFilteredDailyLogs = () => {
-    if (!dailyViewDate) return [];
-    const dailyLogs = logs.filter((log) => log.date === dailyViewDate);
-    if (selectedTimeSlot === "all") {
-      return dailyLogs.sort((a, b) => a.time.localeCompare(b.time));
-    }
-    return dailyLogs.filter((log) => log.time === selectedTimeSlot);
-  };
-
-  const getAvailableTimeSlots = () => {
-    if (!dailyViewDate) return [];
-    const slots = logs
-      .filter(
-        (log) => log.date === dailyViewDate && log.building === filterBuilding
-      )
-      .map((log) => log.time)
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .sort();
-    return slots;
-  };
 
   const formatDateTime = (date, time) => {
-    return `${new Date(date).toLocaleDateString()} ${time}`;
+    // Parse standard to DD/MM/YYYY explicitly in IST
+    const dateObj = new Date(date);
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    return `${formatter.format(dateObj)} ${time}`;
   };
 
   const handleExportToExcel = async () => {
@@ -247,7 +232,7 @@ const PanelLogList = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Panel_Logs_${filterDateFrom || "export"}.xlsx`;
+      a.download = `Panel_Logs_${filterBuilding ? filterBuilding.replace(/\s+/g, '-') + '_' : ''}${filterDateFrom || 'export'}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -283,7 +268,7 @@ const PanelLogList = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Panel_Logs_${filterDateFrom || "export"}.pdf`;
+      a.download = `Panel_Logs_${filterBuilding ? filterBuilding.replace(/\s+/g, '-') + '_' : ''}${filterDateFrom || 'export'}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -575,12 +560,17 @@ const PanelLogList = ({
                 <div key={date} className="daily-section">
                   <div className="daily-section-header">
                     <h3>
-                      {new Date(date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {(() => {
+                        const dateObj = new Date(date);
+                        const formatter = new Intl.DateTimeFormat("en-US", {
+                          timeZone: "Asia/Kolkata",
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric"
+                        });
+                        return formatter.format(dateObj);
+                      })()}
                     </h3>
                     <div className="daily-header-actions">
                       <button
@@ -617,12 +607,6 @@ const PanelLogList = ({
                       >
                         ⚡ Add power failure
                       </button>
-                      <button
-                        className="btn btn-small"
-                        onClick={() => handleDailyView(date)}
-                      >
-                        View Full Table
-                      </button>
                     </div>
                   </div>
 
@@ -637,7 +621,7 @@ const PanelLogList = ({
                             <thead>
                               <tr>
                                 <th rowSpan="3">TIME (HRS)</th>
-                                <th rowSpan="3">I/C FROM TNEB</th>
+                                <th rowSpan="3">I/C FROM <br />TNEB/DG</th>
                                 <th colSpan="6">MAIN INCOMER SUPPLY</th>
                                 {[1, 2, 3]
                                   .filter((i) => i < 3 || config.hasTr3)
@@ -651,7 +635,7 @@ const PanelLogList = ({
                                         (config.hasHtTap ? 1 : 0)
                                       }
                                     >
-                                      OUT GOING TO TR-{i} (2000 KVA)
+                                      OUT GOING TO TR-{i}
                                     </th>
                                   ))}
                                 <th rowSpan="3">
@@ -706,104 +690,137 @@ const PanelLogList = ({
                               </tr>
                             </thead>
                             <tbody>
-                              {dailyLogs.map(
-                                (log) =>
-                                  log.htPanel && (
-                                    <tr key={log.id}>
+                              {getAllTimeSlots().map((slot) => {
+                                const log = dailyLogs.find((l) => l.time === slot);
+                                if (!log || !log.htPanel) {
+                                  return (
+                                    <tr key={`ht-placeholder-${slot}`}>
                                       <td>
-                                        <strong>{log.time}</strong>
+                                        <strong>{slot}</strong>
                                       </td>
-                                      <td>{log.htPanel.icFromTneb || "EB"}</td>
-                                      <td>
-                                        {log.htPanel.voltageFromWreb?.volt ||
-                                          "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.currentAmp?.r || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.currentAmp?.y || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.currentAmp?.b || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.currentAmp?.pf || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.currentAmp?.hz || "-"}
-                                      </td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
                                       {[1, 2, 3]
                                         .filter((i) => i < 3 || config.hasTr3)
-                                        .map((i) => {
-                                          const tr =
-                                            log.htPanel[`outgoingTr${i}`];
-                                          return (
-                                            <React.Fragment key={`ht-data-tr${i}`}>
-                                              <td>
-                                                {tr?.currentAmp?.r || "-"}
-                                              </td>
-                                              <td>
-                                                {tr?.currentAmp?.y || "-"}
-                                              </td>
-                                              <td>
-                                                {tr?.currentAmp?.b || "-"}
-                                              </td>
-                                              <td>
-                                                {getSafeWindingTemp(
-                                                  tr?.windingTemp
-                                                )}
-                                              </td>
-                                              {config.hasHtOilTemp && (
-                                                <td>
-                                                  {getSafeOilTemp(tr?.oilTemp)}
-                                                </td>
-                                              )}
-                                              {config.hasHtTap && (
-                                                <td>{tr?.tap || "-"}</td>
-                                              )}
-                                            </React.Fragment>
-                                          );
-                                        })}
-                                      <td>
-                                        {log.htPanel._updatedBy ||
-                                          log.lastUpdatedBy ||
-                                          "-"}
-                                      </td>
-                                      <td>
-                                        {formatDateTime24hr(log.createdAt)}
-                                      </td>
-                                      <td>
-                                        {formatDateTime24hr(
-                                          log.htPanel._updatedAt ||
-                                          log.updatedAt
-                                        )}
-                                      </td>
-                                      <td>
-                                        <div className="action-buttons">
-                                          <button
-                                            className="btn-edit"
-                                            onClick={() => onEdit(log)}
-                                            title="Update this log"
-                                          >
-                                            ✎
-                                          </button>
-                                          {canDeletePanelLog() && (
-                                            <button
-                                              className="btn-delete"
-                                              onClick={() =>
-                                                handleDelete(log.id, "HT")
-                                              }
-                                              title="Delete HT panel data"
-                                            >
-                                              🗑
-                                            </button>
-                                          )}
-                                        </div>
-                                      </td>
+                                        .map((i) => (
+                                          <React.Fragment key={`ht-placeholder-tr${i}`}>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            {config.hasHtOilTemp && <td>-</td>}
+                                            {config.hasHtTap && <td>-</td>}
+                                          </React.Fragment>
+                                        ))}
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
                                     </tr>
-                                  )
-                              )}
+                                  );
+                                }
+
+                                return (
+                                  <tr key={log.id}>
+                                    <td>
+                                      <strong>{log.time}</strong>
+                                    </td>
+                                    <td>{log.htPanel.icFromTneb || "EB"}</td>
+                                    <td>
+                                      {log.htPanel.voltageFromWreb?.volt ||
+                                        "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel.currentAmp?.r || "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel.currentAmp?.y || "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel.currentAmp?.b || "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel.currentAmp?.pf || "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel.currentAmp?.hz || "-"}
+                                    </td>
+                                    {[1, 2, 3]
+                                      .filter((i) => i < 3 || config.hasTr3)
+                                      .map((i) => {
+                                        const tr =
+                                          log.htPanel[`outgoingTr${i}`];
+                                        return (
+                                          <React.Fragment key={`ht-data-tr${i}`}>
+                                            <td>
+                                              {tr?.currentAmp?.r || "-"}
+                                            </td>
+                                            <td>
+                                              {tr?.currentAmp?.y || "-"}
+                                            </td>
+                                            <td>
+                                              {tr?.currentAmp?.b || "-"}
+                                            </td>
+                                            <td>
+                                              {getSafeWindingTemp(
+                                                tr?.windingTemp
+                                              )}
+                                            </td>
+                                            {config.hasHtOilTemp && (
+                                              <td>
+                                                {getSafeOilTemp(tr?.oilTemp)}
+                                              </td>
+                                            )}
+                                            {config.hasHtTap && (
+                                              <td>{tr?.tap || "-"}</td>
+                                            )}
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    <td>
+                                      {log.htPanel._updatedBy ||
+                                        log.lastUpdatedBy ||
+                                        "-"}
+                                    </td>
+                                    <td>
+                                      {formatDateTime24hr(log.createdAt)}
+                                    </td>
+                                    <td>
+                                      {formatDateTime24hr(
+                                        log.htPanel._updatedAt ||
+                                        log.updatedAt
+                                      )}
+                                    </td>
+                                    <td>
+                                      <div className="action-buttons">
+                                        <button
+                                          className="btn-edit"
+                                          onClick={() => onEdit(log)}
+                                          title="Update this log"
+                                        >
+                                          ✎
+                                        </button>
+                                        {canDeletePanelLog() && (
+                                          <button
+                                            className="btn-delete"
+                                            onClick={() =>
+                                              handleDelete(log.id, "HT")
+                                            }
+                                            title="Delete HT panel data"
+                                          >
+                                            🗑
+                                          </button>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -872,71 +889,99 @@ const PanelLogList = ({
                               </tr>
                             </thead>
                             <tbody>
-                              {dailyLogs.map(
-                                (log) =>
-                                  log.ltPanel && (
-                                    <tr key={log.id}>
+                              {getAllTimeSlots().map((slot) => {
+                                const log = dailyLogs.find((l) => l.time === slot);
+                                if (!log || !log.ltPanel) {
+                                  return (
+                                    <tr key={`lt-placeholder-${slot}`}>
                                       <td>
-                                        <strong>{log.time}</strong>
+                                        <strong>{slot}</strong>
                                       </td>
                                       {[1, 2, 3]
                                         .filter((i) => i < 3 || config.hasInc3)
-                                        .map((i) => {
-                                          const inc = log.ltPanel[`incomer${i}`];
-                                          return (
-                                            <React.Fragment key={`lt-data-inc${i}`}>
-                                              <td>{inc?.voltage?.ry || "-"}</td>
-                                              <td>{inc?.voltage?.yb || "-"}</td>
-                                              <td>{inc?.voltage?.br || "-"}</td>
-                                              <td>{inc?.currentAmp?.r || "-"}</td>
-                                              <td>{inc?.currentAmp?.y || "-"}</td>
-                                              <td>{inc?.currentAmp?.b || "-"}</td>
-                                              {config.hasLtTap && (
-                                                <td>{inc?.tap || "-"}</td>
-                                              )}
-                                              <td>{inc?.kwh || "-"}</td>
-                                            </React.Fragment>
-                                          );
-                                        })}
-                                      <td>
-                                        {log.ltPanel._updatedBy ||
-                                          log.lastUpdatedBy ||
-                                          "-"}
-                                      </td>
-                                      <td>
-                                        {formatDateTime24hr(log.createdAt)}
-                                      </td>
-                                      <td>
-                                        {formatDateTime24hr(
-                                          log.ltPanel._updatedAt ||
-                                          log.updatedAt
-                                        )}
-                                      </td>
-                                      <td>
-                                        <div className="action-buttons">
-                                          <button
-                                            className="btn-edit"
-                                            onClick={() => onEdit(log)}
-                                            title="Update this log"
-                                          >
-                                            ✎
-                                          </button>
-                                          {canDeletePanelLog() && (
-                                            <button
-                                              className="btn-delete"
-                                              onClick={() =>
-                                                handleDelete(log.id, "LT")
-                                              }
-                                              title="Delete LT panel data"
-                                            >
-                                              🗑
-                                            </button>
-                                          )}
-                                        </div>
-                                      </td>
+                                        .map((i) => (
+                                          <React.Fragment key={`lt-placeholder-inc${i}`}>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            {config.hasLtTap && <td>-</td>}
+                                            <td>-</td>
+                                          </React.Fragment>
+                                        ))}
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
+                                      <td>-</td>
                                     </tr>
-                                  )
-                              )}
+                                  );
+                                }
+
+                                return (
+                                  <tr key={log.id}>
+                                    <td>
+                                      <strong>{log.time}</strong>
+                                    </td>
+                                    {[1, 2, 3]
+                                      .filter((i) => i < 3 || config.hasInc3)
+                                      .map((i) => {
+                                        const inc = log.ltPanel[`incomer${i}`];
+                                        return (
+                                          <React.Fragment key={`lt-data-inc${i}`}>
+                                            <td>{inc?.voltage?.ry || "-"}</td>
+                                            <td>{inc?.voltage?.yb || "-"}</td>
+                                            <td>{inc?.voltage?.br || "-"}</td>
+                                            <td>{inc?.currentAmp?.r || "-"}</td>
+                                            <td>{inc?.currentAmp?.y || "-"}</td>
+                                            <td>{inc?.currentAmp?.b || "-"}</td>
+                                            {config.hasLtTap && (
+                                              <td>{inc?.tap || "-"}</td>
+                                            )}
+                                            <td>{inc?.kwh || "-"}</td>
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    <td>
+                                      {log.ltPanel._updatedBy ||
+                                        log.lastUpdatedBy ||
+                                        "-"}
+                                    </td>
+                                    <td>
+                                      {formatDateTime24hr(log.createdAt)}
+                                    </td>
+                                    <td>
+                                      {formatDateTime24hr(
+                                        log.ltPanel._updatedAt ||
+                                        log.updatedAt
+                                      )}
+                                    </td>
+                                    <td>
+                                      <div className="action-buttons">
+                                        <button
+                                          className="btn-edit"
+                                          onClick={() => onEdit(log)}
+                                          title="Update this log"
+                                        >
+                                          ✎
+                                        </button>
+                                        {canDeletePanelLog() && (
+                                          <button
+                                            className="btn-delete"
+                                            onClick={() =>
+                                              handleDelete(log.id, "LT")
+                                            }
+                                            title="Delete LT panel data"
+                                          >
+                                            🗑
+                                          </button>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -1106,7 +1151,7 @@ const PanelLogList = ({
                         <thead>
                           <tr>
                             <th rowSpan="3">TIME (HRS)</th>
-                            <th rowSpan="3">I/C FROM TNEB</th>
+                            <th rowSpan="3">I/C FROM <br />TNEB/DG</th>
                             <th colSpan="6">MAIN INCOMER SUPPLY</th>
                             {[1, 2, 3]
                               .filter((i) => i < 3 || modalConfig.hasTr3)
@@ -1120,7 +1165,7 @@ const PanelLogList = ({
                                     (modalConfig.hasHtTap ? 1 : 0)
                                   }
                                 >
-                                  OUT GOING TO TR-{i} (2000 KVA)
+                                  OUT GOING TO TR-{i}
                                 </th>
                               ))}
                             <th rowSpan="3">REMARK</th>
@@ -1360,364 +1405,6 @@ const PanelLogList = ({
         </div>
       )}
 
-      {dailyViewDate && (
-        <div className="modal-overlay" onClick={closeDailyView}>
-          <div
-            className="modal-content daily-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>
-                Daily View -{" "}
-                {new Date(dailyViewDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </h2>
-              <button className="modal-close" onClick={closeDailyView}>
-                ×
-              </button>
-            </div>
-
-            <div className="modal-panel-selector">
-              <label>Select Time Slot:</label>
-              <select
-                value={selectedTimeSlot}
-                onChange={(e) => setSelectedTimeSlot(e.target.value)}
-                className="panel-selector"
-              >
-                <option value="all">All Times (Full Day)</option>
-                {getAvailableTimeSlots().map((slot) => (
-                  <option key={slot} value={slot}>
-                    {slot}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="modal-body">
-              {getFilteredDailyLogs().length === 0 ? (
-                <p>No logs found for this date.</p>
-              ) : (
-                <>
-                  {getFilteredDailyLogs()[0]?.htPanel && (
-                    <div className="ht-table-section">
-                      <h4>HT Panel</h4>
-                      <div className="table-scroll-container">
-                        <table className="panel-log-table daily-table">
-                          <thead>
-                            <tr>
-                              <th rowSpan="4">TIME (HRS)</th>
-                              <th rowSpan="4">I/C FROM TNEB</th>
-                              <th colSpan="6">MAIN INCOMER SUPPLY</th>
-                              <th colSpan="3">OUT GOING TO TR-1 (2000 KVA)</th>
-                              <th colSpan="3">OUT GOING TO TR-2 (2000 KVA)</th>
-                              <th colSpan="3">OUT GOING TO TR-3 (2000 KVA)</th>
-                              <th rowSpan="4">REMARK</th>
-                            </tr>
-                            <tr>
-                              <th rowSpan="2">VOLT (KV)</th>
-                              <th colSpan="5">CURRENT AMP</th>
-                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
-                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
-                              <th colSpan="3">CURRENT AMP & WINDING TEMP.</th>
-                            </tr>
-                            <tr>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>P.F</th>
-                              <th>HZ</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                            </tr>
-                            <tr>
-                              <th></th>
-                              <th></th>
-                              <th></th>
-                              <th></th>
-                              <th></th>
-                              <th></th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="3">WINDING TEMP.</th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="3">WINDING TEMP.</th>
-                              <th colSpan="3">CURRENT AMP</th>
-                              <th colSpan="3">WINDING TEMP.</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {getFilteredDailyLogs().map(
-                              (log) =>
-                                log.htPanel && (
-                                  <React.Fragment key={log.id}>
-                                    <tr>
-                                      <td rowSpan="2">
-                                        <strong>{log.time}</strong>
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.icFromTneb || "EB"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.voltageFromWreb?.volt ||
-                                          "-"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.currentAmp?.r || "-"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.currentAmp?.y || "-"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.currentAmp?.b || "-"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.currentAmp?.pf || "-"}
-                                      </td>
-                                      <td rowSpan="2">
-                                        {log.htPanel.currentAmp?.hz || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr1?.currentAmp
-                                          ?.r || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr1?.currentAmp
-                                          ?.y || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr1?.currentAmp
-                                          ?.b || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr2?.currentAmp
-                                          ?.r || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr2?.currentAmp
-                                          ?.y || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr2?.currentAmp
-                                          ?.b || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr3?.currentAmp
-                                          ?.r || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr3?.currentAmp
-                                          ?.y || "-"}
-                                      </td>
-                                      <td>
-                                        {log.htPanel.outgoingTr3?.currentAmp
-                                          ?.b || "-"}
-                                      </td>
-                                      <td rowSpan="2">{log.remarks || "-"}</td>
-                                    </tr>
-                                    <tr>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr1?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr2?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp
-                                        )}
-                                      </td>
-                                      <td>
-                                        {getSafeWindingTemp(
-                                          log.htPanel.outgoingTr3?.windingTemp
-                                        )}
-                                      </td>
-                                    </tr>
-                                  </React.Fragment>
-                                )
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {getFilteredDailyLogs()[0]?.ltPanel && (
-                    <div className="lt-table-section">
-                      <h4>LT Panel</h4>
-                      <div className="table-scroll-container">
-                        <table className="panel-log-table daily-table">
-                          <thead>
-                            <tr>
-                              <th rowSpan="3">Time (Hrs)</th>
-                              <th colSpan="8">Incomer -1 (From -Tr-1)</th>
-                              <th colSpan="8">Incomer -2 (From -Tr-2)</th>
-                              <th colSpan="8">Incomer -3 (From -Tr-3)</th>
-                            </tr>
-                            <tr>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                              <th colSpan="3">Voltage</th>
-                              <th colSpan="3">Current Amp</th>
-                              <th rowSpan="2">TAP No.</th>
-                              <th rowSpan="2">KWH</th>
-                            </tr>
-                            <tr>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                              <th>RY</th>
-                              <th>YB</th>
-                              <th>BR</th>
-                              <th>R</th>
-                              <th>Y</th>
-                              <th>B</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {getFilteredDailyLogs().map(
-                              (log) =>
-                                log.ltPanel && (
-                                  <tr key={log.id}>
-                                    <td>
-                                      <strong>{log.time}</strong>
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer1?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer1?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer1?.kwh || "-"}</td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer2?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer2?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer2?.kwh || "-"}</td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.ry || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.yb || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.voltage?.br || "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.r ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.y ||
-                                        "-"}
-                                    </td>
-                                    <td>
-                                      {log.ltPanel.incomer3?.currentAmp?.b ||
-                                        "-"}
-                                    </td>
-                                    <td>{log.ltPanel.incomer3?.tap || "-"}</td>
-                                    <td>{log.ltPanel.incomer3?.kwh || "-"}</td>
-                                  </tr>
-                                )
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {showPowerFailureModal && powerFailureLog && (
         <PowerFailureModal

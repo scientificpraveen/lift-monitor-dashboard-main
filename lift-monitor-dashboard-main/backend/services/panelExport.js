@@ -362,7 +362,8 @@ export const generatePDF = async (filters) => {
   try {
     const logs = await getPanelLogs(filters);
 
-    if (logs.length === 0) {
+    // If no logs but a specific date is requested (e.g. for daily emails), continue to generate an empty template
+    if (logs.length === 0 && !filters.date) {
       throw new Error('No data available for export');
     }
 
@@ -384,6 +385,11 @@ export const generatePDF = async (filters) => {
         acc[log.date].push(log);
         return acc;
       }, {});
+
+      // For automated daily emails with zero logs, ensure the date exists as an empty array to render headers
+      if (Object.keys(logsByDate).length === 0 && filters.date) {
+        logsByDate[filters.date] = [];
+      }
 
       let isFirstPage = true;
 
@@ -407,7 +413,10 @@ export const generatePDF = async (filters) => {
         let yPos = doc.y;
         const startX = 30;
 
-        // HT Panel
+        // Get building config from the first log (or from filters if no logs)
+        const firstLog = dateLogs[0];
+        const config = getBuildingConfig(firstLog?.building || filters?.building || 'PRESTIGE POLYGON');
+
         const htLogs = dateLogs.filter(log => log.htPanel);
         if (htLogs.length > 0) {
           doc.fontSize(10).font('Helvetica-Bold').text('HT PANEL', startX, yPos);
@@ -419,6 +428,8 @@ export const generatePDF = async (filters) => {
           const icW = 22;
           const smallW = 18;
           const trW = 22; // Smaller width for transformer boxes to fit on page
+          const totalTrs = config.hasTr3 ? 3 : 2;
+          const trColCount = 3 + (config.hasHtOilTemp ? 2 : 1) + (config.hasHtTap ? 1 : 0);
           let x = startX;
 
           doc.fontSize(5).font('Helvetica-Bold');
@@ -448,34 +459,41 @@ export const generatePDF = async (filters) => {
           });
           x += smallW * 6;
 
-          // Transformers - separated Current Amp, Winding Temp and Oil Temp
-          ['Tr-1', 'Tr-2', 'Tr-3'].forEach(tr => {
-            // Transformer heading (matching height)
-            doc.rect(x, yPos, trW * 5, cellH * 1.35).stroke();
-            doc.text(`Out Going to ${tr}\n(2000 Kva)`, x + 1, yPos + 2, { width: trW * 5 - 2, align: 'center', fontSize: 4 });
+          // Transformers - building-specific (1-2 or 1-3)
+          for (let ti = 1; ti <= totalTrs; ti++) {
+            const trTotalW = trW * trColCount;
+            // Transformer heading
+            doc.rect(x, yPos, trTotalW, cellH * 1.35).stroke();
+            doc.text(`Out Going to Tr-${ti}\n(2000 Kva)`, x + 1, yPos + 2, { width: trTotalW - 2, align: 'center', fontSize: 4 });
 
             // Current Amp heading
             doc.rect(x, yPos + cellH * 1.35, trW * 3, cellH).stroke();
             doc.text('Current Amp', x + 1, yPos + cellH * 1.35 + 2, { width: trW * 3 - 2, align: 'center', fontSize: 5 });
 
             // Temperatures heading
-            doc.rect(x + trW * 3, yPos + cellH * 1.35, trW * 2, cellH).stroke();
-            doc.text('Temp (°C)', x + trW * 3 + 1, yPos + cellH * 1.35 + 2, { width: trW * 2 - 2, align: 'center', fontSize: 4 });
+            const tempCols = config.hasHtOilTemp ? 2 : 1;
+            doc.rect(x + trW * 3, yPos + cellH * 1.35, trW * tempCols, cellH).stroke();
+            doc.text(config.hasHtOilTemp ? 'Temp (\u00b0C)' : 'Wind', x + trW * 3 + 1, yPos + cellH * 1.35 + 2, { width: trW * tempCols - 2, align: 'center', fontSize: 4 });
+
+            if (config.hasHtTap) {
+              doc.rect(x + trW * (3 + tempCols), yPos + cellH * 1.35, trW, cellH * 2).stroke();
+              doc.text('TAP\nNo.', x + trW * (3 + tempCols) + 1, yPos + cellH * 1.35 + 2, { width: trW - 2, align: 'center', fontSize: 4 });
+            }
 
             // R, Y, B columns for Current Amp
             ['R', 'Y', 'B'].forEach((lbl, i) => {
               doc.rect(x + trW * i, yPos + cellH * 2.35, trW, cellH).stroke();
               doc.text(lbl, x + trW * i + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
             });
+            doc.rect(x + trW * 3, yPos + cellH * 2.35, trW, cellH).stroke();
+            doc.text('Wind', x + trW * 3 + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
+            if (config.hasHtOilTemp) {
+              doc.rect(x + trW * 4, yPos + cellH * 2.35, trW, cellH).stroke();
+              doc.text('Oil', x + trW * 4 + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
+            }
 
-            // Wind, Oil columns for Temperature
-            ['Wind', 'Oil'].forEach((lbl, i) => {
-              doc.rect(x + trW * 3 + trW * i, yPos + cellH * 2.35, trW, cellH).stroke();
-              doc.text(lbl, x + trW * 3 + trW * i + 1, yPos + cellH * 2.35 + 2, { width: trW - 2, align: 'center', fontSize: 5 });
-            });
-
-            x += trW * 5;
-          });
+            x += trTotalW;
+          }
 
           yPos += cellH * 3.35;
 
@@ -502,23 +520,28 @@ export const generatePDF = async (filters) => {
               x += smallW;
             });
 
-            // Current Amp, Winding Temp and Oil Temp for all transformers
-            [log.htPanel.outgoingTr1, log.htPanel.outgoingTr2, log.htPanel.outgoingTr3].forEach(tr => {
-              // Current Amp columns (R, Y, B)
+            // Transformer data - building-specific number and columns
+            for (let ti = 1; ti <= totalTrs; ti++) {
+              const tr = log.htPanel[`outgoingTr${ti}`];
               ['r', 'y', 'b'].forEach(ph => {
                 doc.rect(x, yPos, trW, cellH).stroke();
                 doc.text(String(tr?.currentAmp?.[ph] || '-').substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
                 x += trW;
               });
-              // Winding Temp and Oil Temp
               doc.rect(x, yPos, trW, cellH).stroke();
               doc.text(String(getSafeTemp(tr?.windingTemp)).substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
               x += trW;
-
-              doc.rect(x, yPos, trW, cellH).stroke();
-              doc.text(String(getSafeTemp(tr?.oilTemp)).substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
-              x += trW;
-            });
+              if (config.hasHtOilTemp) {
+                doc.rect(x, yPos, trW, cellH).stroke();
+                doc.text(String(getSafeTemp(tr?.oilTemp)).substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
+                x += trW;
+              }
+              if (config.hasHtTap) {
+                doc.rect(x, yPos, trW, cellH).stroke();
+                doc.text(String(tr?.tap || '-').substring(0, 4), x + 1, yPos + 2, { width: trW - 2, align: 'center', fontSize: 4 });
+                x += trW;
+              }
+            }
 
             yPos += cellH;
           });
@@ -532,9 +555,9 @@ export const generatePDF = async (filters) => {
           doc.fontSize(10).font('Helvetica-Bold').text('LT PANEL', startX, yPos);
           yPos += 15;
 
-          const cellH = 11;
-          const timeW = 30;
-          const tinyW = 23;
+          const totalIncs = config.hasInc3 ? 3 : 2;
+          const incColCount = 6 + (config.hasLtTap ? 1 : 0) + 1; // Voltage(3)+CurrentAmp(3)+optional TAP+KWH
+          const incW = tinyW * incColCount;
           let x = startX;
 
           doc.fontSize(6).font('Helvetica-Bold');
@@ -543,10 +566,9 @@ export const generatePDF = async (filters) => {
           doc.text('Time\n(Hrs)', x + 2, yPos + cellH, { width: timeW - 4, align: 'center' });
           x += timeW;
 
-          ['Inc-1', 'Inc-2', 'Inc-3'].forEach(inc => {
-            const incW = tinyW * 8;
+          for (let ii = 1; ii <= totalIncs; ii++) {
             doc.rect(x, yPos, incW, cellH).stroke();
-            doc.text(`Incomer-${inc.slice(-1)} (From Tr-${inc.slice(-1)})`, x + 1, yPos + 3, { width: incW - 2, align: 'center' });
+            doc.text(`Incomer-${ii} (From Tr-${ii})`, x + 1, yPos + 3, { width: incW - 2, align: 'center' });
 
             doc.rect(x, yPos + cellH, tinyW * 3, cellH).stroke();
             doc.text('Voltage', x + 1, yPos + cellH + 3, { width: tinyW * 3 - 2, align: 'center' });
@@ -562,13 +584,17 @@ export const generatePDF = async (filters) => {
               doc.text(lbl, x + tinyW * (3 + i) + 1, yPos + cellH * 2 + 3, { width: tinyW - 2, align: 'center' });
             });
 
-            ['TAP\nNo.', 'KWH'].forEach((lbl, i) => {
-              doc.rect(x + tinyW * (6 + i), yPos + cellH, tinyW, cellH * 2).stroke();
-              doc.text(lbl, x + tinyW * (6 + i) + 1, yPos + cellH + 4, { width: tinyW - 2, align: 'center' });
-            });
+            let tapOffset = 6;
+            if (config.hasLtTap) {
+              doc.rect(x + tinyW * tapOffset, yPos + cellH, tinyW, cellH * 2).stroke();
+              doc.text('TAP\nNo.', x + tinyW * tapOffset + 1, yPos + cellH + 4, { width: tinyW - 2, align: 'center' });
+              tapOffset++;
+            }
+            doc.rect(x + tinyW * tapOffset, yPos + cellH, tinyW, cellH * 2).stroke();
+            doc.text('KWH', x + tinyW * tapOffset + 1, yPos + cellH + 5, { width: tinyW - 2, align: 'center' });
 
             x += incW;
-          });
+          }
 
           yPos += cellH * 3;
 
@@ -580,30 +606,31 @@ export const generatePDF = async (filters) => {
             doc.text(log.time, x + 2, yPos + 3, { width: timeW - 4, align: 'center' });
             x += timeW;
 
-            [log.ltPanel.incomer1, log.ltPanel.incomer2, log.ltPanel.incomer3].forEach(inc => {
+            for (let ii = 1; ii <= totalIncs; ii++) {
+              const inc = log.ltPanel[`incomer${ii}`];
               ['ry', 'yb', 'br'].forEach(ph => {
                 doc.rect(x, yPos, tinyW, cellH).stroke();
                 doc.text(String(inc?.voltage?.[ph] || '-').substring(0, 4), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
                 x += tinyW;
               });
-
               ['r', 'y', 'b'].forEach(ph => {
                 doc.rect(x, yPos, tinyW, cellH).stroke();
                 doc.text(String(inc?.currentAmp?.[ph] || '-').substring(0, 4), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
                 x += tinyW;
               });
-
-              doc.rect(x, yPos, tinyW, cellH).stroke();
-              doc.text(String(inc?.tap || '-').substring(0, 3), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
-              x += tinyW;
-
+              if (config.hasLtTap) {
+                doc.rect(x, yPos, tinyW, cellH).stroke();
+                doc.text(String(inc?.tap || '-').substring(0, 3), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
+                x += tinyW;
+              }
               doc.rect(x, yPos, tinyW, cellH).stroke();
               doc.text(String(inc?.kwh || '-').substring(0, 5), x + 1, yPos + 3, { width: tinyW - 2, align: 'center' });
               x += tinyW;
-            });
+            }
 
             yPos += cellH;
           });
+
 
           yPos += 10;
         }
@@ -611,8 +638,7 @@ export const generatePDF = async (filters) => {
         // Shift Incharge, Remarks, and Power Failure Section
         if (yPos > 650) doc.addPage();
 
-        // Get first log to extract shift incharge and remarks
-        const firstLog = dateLogs[0];
+        // Get first log to extract shift incharge and remarks (firstLog already declared above)
 
         // Shift Incharge Section
         doc.fontSize(10).font('Helvetica-Bold').text('SHIFT INCHARGE', startX, yPos);
@@ -681,6 +707,14 @@ export const generatePDF = async (filters) => {
         } else {
           doc.fontSize(9).font('Helvetica');
           doc.text('No power failures recorded', startX + 10, yPos);
+          // Add empty slots rendering if building is fully empty? Not strictly required since headers show it's blank.
+
+          // Add Verified By Signature at the bottom of the page
+          doc.moveDown(4);
+          doc.fontSize(10).font('Helvetica-Bold');
+          doc.text('Verified By:', 30, doc.y, { align: 'left' });
+          doc.text('_______________________', 100, doc.y - 10, { align: 'left' });
+
         }
       });
 
