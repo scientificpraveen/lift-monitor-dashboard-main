@@ -46,13 +46,13 @@ export const generateExcelReport = (logs) => {
           "",
           "",
           "",
-          "Out Going to Tr-1 (2000 Kva)",
+          "Out Going to Tr-1",
           "",
           "",
-          "Out Going to Tr-2 (2000 Kva)",
+          "Out Going to Tr-2",
           "",
           "",
-          "Out Going to Tr-3 (2000 Kva)",
+          "Out Going to Tr-3",
           "",
           "",
           "REMARK",
@@ -512,7 +512,7 @@ export const generatePDFReport = (logs) => {
               // Row 1
               doc.rect(currentX, currentY, trWidth, rowHeight).stroke();
               doc.text(
-                `Out Going to ${tr}\n(2000 Kva)`,
+                `Out Going to ${tr}`,
                 currentX + 1,
                 currentY + 1,
                 { width: trWidth - 2, align: "center", lineBreak: false }
@@ -1112,7 +1112,7 @@ export const generateSingleBuildingPDF = (building, logs) => {
               // Row 1
               doc.rect(currentX, currentY, trWidth, rowHeight).stroke();
               doc.text(
-                `Out Going to ${tr}\n(2000 Kva)`,
+                `Out Going to ${tr}`,
                 currentX + 1,
                 currentY + 1,
                 {

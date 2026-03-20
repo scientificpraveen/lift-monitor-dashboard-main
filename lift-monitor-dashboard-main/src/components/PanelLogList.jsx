@@ -18,7 +18,7 @@ const PanelLogList = ({
   onCreateNew,
   filterBuilding: propFilterBuilding,
 }) => {
-  const { user, canDeletePanelLog, getAccessibleBuildings, isAdmin } =
+  const { user, canDeletePanelLog, canEditPanelLog, getAccessibleBuildings, isAdmin } =
     useAuth();
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [logs, setLogs] = useState([]);
@@ -221,7 +221,8 @@ const PanelLogList = ({
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/excel?${params.toString()}`,
+        { credentials: "include" }
       );
 
       if (!response.ok) {
@@ -257,7 +258,8 @@ const PanelLogList = ({
       if (filterTime) params.append("time", filterTime);
 
       const response = await fetch(
-        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`
+        `${API_BASE_URL}/panel-logs/export/pdf?${params.toString()}`,
+        { credentials: "include" }
       );
 
       if (!response.ok) {
@@ -339,17 +341,53 @@ const PanelLogList = ({
       alert("You must be logged in to verify");
       return;
     }
+
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      hour12: false
+    });
+    const hour = parseInt(formatter.format(now), 10);
+
+    let targetShift = '';
+    if (hour >= 7 && hour < 15) {
+      targetShift = 'aShift';
+    } else if (hour >= 15 && hour < 23) {
+      targetShift = 'bShift';
+    } else {
+      targetShift = 'cShift';
+    }
+
     try {
-      // Update all logs for this date
-      const dailyLogs = logs.filter((log) => log.date === date);
+      // Update logs for this date, restricted to selected building if any
+      const dailyLogs = logs.filter((log) => log.date === date && (!filterBuilding || log.building === filterBuilding));
       for (const log of dailyLogs) {
+        // Preserve existing shift data
+        const currentIncharge = log.shiftIncharge || {
+          aShift: { name: "", signature: "" },
+          bShift: { name: "", signature: "" },
+          cShift: { name: "", signature: "" }
+        };
+
+        const existingNames = currentIncharge[targetShift]?.name
+          ? currentIncharge[targetShift].name.split(', ').filter(Boolean)
+          : [];
+        if (!existingNames.includes(user.name)) {
+          existingNames.push(user.name);
+        }
+
+        const newIncharge = {
+          ...currentIncharge,
+          [targetShift]: {
+            ...currentIncharge[targetShift],
+            name: existingNames.join(', ')
+          }
+        };
+
         await updatePanelLog(log.id, {
-          shiftIncharge: {
-            aShift: { name: user.name, signature: "" },
-            bShift: { name: "", signature: "" },
-            cShift: { name: "", signature: "" },
-          },
-          lastUpdatedBy: user.name,
+          shiftIncharge: newIncharge,
+          verifiedBy: user.name,
         });
       }
       loadLogs();
@@ -610,7 +648,7 @@ const PanelLogList = ({
                     </div>
                   </div>
 
-                  {dailyLogs[0]?.htPanel &&
+                  {dailyLogs.some(l => l.htPanel) &&
                     (filterPanelType === "" ||
                       filterPanelType === "HT" ||
                       filterPanelType === "BOTH") && (
@@ -647,7 +685,7 @@ const PanelLogList = ({
                                 </th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
-                                <th rowSpan="3">ACTIONS</th>
+                                {(canEditPanelLog() || canDeletePanelLog()) && <th rowSpan="3">ACTIONS</th>}
                               </tr>
                               <tr>
                                 <th rowSpan="2">VOLT (KV)</th>
@@ -796,28 +834,32 @@ const PanelLogList = ({
                                         log.updatedAt
                                       )}
                                     </td>
-                                    <td>
-                                      <div className="action-buttons">
-                                        <button
-                                          className="btn-edit"
-                                          onClick={() => onEdit(log)}
-                                          title="Update this log"
-                                        >
-                                          ✎
-                                        </button>
-                                        {canDeletePanelLog() && (
-                                          <button
-                                            className="btn-delete"
-                                            onClick={() =>
-                                              handleDelete(log.id, "HT")
-                                            }
-                                            title="Delete HT panel data"
-                                          >
-                                            🗑
-                                          </button>
-                                        )}
-                                      </div>
-                                    </td>
+                                    {(canEditPanelLog() || canDeletePanelLog()) && (
+                                      <td>
+                                        <div className="action-buttons">
+                                          {canEditPanelLog() && (
+                                            <button
+                                              className="btn-edit"
+                                              onClick={() => onEdit(log)}
+                                              title="Update this log"
+                                            >
+                                              ✎
+                                            </button>
+                                          )}
+                                          {canDeletePanelLog() && (
+                                            <button
+                                              className="btn-delete"
+                                              onClick={() =>
+                                                handleDelete(log.id, "HT")
+                                              }
+                                              title="Delete HT panel data"
+                                            >
+                                              🗑
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    )}
                                   </tr>
                                 );
                               })}
@@ -827,7 +869,7 @@ const PanelLogList = ({
                       </div>
                     )}
 
-                  {dailyLogs[0]?.ltPanel &&
+                  {dailyLogs.some(l => l.ltPanel) &&
                     (filterPanelType === "" ||
                       filterPanelType === "LT" ||
                       filterPanelType === "BOTH") && (
@@ -857,7 +899,7 @@ const PanelLogList = ({
                                 </th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
-                                <th rowSpan="3">ACTIONS</th>
+                                {(canEditPanelLog() || canDeletePanelLog()) && <th rowSpan="3">ACTIONS</th>}
                               </tr>
                               <tr>
                                 {[1, 2, 3]
@@ -957,28 +999,32 @@ const PanelLogList = ({
                                         log.updatedAt
                                       )}
                                     </td>
-                                    <td>
-                                      <div className="action-buttons">
-                                        <button
-                                          className="btn-edit"
-                                          onClick={() => onEdit(log)}
-                                          title="Update this log"
-                                        >
-                                          ✎
-                                        </button>
-                                        {canDeletePanelLog() && (
-                                          <button
-                                            className="btn-delete"
-                                            onClick={() =>
-                                              handleDelete(log.id, "LT")
-                                            }
-                                            title="Delete LT panel data"
-                                          >
-                                            🗑
-                                          </button>
-                                        )}
-                                      </div>
-                                    </td>
+                                    {(canEditPanelLog() || canDeletePanelLog()) && (
+                                      <td>
+                                        <div className="action-buttons">
+                                          {canEditPanelLog() && (
+                                            <button
+                                              className="btn-edit"
+                                              onClick={() => onEdit(log)}
+                                              title="Update this log"
+                                            >
+                                              ✎
+                                            </button>
+                                          )}
+                                          {canDeletePanelLog() && (
+                                            <button
+                                              className="btn-delete"
+                                              onClick={() =>
+                                                handleDelete(log.id, "LT")
+                                              }
+                                              title="Delete LT panel data"
+                                            >
+                                              🗑
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    )}
                                   </tr>
                                 );
                               })}
@@ -996,17 +1042,17 @@ const PanelLogList = ({
                       <div className="section-content">
                         {dailyLogs.some((log) => log.shiftIncharge) ? (
                           <p className="shift-info">
-                            {dailyLogs[0]?.shiftIncharge?.aShift?.name &&
-                              `A: ${dailyLogs[0].shiftIncharge.aShift.name} | `}
-                            {dailyLogs[0]?.shiftIncharge?.bShift?.name &&
-                              `B: ${dailyLogs[0].shiftIncharge.bShift.name} | `}
-                            {dailyLogs[0]?.shiftIncharge?.cShift?.name &&
-                              `C: ${dailyLogs[0].shiftIncharge.cShift.name}`}
-                            {dailyLogs[0]?.shiftInchargeHistory &&
-                              dailyLogs[0].shiftInchargeHistory.length > 0 &&
-                              ` | Verified by: ${dailyLogs[0].shiftInchargeHistory
-                                .map((record) => record.verifiedBy)
-                                .join(", ")}`}
+                            {(() => {
+                              const sLog = dailyLogs.find(l => l.shiftIncharge);
+                              if (!sLog) return null;
+                              return (
+                                <>
+                                  {sLog.shiftIncharge?.aShift?.name && `A: ${sLog.shiftIncharge.aShift.name} `}
+                                  {sLog.shiftIncharge?.bShift?.name && `${sLog.shiftIncharge?.aShift?.name ? '| ' : ''}B: ${sLog.shiftIncharge.bShift.name} `}
+                                  {sLog.shiftIncharge?.cShift?.name && `${(sLog.shiftIncharge?.aShift?.name || sLog.shiftIncharge?.bShift?.name) ? '| ' : ''}C: ${sLog.shiftIncharge.cShift.name}`}
+                                </>
+                              );
+                            })()}
                           </p>
                         ) : (
                           <p className="not-set">Not verified</p>
@@ -1020,7 +1066,7 @@ const PanelLogList = ({
                       <div className="section-content">
                         {dailyLogs.some((log) => log.remarks) ? (
                           <p className="remarks-info">
-                            {dailyLogs[0]?.remarks || "-"}
+                            {dailyLogs.find((log) => log.remarks)?.remarks || "-"}
                           </p>
                         ) : (
                           <p className="not-set">No remarks</p>
@@ -1084,13 +1130,15 @@ const PanelLogList = ({
                   className="log-actions"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <button
-                    className="btn-icon btn-edit"
-                    onClick={() => onEdit(log)}
-                    title="Edit"
-                  >
-                    ✎
-                  </button>
+                  {canEditPanelLog() && (
+                    <button
+                      className="btn-icon btn-edit"
+                      onClick={() => onEdit(log)}
+                      title="Edit"
+                    >
+                      ✎
+                    </button>
+                  )}
                   {canDeletePanelLog() && (
                     <button
                       className="btn-icon btn-delete"
@@ -1337,9 +1385,9 @@ const PanelLogList = ({
                   {modalLog.shiftIncharge?.aShift?.name &&
                     ` A: ${modalLog.shiftIncharge.aShift.name}`}
                   {modalLog.shiftIncharge?.bShift?.name &&
-                    ` | B: ${modalLog.shiftIncharge.bShift.name}`}
+                    `${modalLog.shiftIncharge?.aShift?.name ? ' |' : ''} B: ${modalLog.shiftIncharge.bShift.name}`}
                   {modalLog.shiftIncharge?.cShift?.name &&
-                    ` | C: ${modalLog.shiftIncharge.cShift.name}`}
+                    `${(modalLog.shiftIncharge?.aShift?.name || modalLog.shiftIncharge?.bShift?.name) ? ' |' : ''} C: ${modalLog.shiftIncharge.cShift.name}`}
                   {!modalLog.shiftIncharge?.aShift?.name &&
                     !modalLog.shiftIncharge?.bShift?.name &&
                     !modalLog.shiftIncharge?.cShift?.name &&

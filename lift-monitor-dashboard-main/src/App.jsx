@@ -19,7 +19,7 @@ import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
 
 const App = () => {
-  const { isAuthenticated, loading, getAccessibleBuildings } = useAuth();
+  const { isAuthenticated, loading, getAccessibleBuildings, user } = useAuth();
   const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', 'stp', or 'users'
   const accessibleBuildings = getAccessibleBuildings(buildings);
   const [selectedBuilding, setSelectedBuilding] = useState(
@@ -34,6 +34,17 @@ const App = () => {
   const handleCloseAlert = (index) => {
     setAlerts((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // Reset building selection if new user logs in and previous building is restricted
+  useEffect(() => {
+    if (user) {
+      const allowed = getAccessibleBuildings(buildings);
+      if (allowed.length > 0 && !allowed.includes(selectedBuilding)) {
+        setSelectedBuilding(allowed[0]);
+        setActivePanel(null);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -125,7 +136,7 @@ const App = () => {
       setLiftData(flattenedData);
 
       const newAlerts = flattenedData
-        .filter((lift) => lift.Alarm === "1")
+        .filter((lift) => lift.Alarm === "1" && lift.building === selectedBuilding)
         .map((lift) => ({
           id: lift.ID,
           floor: lift.Fl,

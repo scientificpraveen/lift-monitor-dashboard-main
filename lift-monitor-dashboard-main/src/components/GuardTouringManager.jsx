@@ -30,6 +30,14 @@ const GuardTouringManager = ({ building }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 50;
 
+    // Filters & Sorting state
+    const [filterFrom, setFilterFrom] = useState("");
+    const [filterTo, setFilterTo] = useState("");
+    const [filterName, setFilterName] = useState("");
+    const [filterLocation, setFilterLocation] = useState("");
+    const [filterFloor, setFilterFloor] = useState("");
+    const [sortConfig, setSortConfig] = useState({ key: 'timestamp', direction: 'desc' });
+
     const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
     const apiBase = `${API_BASE}/guard`;
 
@@ -253,6 +261,47 @@ const GuardTouringManager = ({ building }) => {
         fontSize: '16px'
     };
 
+    // Sorting & Filtering Logic for Guard Logs
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+        setSortConfig({ key, direction });
+    };
+
+    const getSortIcon = (key) => {
+        if (sortConfig.key !== key) return "↕";
+        return sortConfig.direction === 'asc' ? "↑" : "↓";
+    };
+
+    const filteredLogs = logs.filter(log => {
+        if (filterFrom && new Date(log.timestamp) < new Date(filterFrom)) return false;
+        if (filterTo && new Date(log.timestamp) > new Date(filterTo + 'T23:59:59')) return false;
+        if (filterName && !log.name?.toLowerCase().includes(filterName.toLowerCase())) return false;
+        if (filterLocation && !log.location?.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+        if (filterFloor && !log.floor?.toLowerCase().includes(filterFloor.toLowerCase())) return false;
+        return true;
+    }).sort((a, b) => {
+        const { key, direction } = sortConfig;
+        if (!key) return 0;
+
+        let valA = a[key];
+        let valB = b[key];
+
+        if (key === 'timestamp') {
+            valA = new Date(valA).getTime();
+            valB = new Date(valB).getTime();
+        } else {
+            valA = (valA || '').toString().toLowerCase();
+            valB = (valB || '').toString().toLowerCase();
+        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     return (
         <div style={containerStyle}>
 
@@ -360,19 +409,60 @@ const GuardTouringManager = ({ building }) => {
             )}
 
             {/* LOG DASHBOARD TABLE (Purple Header) */}
-            <div style={tableContainerStyle}>
+            <div style={{ ...tableContainerStyle, display: 'flex', flexDirection: 'column' }}>
+
+                {/* FILTER TOOLBAR */}
+                <div style={{ display: 'flex', gap: '15px', padding: '20px', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', alignItems: 'flex-end', width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: '500' }}>From Date</label>
+                        <input type="date" value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: '500' }}>To Date</label>
+                        <input type="date" value={filterTo} onChange={e => { setFilterTo(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: '500' }}>Name</label>
+                        <input type="text" placeholder="Search Name..." value={filterName} onChange={e => { setFilterName(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: '500' }}>Location</label>
+                        <input type="text" placeholder="Search Location..." value={filterLocation} onChange={e => { setFilterLocation(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: '500' }}>Floor</label>
+                        <input type="text" placeholder="Search Floor..." value={filterFloor} onChange={e => { setFilterFloor(e.target.value); setCurrentPage(1); }} style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', width: '100%', boxSizing: 'border-box' }} />
+                    </div>
+                    <button
+                        onClick={() => { setFilterFrom(''); setFilterTo(''); setFilterName(''); setFilterLocation(''); setFilterFloor(''); setCurrentPage(1); }}
+                        style={{ padding: '8px 16px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', height: '35px' }}
+                    >
+                        Clear Filters
+                    </button>
+                </div>
+
                 <table style={tableStyle}>
                     <thead style={theadStyle}>
                         <tr>
-                            <th style={{ ...thStyle, width: '60px', textAlign: 'center' }}>SNo</th>
-                            <th style={thStyle}>Timestamp</th>
-                            <th style={thStyle}>Name</th>
-                            <th style={thStyle}>Location</th>
-                            <th style={thStyle}>Floor</th>
+                            <th style={{ ...thStyle, width: '60px', textAlign: 'center', cursor: 'pointer' }} onClick={() => handleSort('id')}>
+                                SNo {getSortIcon('id')}
+                            </th>
+                            <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('timestamp')}>
+                                Timestamp {getSortIcon('timestamp')}
+                            </th>
+                            <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                                Name {getSortIcon('name')}
+                            </th>
+                            <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('location')}>
+                                Location {getSortIcon('location')}
+                            </th>
+                            <th style={{ ...thStyle, cursor: 'pointer' }} onClick={() => handleSort('floor')}>
+                                Floor {getSortIcon('floor')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {logs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((log, index) => {
+                        {paginatedLogs.map((log, index) => {
                             // Format timestamp: yyyy-mm-dd hh:mm:ss
                             const formatTimestamp = (isoString) => {
                                 if (!isoString) return "";
@@ -396,10 +486,10 @@ const GuardTouringManager = ({ building }) => {
                                 </tr>
                             );
                         })}
-                        {logs.length === 0 && (
+                        {filteredLogs.length === 0 && (
                             <tr>
                                 <td colSpan="5" style={{ ...tdStyle, textAlign: 'center', padding: '50px', color: '#999', fontSize: '16px' }}>
-                                    No logs available for {building}
+                                    No logs available for {building} based on current filters.
                                 </td>
                             </tr>
                         )}
@@ -407,7 +497,7 @@ const GuardTouringManager = ({ building }) => {
                 </table>
             </div>
 
-            {Math.ceil(logs.length / itemsPerPage) > 1 && (
+            {Math.ceil(filteredLogs.length / itemsPerPage) > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px', gap: '15px' }}>
                     <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -417,12 +507,12 @@ const GuardTouringManager = ({ building }) => {
                         Previous
                     </button>
                     <span style={{ fontSize: '14px', color: '#555' }}>
-                        Page <strong>{currentPage}</strong> of <strong>{Math.ceil(logs.length / itemsPerPage)}</strong>
+                        Page <strong>{currentPage}</strong> of <strong>{Math.ceil(filteredLogs.length / itemsPerPage)}</strong>
                     </span>
                     <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(logs.length / itemsPerPage)))}
-                        disabled={currentPage === Math.ceil(logs.length / itemsPerPage)}
-                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === Math.ceil(logs.length / itemsPerPage) ? '#f5f5f5' : 'white', cursor: currentPage === Math.ceil(logs.length / itemsPerPage) ? 'not-allowed' : 'pointer' }}
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLogs.length / itemsPerPage)))}
+                        disabled={currentPage === Math.ceil(filteredLogs.length / itemsPerPage)}
+                        style={{ padding: '8px 16px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === Math.ceil(filteredLogs.length / itemsPerPage) ? '#f5f5f5' : 'white', cursor: currentPage === Math.ceil(filteredLogs.length / itemsPerPage) ? 'not-allowed' : 'pointer' }}
                     >
                         Next
                     </button>

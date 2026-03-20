@@ -98,7 +98,7 @@ export const generateExcel = async (filters) => {
         const row1 = ['Time (Hrs)', 'I/C From TNEB', 'Main Incomer Supply', '', '', '', '', ''];
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasTr3) {
-            row1.push(`Out Going to Tr-${i} (2000 Kva)`);
+            row1.push(`Out Going to Tr-${i}`);
             for (let j = 1; j < trCols; j++) row1.push(''); // fill empty spaces for merge
           }
         });
@@ -464,7 +464,7 @@ export const generatePDF = async (filters) => {
             const trTotalW = trW * trColCount;
             // Transformer heading
             doc.rect(x, yPos, trTotalW, cellH * 1.35).stroke();
-            doc.text(`Out Going to Tr-${ti}\n(2000 Kva)`, x + 1, yPos + 2, { width: trTotalW - 2, align: 'center', fontSize: 4 });
+            doc.text(`Out Going to Tr-${ti}`, x + 1, yPos + 2, { width: trTotalW - 2, align: 'center', fontSize: 4 });
 
             // Current Amp heading
             doc.rect(x, yPos + cellH * 1.35, trW * 3, cellH).stroke();

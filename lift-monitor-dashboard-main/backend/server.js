@@ -34,6 +34,7 @@ import {
 } from "./services/emailQueue.js";
 import { PrismaClient } from "@prisma/client";
 import { getISTDateString, getISTTimeString } from "./utils/timeUtils.js";
+import * as whatsappService from "./services/whatsappService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -251,6 +252,17 @@ app.post("/api/lifts", (req, res) => {
     if (!buildingName || !liftData[buildingName]) {
       return res.status(400).json({ error: "Invalid building name or format" });
     }
+
+    // WhatsApp Alarm Tracking hook (Evaluate 0 -> 1 transitions)
+    lifts.forEach(incomingLift => {
+      const existingLift = liftData[buildingName].find(l => l.ID === incomingLift.ID);
+      if (existingLift) {
+        if ((existingLift.Alarm === "0" || existingLift.Alarm === 0) && (incomingLift.Alarm === "1" || incomingLift.Alarm === 1)) {
+          console.log(`[ALARM DETECTED] Triggering WhatsApp alert for ${buildingName} - ${incomingLift.ID}`);
+          whatsappService.sendAlarmNotification(buildingName, incomingLift.ID);
+        }
+      }
+    });
 
     liftData[buildingName] = lifts;
 
@@ -649,6 +661,7 @@ app.put("/api/panel-logs/:id", authMiddleware, async (req, res) => {
     const updatedLog = await panelLogService.updatePanelLog(id, logData);
 
     if (!updatedLog) {
+      console.error("DEBUG PUT UPDATE FAILED:", { id, logData });
       return res.status(404).json({
         success: false,
         error: "Panel log not found",

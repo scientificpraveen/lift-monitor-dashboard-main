@@ -1,7 +1,17 @@
 FROM node:20-alpine
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
 
+# Install Chromium/Puppeteer dependencies for WhatsApp Headless along with OpenSSL for Prisma
+RUN apk add --no-cache \
+    openssl \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 WORKDIR /app
 
 COPY package*.json ./

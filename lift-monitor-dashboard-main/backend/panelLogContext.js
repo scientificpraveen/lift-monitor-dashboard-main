@@ -436,37 +436,17 @@ export const getPanelLogs = async (filters = {}) => {
     const htPanel = log.htPanel;
     if (!htPanel || typeof htPanel !== "object") return false;
 
-    // Check for actual voltage/current readings (the meaningful data)
-    const hasVoltage =
-      htPanel.voltageFromWreb?.volt &&
-      htPanel.voltageFromWreb.volt !== "" &&
-      htPanel.voltageFromWreb.volt !== "-";
+    // Recursively check if any deeply nested string property has a value other than "" or "-"
+    const hasValues = (obj) => {
+      if (!obj) return false;
+      if (typeof obj === 'string') return obj.trim() !== "" && obj.trim() !== "-";
+      if (typeof obj === 'object') {
+        return Object.values(obj).some(val => hasValues(val));
+      }
+      return false;
+    };
 
-    const hasCurrentAmp =
-      htPanel.currentAmp &&
-      ((htPanel.currentAmp.r &&
-        htPanel.currentAmp.r !== "" &&
-        htPanel.currentAmp.r !== "-") ||
-        (htPanel.currentAmp.y &&
-          htPanel.currentAmp.y !== "" &&
-          htPanel.currentAmp.y !== "-") ||
-        (htPanel.currentAmp.b &&
-          htPanel.currentAmp.b !== "" &&
-          htPanel.currentAmp.b !== "-"));
-
-    const hasTr1Data =
-      htPanel.outgoingTr1?.currentAmp &&
-      ((htPanel.outgoingTr1.currentAmp.r &&
-        htPanel.outgoingTr1.currentAmp.r !== "" &&
-        htPanel.outgoingTr1.currentAmp.r !== "-") ||
-        (htPanel.outgoingTr1.currentAmp.y &&
-          htPanel.outgoingTr1.currentAmp.y !== "" &&
-          htPanel.outgoingTr1.currentAmp.y !== "-") ||
-        (htPanel.outgoingTr1.currentAmp.b &&
-          htPanel.outgoingTr1.currentAmp.b !== "" &&
-          htPanel.outgoingTr1.currentAmp.b !== "-"));
-
-    return hasVoltage || hasCurrentAmp || hasTr1Data;
+    return hasValues(htPanel);
   };
 
   // Helper to check if LT panel has actual measurement values
@@ -479,32 +459,16 @@ export const getPanelLogs = async (filters = {}) => {
     const ltPanel = log.ltPanel;
     if (!ltPanel || typeof ltPanel !== "object") return false;
 
-    // Check incomer1 for actual readings
-    const hasIncomer1 =
-      ltPanel.incomer1 &&
-      ((ltPanel.incomer1.voltage?.ry &&
-        ltPanel.incomer1.voltage.ry !== "" &&
-        ltPanel.incomer1.voltage.ry !== "-") ||
-        (ltPanel.incomer1.currentAmp?.r &&
-          ltPanel.incomer1.currentAmp.r !== "" &&
-          ltPanel.incomer1.currentAmp.r !== "-") ||
-        (ltPanel.incomer1.kwh &&
-          ltPanel.incomer1.kwh !== "" &&
-          ltPanel.incomer1.kwh !== "-"));
+    const hasValues = (obj) => {
+      if (!obj) return false;
+      if (typeof obj === 'string') return obj.trim() !== "" && obj.trim() !== "-";
+      if (typeof obj === 'object') {
+        return Object.values(obj).some(val => hasValues(val));
+      }
+      return false;
+    };
 
-    const hasIncomer2 =
-      ltPanel.incomer2 &&
-      ((ltPanel.incomer2.voltage?.ry &&
-        ltPanel.incomer2.voltage.ry !== "" &&
-        ltPanel.incomer2.voltage.ry !== "-") ||
-        (ltPanel.incomer2.currentAmp?.r &&
-          ltPanel.incomer2.currentAmp.r !== "" &&
-          ltPanel.incomer2.currentAmp.r !== "-") ||
-        (ltPanel.incomer2.kwh &&
-          ltPanel.incomer2.kwh !== "" &&
-          ltPanel.incomer2.kwh !== "-"));
-
-    return hasIncomer1 || hasIncomer2;
+    return hasValues(ltPanel);
   };
 
   // Post-query filter by panel type (since Prisma can't filter JSON content)
@@ -572,68 +536,36 @@ export const updatePanelLog = async (id, logData) => {
       return null;
     }
 
-    // Prepare the update data - exclude id, createdAt, updatedAt to let Prisma handle them
-    const { id: _id, createdAt, updatedAt, ...restLogData } = logData;
+    // Prepare the update data - exclude id, createdAt, updatedAt, and relations to let Prisma handle them
+    const { id: _id, createdAt, updatedAt, shiftInchargeHistory, verifiedBy, ...restLogData } = logData;
     const updateData = { ...restLogData };
 
     // Helper to check if HT panel has actual measurement values
     const hasActualHTData = (htPanel) => {
       if (!htPanel || typeof htPanel !== "object") return false;
-      const hasVoltage =
-        htPanel.voltageFromWreb?.volt &&
-        htPanel.voltageFromWreb.volt !== "" &&
-        htPanel.voltageFromWreb.volt !== "-";
-      const hasCurrentAmp =
-        htPanel.currentAmp &&
-        ((htPanel.currentAmp.r &&
-          htPanel.currentAmp.r !== "" &&
-          htPanel.currentAmp.r !== "-") ||
-          (htPanel.currentAmp.y &&
-            htPanel.currentAmp.y !== "" &&
-            htPanel.currentAmp.y !== "-") ||
-          (htPanel.currentAmp.b &&
-            htPanel.currentAmp.b !== "" &&
-            htPanel.currentAmp.b !== "-"));
-      const hasTr1Data =
-        htPanel.outgoingTr1?.currentAmp &&
-        ((htPanel.outgoingTr1.currentAmp.r &&
-          htPanel.outgoingTr1.currentAmp.r !== "" &&
-          htPanel.outgoingTr1.currentAmp.r !== "-") ||
-          (htPanel.outgoingTr1.currentAmp.y &&
-            htPanel.outgoingTr1.currentAmp.y !== "" &&
-            htPanel.outgoingTr1.currentAmp.y !== "-") ||
-          (htPanel.outgoingTr1.currentAmp.b &&
-            htPanel.outgoingTr1.currentAmp.b !== "" &&
-            htPanel.outgoingTr1.currentAmp.b !== "-"));
-      return hasVoltage || hasCurrentAmp || hasTr1Data;
+      const hasValues = (obj) => {
+        if (!obj) return false;
+        if (typeof obj === 'string') return obj.trim() !== "" && obj.trim() !== "-";
+        if (typeof obj === 'object') {
+          return Object.values(obj).some(val => hasValues(val));
+        }
+        return false;
+      };
+      return hasValues(htPanel);
     };
 
     // Helper to check if LT panel has actual measurement values
     const hasActualLTData = (ltPanel) => {
       if (!ltPanel || typeof ltPanel !== "object") return false;
-      const hasIncomer1 =
-        ltPanel.incomer1 &&
-        ((ltPanel.incomer1.voltage?.ry &&
-          ltPanel.incomer1.voltage.ry !== "" &&
-          ltPanel.incomer1.voltage.ry !== "-") ||
-          (ltPanel.incomer1.currentAmp?.r &&
-            ltPanel.incomer1.currentAmp.r !== "" &&
-            ltPanel.incomer1.currentAmp.r !== "-") ||
-          (ltPanel.incomer1.kwh &&
-            ltPanel.incomer1.kwh !== "" &&
-            ltPanel.incomer1.kwh !== "-"));
-      const hasIncomer2 =
-        ltPanel.incomer2 &&
-        ((ltPanel.incomer2.voltage?.ry &&
-          ltPanel.incomer2.voltage.ry !== "" &&
-          ltPanel.incomer2.voltage.ry !== "-") ||
-          (ltPanel.incomer2.currentAmp?.r &&
-            ltPanel.incomer2.currentAmp.r !== "" &&
-            ltPanel.incomer2.currentAmp.r !== "-") ||
-          (ltPanel.incomer2.kwh &&
-            ltPanel.incomer2.kwh !== "" &&
-            ltPanel.incomer2.kwh !== "-"));
-      return hasIncomer1 || hasIncomer2;
+      const hasValues = (obj) => {
+        if (!obj) return false;
+        if (typeof obj === 'string') return obj.trim() !== "" && obj.trim() !== "-";
+        if (typeof obj === 'object') {
+          return Object.values(obj).some(val => hasValues(val));
+        }
+        return false;
+      };
+      return hasValues(ltPanel);
     };
 
     const now = new Date().toISOString();
@@ -693,7 +625,8 @@ export const updatePanelLog = async (id, logData) => {
 
     // Track shift incharge verification history
     let historyRecord = null;
-    if (logData.shiftIncharge && logData.lastUpdatedBy) {
+    const verifierName = logData.verifiedBy || logData.lastUpdatedBy;
+    if (logData.shiftIncharge && verifierName) {
       // Check if this is a new verification (not just merging existing data)
       const existingShiftIncharge = JSON.stringify(
         existingLog.shiftIncharge || {}
@@ -702,7 +635,7 @@ export const updatePanelLog = async (id, logData) => {
 
       if (existingShiftIncharge !== newShiftIncharge) {
         historyRecord = {
-          verifiedBy: logData.lastUpdatedBy,
+          verifiedBy: verifierName,
           shiftData: logData.shiftIncharge,
         };
       }
@@ -731,7 +664,7 @@ export const updatePanelLog = async (id, logData) => {
 
     return updatedLog;
   } catch (error) {
-    console.error("Error updating panel log:", error);
+    console.error("DEBUG Prisma Error updating panel log:", error, id, logData);
     return null;
   }
 };

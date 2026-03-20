@@ -359,7 +359,8 @@ router.put('/logs/:id', authMiddleware, async (req, res) => {
             where: { id: parseInt(id) },
             data: {
                 answers, // Expecting JSON object
-                remarks
+                remarks,
+                userName: req.user.name || req.user.username || 'System'
             }
         });
 
