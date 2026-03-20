@@ -4,6 +4,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: lift-monitor-backend
+    volumes:
+      - ./backend/.wwebjs_auth:/app/.wwebjs_auth
+      - ./backend/.wwebjs_cache:/app/.wwebjs_cache
     env_file:
       - backend/.env
     environment:

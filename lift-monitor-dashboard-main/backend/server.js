@@ -258,8 +258,8 @@ app.post("/api/lifts", (req, res) => {
       const existingLift = liftData[buildingName].find(l => l.ID === incomingLift.ID);
       if (existingLift) {
         if ((existingLift.Alarm === "0" || existingLift.Alarm === 0) && (incomingLift.Alarm === "1" || incomingLift.Alarm === 1)) {
-          console.log(`[ALARM DETECTED] Triggering WhatsApp alert for ${buildingName} - ${incomingLift.ID}`);
-          whatsappService.sendAlarmNotification(buildingName, incomingLift.ID);
+          console.log(`[ALARM DETECTED] Triggering WhatsApp alert for ${buildingName} - ${incomingLift.ID} on Floor ${incomingLift.Fl}`);
+          whatsappService.sendAlarmNotification(buildingName, incomingLift.ID, incomingLift.Fl);
         }
       }
     });

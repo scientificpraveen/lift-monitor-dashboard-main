@@ -398,7 +398,8 @@ const StpAutomation = ({ building }) => {
                 setIsConnected(true);
             } catch (e) { setIsConnected(false); }
         };
-        setInterval(fetchData, 1000);
+        const interval = setInterval(fetchData, 1000);
+        return () => clearInterval(interval);
     }, []);
 
     return (
