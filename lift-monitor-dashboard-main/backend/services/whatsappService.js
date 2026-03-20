@@ -24,7 +24,18 @@ try {
 const puppeteerExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
 
 const puppeteerOptions = {
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-extensions'
+    ],
+    headless: true,
 };
 
 if (puppeteerExecutablePath) {
@@ -72,13 +83,19 @@ client.initialize().catch(err => {
  * @param {string} buildingName - Name of the building in uppercase (e.g. "PRESTIGE POLYGON")
  * @param {string} liftId - Lift identifier (e.g. "P1")
  */
-export const sendAlarmNotification = async (buildingName, liftId) => {
+export const sendAlarmNotification = async (buildingName, liftId, floor) => {
     if (!isReady) {
         console.warn(`[WhatsApp] Skipping message for ${liftId} in ${buildingName} - Client not ready yet.`);
         return;
     }
 
-    const message = `🚨 *ALERT! ALARM PRESSED* 🚨\n\n*Building:* ${buildingName}\n*Lift:* ${liftId}`;
+    const timestamp = new Date().toLocaleString('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+    }).toUpperCase();
+
+    const message = `🚨 *ALERT! ALARM PRESSED* 🚨\n\n*Timestamp:* ${timestamp}\n*Building:* ${buildingName}\n*Floor:* ${floor || 'Unknown'}\n*Lift:* ${liftId}`;
 
     // Gather recipients: Admins + Building specific
     const recipients = new Set();

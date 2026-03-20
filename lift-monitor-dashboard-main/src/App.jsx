@@ -136,7 +136,7 @@ const App = () => {
       setLiftData(flattenedData);
 
       const newAlerts = flattenedData
-        .filter((lift) => lift.Alarm === "1" && lift.building === selectedBuilding)
+        .filter((lift) => lift.Alarm === "1")
         .map((lift) => ({
           id: lift.ID,
           floor: lift.Fl,
@@ -156,7 +156,7 @@ const App = () => {
 
     fetchData();
 
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 1000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
@@ -184,12 +184,16 @@ const App = () => {
     (lift) => lift.building === selectedBuilding
   );
 
+  const visibleAlerts = alerts.filter(
+    (alert) => alert.building === selectedBuilding
+  );
+
   return (
     <div className="app">
       <Header />
 
       <>
-        <TopAlert alerts={alerts} onClose={handleCloseAlert} />
+        <TopAlert alerts={visibleAlerts} onClose={handleCloseAlert} />
         <div className="dashboard">
           <Sidebar
             selected={selectedBuilding}

@@ -1047,9 +1047,9 @@ const PanelLogList = ({
                               if (!sLog) return null;
                               return (
                                 <>
-                                  {sLog.shiftIncharge?.aShift?.name && `A: ${sLog.shiftIncharge.aShift.name} `}
-                                  {sLog.shiftIncharge?.bShift?.name && `${sLog.shiftIncharge?.aShift?.name ? '| ' : ''}B: ${sLog.shiftIncharge.bShift.name} `}
-                                  {sLog.shiftIncharge?.cShift?.name && `${(sLog.shiftIncharge?.aShift?.name || sLog.shiftIncharge?.bShift?.name) ? '| ' : ''}C: ${sLog.shiftIncharge.cShift.name}`}
+                                  {sLog.shiftIncharge?.aShift?.name && <div>A: {sLog.shiftIncharge.aShift.name}</div>}
+                                  {sLog.shiftIncharge?.bShift?.name && <div>B: {sLog.shiftIncharge.bShift.name}</div>}
+                                  {sLog.shiftIncharge?.cShift?.name && <div>C: {sLog.shiftIncharge.cShift.name}</div>}
                                 </>
                               );
                             })()}
@@ -1380,19 +1380,19 @@ const PanelLogList = ({
                 )}
 
               <div className="modal-metadata">
-                <p>
+                <div>
                   <strong>Shift Incharge:</strong>
                   {modalLog.shiftIncharge?.aShift?.name &&
-                    ` A: ${modalLog.shiftIncharge.aShift.name}`}
+                    <div>A: {modalLog.shiftIncharge.aShift.name}</div>}
                   {modalLog.shiftIncharge?.bShift?.name &&
-                    `${modalLog.shiftIncharge?.aShift?.name ? ' |' : ''} B: ${modalLog.shiftIncharge.bShift.name}`}
+                    <div>B: {modalLog.shiftIncharge.bShift.name}</div>}
                   {modalLog.shiftIncharge?.cShift?.name &&
-                    `${(modalLog.shiftIncharge?.aShift?.name || modalLog.shiftIncharge?.bShift?.name) ? ' |' : ''} C: ${modalLog.shiftIncharge.cShift.name}`}
+                    <div>C: {modalLog.shiftIncharge.cShift.name}</div>}
                   {!modalLog.shiftIncharge?.aShift?.name &&
                     !modalLog.shiftIncharge?.bShift?.name &&
                     !modalLog.shiftIncharge?.cShift?.name &&
-                    "-"}
-                </p>
+                    <div>-</div>}
+                </div>
 
                 {/* Shift Incharge Verification History */}
                 {modalLog.shiftInchargeHistory &&
