@@ -13,22 +13,19 @@ services:
       NODE_ENV: production
       PORT: 3001
     ports:
-      - "3001:3001" # Changed from expose to ports - allows ESP8266 to connect
+      - "3001:3001"  # Changed from expose to ports - allows ESP8266 to connect
     restart: unless-stopped
     healthcheck:
       test:
         [
           "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3001/health",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3001/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})",
         ]
       interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 60s
+      timeout: 10s
+      retries: 3
     networks:
       - app-network
 
@@ -49,9 +46,8 @@ services:
       test:
         ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 60s
+      timeout: 10s
+      retries: 3
     networks:
       - app-network
 
@@ -67,13 +63,6 @@ services:
     depends_on:
       - frontend
     restart: unless-stopped
-    healthcheck:
-      test:
-        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 30s
     networks:
       - app-network
 

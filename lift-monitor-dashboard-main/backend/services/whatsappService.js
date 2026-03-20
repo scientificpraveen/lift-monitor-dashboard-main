@@ -84,6 +84,7 @@ client.initialize().catch(err => {
  * @param {string} liftId - Lift identifier (e.g. "P1")
  */
 export const sendAlarmNotification = async (buildingName, liftId, floor) => {
+export const sendAlarmNotification = async (buildingName, liftId, floor) => {
     if (!isReady) {
         console.warn(`[WhatsApp] Skipping message for ${liftId} in ${buildingName} - Client not ready yet.`);
         return;
