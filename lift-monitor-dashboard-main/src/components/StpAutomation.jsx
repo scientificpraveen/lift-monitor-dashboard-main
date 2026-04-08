@@ -6,6 +6,20 @@ const API_URL = `${API_BASE}/stp`;
 
 // --- VISUAL COMPONENTS (INLINE STYLES FOR RELIABILITY) ---
 
+export const parseStpVal = (val) => {
+    if (typeof val === 'string') {
+        const floatData = parseFloat(val.substring(0, val.length - 1));
+        return {
+            num: isNaN(floatData) ? 0 : floatData,
+            isError: val.endsWith('e'),
+            raw: val,
+            rawTime: /^\d{2}:[0-5]\d:[0-5]\d[ne]$/.test(val) ? val.substring(0, val.length - 1) : null
+        };
+    }
+    const safeFloat = parseFloat(val);
+    return { num: isNaN(safeFloat) ? 0 : safeFloat, isError: false, raw: String(val) };
+};
+
 // 1. Static Arrow
 const StaticArrow = ({ x, y, rotate = 0, color = "#1e3a8a", scale = 1 }) => (
     <div
@@ -105,11 +119,20 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
                 <div style={{ color: '#1f2937', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.2 }}>
                     {label && label.split('\n').map((line, i) => <div key={i}>{line}</div>)}
                 </div>
-                {subLabel && subLabel.includes("Water Level:") ? (
-                    <div style={{ marginTop: '25px', marginLeft: '-45px', color: '#1e3a8a', fontSize: '35px', fontWeight: '900', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
-                        {subLabel.replace("Water Level: ", "")}
-                    </div>
-                ) : subLabel && (
+                {subLabel && subLabel.includes("Water Level:") ? (() => {
+                    const levelStr = subLabel.replace("Water Level: ", "");
+                    const p = parseStpVal(levelStr.replace("%", ""));
+                    return (
+                        <div style={{
+                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                            color: p.isError ? '#ea580c' : '#1e3a8a', fontSize: '35px', fontWeight: '900', zIndex: 40,
+                            textShadow: p.isError ? '0 1px 2px rgba(255,237,213,0.8)' : '0 1px 2px rgba(255,255,255,0.8)',
+                            animation: p.isError ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                        }}>
+                            {p.num}%
+                        </div>
+                    );
+                })() : subLabel && (
                     <div style={{ marginTop: '4px', color: subLabel.includes("Water Level") ? '#1e3a8a' : '#1f2937', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase' }}>
                         {subLabel}
                     </div>
@@ -131,19 +154,24 @@ const Tank = ({ label, subLabel, x, y, width = "192px", height = "144px", specia
             </div>
             {
                 (specialLabel || indicatorValue) && (
-                    <div style={{ position: 'absolute', bottom: `${8 + indicatorOffset}px`, right: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 30 }}>
-                        <div style={{
-                            width: '80px', height: '80px', borderRadius: '50%', backgroundColor: indicatorColor, border: '2px solid white',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', ...animationStyle
-                        }}>
+                    <div style={{ position: 'absolute', bottom: `${15 + indicatorOffset}px`, right: '6px', top: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 30 }}>
+                        <div style={{ padding: '4px 6px', backgroundColor: 'white', border: `2px solid ${indicatorColor}`, borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', minWidth: '60px', textAlign: 'center', ...animationStyle }}>
                             {indicatorValue ? (
-                                <span style={{ color: 'white', fontSize: '16px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1 }}>{indicatorValue}</span>
-                            ) : (labelPosition === 'inside' && specialLabel && (
-                                <span style={{ color: 'white', fontSize: '15px', fontWeight: 900, textShadow: '0 1px 1px rgba(0,0,0,0.2)', lineHeight: 1.1 }}>
+                                <div style={{ fontSize: '20px', fontWeight: '900', color: indicatorColor }}>{indicatorValue}</div>
+                            ) : null}
+                            {labelPosition === 'inside' && specialLabel && !indicatorValue && (
+                                <div style={{ fontSize: '15px', fontWeight: '900', color: indicatorColor }}>
                                     {specialLabel.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-                                </span>
-                            ))}
+                                </div>
+                            )}
                         </div>
+                        {indicatorValue && specialLabel && (
+                            <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {specialLabel.split('\n').map((line, i) => (
+                                    <span key={i} style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', whiteSpace: 'nowrap', lineHeight: '1.1' }}>{line}</span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )
             }
@@ -256,8 +284,8 @@ const FiveWayValveUnit = ({ x, y, label, status = 5, portsSide = 'left', invertV
     // portsSide='right' (PSF): Vin/Vout on Right, Drain on Left.
     // portsSide='left' (ACF): Vin/Vout on Left, Drain on Right.
     const isRight = portsSide === 'right';
-    const vinStyle = isRight ? { top: 12, right: -26 } : { top: 12, left: -26 };
-    const voutStyle = isRight ? { bottom: 5, right: -40 } : { bottom: 5, left: -40 };
+    const vinStyle = isRight ? { top: 10, right: -28 } : { top: 10, left: -28 };
+    const voutStyle = isRight ? { bottom: 10, right: -44 } : { bottom: 10, left: -44 };
     const drainStyle = isRight ? { top: 35, left: -50 } : { top: 35, right: -50 };
 
     return (
@@ -277,7 +305,7 @@ const FiveWayValveUnit = ({ x, y, label, status = 5, portsSide = 'left', invertV
 
             <div style={{
                 width: '80px', height: '60px', borderRadius: '4px', backgroundColor: mainColor,
-                border: status === 6 ? '2px dashed black' : '2px solid rgba(255,255,255,0.5)',
+                border: status === 6 ? '0.5px dashed black' : '2px solid rgba(255,255,255,0.5)',
                 position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
                 animation: isPulse ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
             }}>
@@ -348,18 +376,25 @@ const DosingPump = ({ x, y, status = 2 }) => {
 };
 
 // 11. Monitor Box
-const MonitorBox = ({ x, y, label, value, color = "#0ea5e9" }) => (
-    <div style={{ position: 'absolute', left: x, top: y, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ padding: '4px 8px', backgroundColor: 'white', border: `2px solid ${color}`, borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', minWidth: '80px', textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: '900', color: color }}>{value}</div>
+const MonitorBox = ({ x, y, label, value, isError = false, color = "#0ea5e9" }) => {
+    const activeColor = isError ? '#ea580c' : color;
+    return (
+        <div style={{ position: 'absolute', left: x, top: y, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{
+                padding: '4px 8px', backgroundColor: 'white', border: `2px solid ${activeColor}`, borderRadius: '6px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', minWidth: '80px', textAlign: 'center',
+                animation: isError ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+            }}>
+                <div style={{ fontSize: '20px', fontWeight: '900', color: activeColor }}>{value}</div>
+            </div>
+            <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {label.split('\n').map((line, i) => (
+                    <span key={i} style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b', whiteSpace: 'nowrap', lineHeight: '1.1' }}>{line}</span>
+                ))}
+            </div>
         </div>
-        <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {label.split('\n').map((line, i) => (
-                <span key={i} style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b', whiteSpace: 'nowrap', lineHeight: '1.1' }}>{line}</span>
-            ))}
-        </div>
-    </div>
-);
+    );
+};
 
 
 // --- MAIN DASHBOARD ---
@@ -371,7 +406,7 @@ const StpAutomation = ({ building }) => {
         // Blowers (Default 2 - Orange)
         B1: 2, B2: 2,
         // Valves (Default 2 - Orange)
-        AirSolenoid: 2, ClarifierValve: 1, // Default 1 (Flowing)
+        AirSolenoid: 2, WaterSolenoid: 2, ClarifierValve: 1, // Default 1 (Flowing)
         // Fans (Default 2 - Orange)
         FAF1: 2, FAF2: 2, EF1: 2, EF2: 2,
         // UV, Dosing, ARM (Default 2 - Orange)
@@ -379,28 +414,34 @@ const StpAutomation = ({ building }) => {
         // PSF/ACF Valve (Default 6)
         PSFValve: 6, ACFValve: 6,
         // Tank Levels (Default 0, Display unit %)
-        CollectionTankLevel: 0, SBRTankLevel: 0, SludgeTankLevel: 0, FilterTankLevel: 0, TreatedWaterTankLevel: 0, SoftwaterTankLevel: 0,
+        CollectionTankLevel: "0n", SBRTankLevel: "0n", SludgeTankLevel: "0n", FilterTankLevel: "0n", TreatedWaterTankLevel: "0n", SoftwaterTankLevel: "0n",
         // Pressure (Default 0.0, Display unit Bar)
-        InletPressure: 0.0, OutletPressure: 0.0,
+        InletPressure: "0.0n", OutletPressure: "0.0n",
         // DO, TSS, TH (Default 0.0, Display unit mg/l)
-        DO1: 0.0, DO2: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0, SoftnerTH: 0.0,
+        DO1: "0.0n", DO2: "0.0n", SBRTSS: "0.0n", ClarifierTSS: "0.0n", SoftnerTH: "0.0n",
         // System Status
         deviceOnline: false
     });
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
+        if (!building) return;
         const fetchData = async () => {
             try {
-                const res = await fetch(API_URL);
-                const json = await res.json();
-                setData(prev => ({ ...prev, ...json }));
-                setIsConnected(true);
+                const res = await fetch(`${API_URL}?building=${encodeURIComponent(building)}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    setData(prev => ({ ...prev, ...json }));
+                    setIsConnected(true);
+                } else {
+                    setIsConnected(false);
+                }
             } catch (e) { setIsConnected(false); }
         };
+        fetchData();
         const interval = setInterval(fetchData, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [building]);
 
     return (
         <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#f9fafb', paddingBottom: '100px', overflow: 'auto' }}>
@@ -441,9 +482,9 @@ const StpAutomation = ({ building }) => {
 
             {/* Main Diagram Container */}
             <div style={{
-                position: 'relative', minWidth: '2200px', height: '1500px', backgroundColor: 'white', margin: '0 auto',
+                position: 'relative', minWidth: '2200px', height: '1500px', backgroundColor: 'white', marginLeft: '20px',
                 borderRadius: '40px', border: '1px solid #e5e7eb', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                padding: '16px', transform: 'scale(0.70)', transformOrigin: 'top center',
+                padding: '16px', transform: `scale(0.70)`, transformOrigin: 'top left', marginBottom: `-450px`, marginRight: `-660px`,
                 display: 'flex', justifyContent: 'center', alignItems: 'flex-start'
             }}>
                 <div style={{ position: 'relative', width: '1800px', height: '100%', marginTop: '50px' }}>
@@ -472,7 +513,8 @@ const StpAutomation = ({ building }) => {
                     />
 
                     {/* Clarifier -> Filter Feed (Gravity) with Clarifier Valve */}
-                    <Pipe points="M 1040 210 L 1040 480" isFlowing={data.ClarifierValve === 1} width="8" />
+                    <Pipe points="M 1040 210 L 1040 320" isFlowing={true} width="8" />
+                    <Pipe points="M 1040 360 L 1040 480" isFlowing={data.ClarifierValve === 1} width="8" />
                     <StaticArrow x="1040px" y="440px" rotate={90} />
 
                     <Motor id="V" label={"CLARIFIER\nVALVE"} status={data.ClarifierValve ?? 1} x="990px" y="320px" />
@@ -523,6 +565,22 @@ const StpAutomation = ({ building }) => {
                     {/* PSF VESSEL (1120, 840) - Ports on Left */}
                     <CylindricalVessel label="PSF" x={1200} y={820} width="110px" height="160px" portsSide="left" />
 
+                    {/* PSF Vessel Time Block */}
+                    {data.PSFTime && parseStpVal(data.PSFTime).rawTime && (
+                        <div style={{ position: 'absolute', left: 1215, top: 1045, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{
+                                padding: '4px 8px', backgroundColor: 'white', border: `2px solid #10b981`, borderRadius: '6px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', minWidth: '80px', textAlign: 'center',
+                                animation: parseStpVal(data.PSFTime).isError ? 'pulse 1s infinite' : 'none'
+                            }}>
+                                <div style={{ fontSize: '18px', fontWeight: '900', color: '#10b981' }}>{parseStpVal(data.PSFTime).rawTime}</div>
+                            </div>
+                            <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', whiteSpace: 'nowrap', lineHeight: '1.1' }}>HH:MM:SS</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* PSF Connections (Valve Right <-> Vessel Left) */}
                     {/* Vin: Valve Right (1086, 878) -> Vessel Left (1120, 878) */}
                     <Pipe points="M 1085 875 L 1150 875 L 1150 840 L 1200 840"
@@ -539,7 +597,7 @@ const StpAutomation = ({ building }) => {
                     {/* PSF Mode Label */}
                     {data.PSFValve >= 1 && data.PSFValve <= 5 && (
                         <div style={{
-                            position: 'absolute', left: 1210, top: 1010, width: 100, textAlign: 'center',
+                            position: 'absolute', left: 1210, top: 1005, width: 100, textAlign: 'center',
                             fontSize: '14px', fontWeight: '900', textTransform: 'uppercase',
                             color: data.PSFValve === 1 ? '#166534' : data.PSFValve === 2 ? '#1e40af' :
                                 data.PSFValve === 3 ? '#6b21a8' : data.PSFValve === 4 ? '#854d0e' :
@@ -566,23 +624,39 @@ const StpAutomation = ({ building }) => {
                     {/* ACF VESSEL (140, 840) - Ports on Right */}
                     <CylindricalVessel label="ACF" x={100} y={820} width="110px" height="160px" portsSide="right" />
 
+                    {/* ACF Vessel Time Block */}
+                    {data.ACFTime && parseStpVal(data.ACFTime).rawTime && (
+                        <div style={{ position: 'absolute', left: 115, top: 1045, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{
+                                padding: '4px 8px', backgroundColor: 'white', border: `2px solid #10b981`, borderRadius: '6px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', minWidth: '80px', textAlign: 'center',
+                                animation: parseStpVal(data.ACFTime).isError ? 'pulse 1s infinite' : 'none'
+                            }}>
+                                <div style={{ fontSize: '18px', fontWeight: '900', color: '#10b981' }}>{parseStpVal(data.ACFTime).rawTime}</div>
+                            </div>
+                            <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', whiteSpace: 'nowrap', lineHeight: '1.1' }}>HH:MM:SS</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* ACF Connections (Valve Left <-> Vessel Right) */}
                     {/* Vin: Valve Left (300, 878) -> Vessel Right (240, 878) */}
                     <Pipe points="M 300 875 L 250 875 L 250 840 L 210 840"
-                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve >= 1 && data.ACFValve <= 3)}
+                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve >= 1 && data.ACFValve <= 3)}
                         isReverse={(data.M10 === 1 || data.M11 === 1) && data.ACFValve === 2}
                         color="#94a3b8" width="8" flowColor="#3b82f6" />
 
                     {/* Vout: Vessel Right (240, 924) -> Valve Left (300, 924) */}
                     <Pipe points="M 300 925 L 250 925 L 250 960 L 210 960"
-                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve >= 1 && data.ACFValve <= 3)}
-                        isReverse={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve === 1 || data.ACFValve === 3)}
+                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve >= 1 && data.ACFValve <= 3)}
+                        isReverse={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve === 1 || data.ACFValve === 3)}
                         color="#94a3b8" width="8" flowColor="#3b82f6" />
 
                     {/* ACF Mode Label */}
                     {data.ACFValve >= 1 && data.ACFValve <= 5 && (
                         <div style={{
-                            position: 'absolute', left: 100, top: 1010, width: 100, textAlign: 'center',
+                            position: 'absolute', left: 100, top: 1005, width: 100, textAlign: 'center',
                             fontSize: '14px', fontWeight: '900', textTransform: 'uppercase',
                             color: data.ACFValve === 1 ? '#166534' : data.ACFValve === 2 ? '#1e40af' :
                                 data.ACFValve === 3 ? '#6b21a8' : data.ACFValve === 4 ? '#854d0e' :
@@ -600,19 +674,19 @@ const StpAutomation = ({ building }) => {
                     {/* --- ROW 2 FLOW: ACF Out -> UV --- */}
                     {/* ACF Outlet Top (340, 870) -> Up 780 -> Left 100 -> Down 1300 -> Right 250 */}
                     <Pipe points="M 340 870 L 340 780 L 50 780 L 50 1100"
-                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve === 1 || data.ACFValve === 5)} width="8" />
+                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve === 1 || data.ACFValve === 5)} width="8" />
 
                     <UVUnit x={5} y={1100} status={data.UV ?? 2} />
 
                     {/* UV -> TREATED TANK */}
                     <Pipe points="M 50 1180 L 50 1250 L 340 1250"
-                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve === 1 || data.ACFValve === 5)} width="8" />
+                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve === 1 || data.ACFValve === 5)} width="8" />
 
                     <DosingPump x={200} y={1100} status={data.DosingPump ?? 2} />
                     <Pipe points="M 240 1180 L 240 1250" isFlowing={data.DosingPump === 1} width="8" />
 
                     {/* 2. TREATED WATER TANK */}
-                    <Tank label={"TREATED WATER\nTANK"} subLabel={`Water Level: ${data.TreatedWaterTankLevel ?? 0}%`} x="340px" y="1180px" />
+                    <Tank label={"TREATED WATER\nTANK"} subLabel={`Water Level: ${data.TreatedWaterTankLevel ?? "0n"}%`} x="340px" y="1180px" />
 
                     <Pipe points="M 520 1250 L 620 1250" isFlowing={data.M12 === 1} width="8" />
 
@@ -626,20 +700,23 @@ const StpAutomation = ({ building }) => {
 
                     <CylindricalVessel label="SOFTENER" x={800} y={1180} width="120px" height="170px" showPorts={false} />
 
-                    <Pipe points="M 920 1250 L 1060 1250" isFlowing={data.M12 === 1} width="8" />
+                    <Pipe points="M 920 1250 L 1020 1250" isFlowing={data.M12 === 1} width="8" />
+                    <Pipe points="M 1070 1250 L 1140 1250" isFlowing={data.M12 === 1 && data.WaterSolenoid === 1} width="8" />
 
-                    <StaticArrow x="920px" y="1210px" rotate={-45} color="#c026d3" />
-                    <MonitorBox x={950} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${(data.SoftnerTH ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
+                    <StaticArrow x="920px" y="1210px" rotate={-45} color="#7c3aed" />
+                    <MonitorBox x={950} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${parseStpVal(data.SoftnerTH).num.toFixed(2)} mg/l`} isError={parseStpVal(data.SoftnerTH).isError} color="#7c3aed" />
 
-                    <Tank label={"SOFT WATER\nTANK"} subLabel={`Water Level: ${data.SoftwaterTankLevel ?? 0}%`} x="1060px" y="1190px" />
+                    <Motor id="V" label={"WATER\nSOLENOID"} status={data.WaterSolenoid ?? 2} x="1000px" y="1226px" />
 
-                    <Pipe points="M 1250 1250 L 1360 1250" isFlowing={data.M13 === 1} width="8" />
+                    <Tank label={"SOFT WATER\nTANK"} subLabel={`Water Level: ${data.SoftwaterTankLevel ?? "0n"}%`} x="1140px" y="1190px" />
 
-                    <Motor id="M13" status={data.M13} x="1310px" y="1230px" label={"SOFT WATER\nTRANSFER PUMP"} />
+                    <Pipe points="M 1335 1250 L 1435 1250" isFlowing={data.M13 === 1} width="8" />
 
-                    <Pipe points="M 1380 1230 L 1380 1150" isFlowing={data.M13 === 1} width="8" />
-                    <StaticArrow x="1380px" y="1180px" rotate={-90} />
-                    <div style={{ position: 'absolute', left: 1290, top: 1120, fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>TO COOLING TOWER</div>
+                    <Motor id="M13" status={data.M13} x="1390px" y="1230px" label={"SOFT WATER\nTRANSFER PUMP"} />
+
+                    <Pipe points="M 1455 1230 L 1455 1150" isFlowing={data.M13 === 1} width="8" />
+                    <StaticArrow x="1455px" y="1180px" rotate={-90} />
+                    <div style={{ position: 'absolute', left: 1370, top: 1120, fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>TO COOLING TOWER</div>
 
                     {/* --- DRAIN SYSTEM --- */}
                     {/* PSF Drain: Start Left (1006, 900) -> 950, 900 -> 950, 660 */}
@@ -649,13 +726,13 @@ const StpAutomation = ({ building }) => {
 
                     {/* ACF Drain: Start Right (380, 900) -> 430, 900 -> 430, 660 */}
                     <Pipe points="M 380 900 L 450 900 L 450 800 L 600 800"
-                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.ACFValve >= 2 && data.ACFValve <= 4)}
+                        isFlowing={(data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve >= 2 && data.ACFValve <= 4)}
                         color="#ef4444" width="8" flowColor="#fee2e2" />
 
                     {/* From Merge (y=660) Left to x=40 (Margin) -> Up towards M5 (150) -> Tank Right (242) */}
                     <Pipe points="M 600 800 L 600 730 L -30 730 L -30 150 L 45 150"
                         isFlowing={((data.M10 === 1 || data.M11 === 1) && (data.PSFValve >= 2 && data.PSFValve <= 4)) ||
-                            ((data.M10 === 1 || data.M11 === 1) && (data.ACFValve >= 2 && data.ACFValve <= 4))}
+                            ((data.M10 === 1 || data.M11 === 1) && (data.PSFValve === 1 || data.PSFValve === 5) && (data.ACFValve >= 2 && data.ACFValve <= 4))}
                         color="#ef4444" width="8" flowColor="#fee2e2" />
 
                     {/* Drain Pipeline Arrows */}
@@ -682,65 +759,67 @@ const StpAutomation = ({ building }) => {
                     {/* Dosing Pump Pipeline Arrows */}
                     <StaticArrow x="235px" y="1190px" rotate={90} />
 
+                    {/* Treated Water Tank to Cooling Tower Arrows */}
                     <StaticArrow x="550px" y="1250px" rotate={0} />
                     <StaticArrow x="750px" y="1250px" rotate={0} />
-                    <StaticArrow x="1020px" y="1250px" rotate={0} />
-                    <StaticArrow x="1300px" y="1250px" rotate={0} />
+                    <StaticArrow x="950px" y="1250px" rotate={0} />
+                    <StaticArrow x="1090px" y="1250px" rotate={0} />
+                    <StaticArrow x="1350px" y="1250px" rotate={0} />
 
                     {/* --- MONITORING LAYER (Pressure / TSS) --- */}
                     {/* Inlet Pressure: Line from T-Junction (1046, 750) to Arrow */}
                     <Pipe points="M 1040 820 L 960 820" width="3" color="#0891b2" />
                     <StaticArrow x="925px" y="800px" rotate={-180} color="#0891b2" />
-                    <MonitorBox x={820} y={800} label={"INLET PRESSURE"} value={`${(data.InletPressure ?? 0.0).toFixed(2)} Bar`} color="#0891b2" />
+                    <MonitorBox x={810} y={800} label={"INLET PRESSURE"} value={`${parseStpVal(data.InletPressure).num.toFixed(2)} Bar`} isError={parseStpVal(data.InletPressure).isError} color="#0891b2" />
 
                     {/* Outlet Pressure: Line from PSF Out (1046, 950) to Arrow (Left side) */}
                     <Pipe points="M 1040 970 L 960 970" width="3" color="#0891b2" />
                     <StaticArrow x="925px" y="950px" rotate={-180} color="#0891b2" />
-                    <MonitorBox x={810} y={950} label={"OUTLET PRESSURE"} value={`${(data.OutletPressure ?? 0.0).toFixed(2)} Bar`} color="#0891b2" />
+                    <MonitorBox x={800} y={950} label={"OUTLET PRESSURE"} value={`${parseStpVal(data.OutletPressure).num.toFixed(2)} Bar`} isError={parseStpVal(data.OutletPressure).isError} color="#0891b2" />
 
                     {/* SBR TSS */}
                     <StaticArrow x="238px" y="548px" rotate={45} color="#c026d3" />
-                    <MonitorBox x={272} y={565} label="SBR TSS" value={`${(data.SBRTSS ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
+                    <MonitorBox x={272} y={565} label="SBR TSS" value={`${parseStpVal(data.SBRTSS).num.toFixed(2)} mg/l`} isError={parseStpVal(data.SBRTSS).isError} color="#c026d3" />
 
                     {/* Clarifier TSS */}
                     <StaticArrow x="1040px" y="240px" rotate={0} color="#c026d3" />
-                    <MonitorBox x={1070} y={240} label="CLARIFIER TSS" value={`${(data.ClarifierTSS ?? 0.0).toFixed(2)} mg/l`} color="#c026d3" />
+                    <MonitorBox x={1070} y={240} label="CLARIFIER TSS" value={`${parseStpVal(data.ClarifierTSS).num.toFixed(2)} mg/l`} isError={parseStpVal(data.ClarifierTSS).isError} color="#c026d3" />
 
                     {/* --- TANKS LAYER --- */}
-                    <Tank label="Collection Tank" subLabel={`Water Level: ${data.CollectionTankLevel ?? 0}%`} x="50px" y="80px" />
+                    <Tank label="Collection Tank" subLabel={`Water Level: ${data.CollectionTankLevel ?? "0n"}%`} x="50px" y="80px" />
 
                     <Tank
                         label={"MBBR AERATION\nTANK"}
                         x="500px" y="80px"
                         specialLabel="DO1"
-                        indicatorValue={`${(data.DO1 ?? 0.0).toFixed(2)} mg/l`}
-                        indicatorColor="#0891b2"
+                        indicatorValue={`${parseStpVal(data.DO1).num.toFixed(2)} mg/l`}
+                        indicatorColor={parseStpVal(data.DO1).isError ? '#f97316' : '#0049ff'}
                         indicatorOffset={-10}
                         showBubbles={true}
                     />
 
                     <Tank label={"CLARIFIER TANK\nWITH ARM"} x="950px" y="80px" labelPosition="inside" />
-                    <Fan x="1060px" y="140px" label="ARM" status={data.ARM ?? 2} scale={1.2} />
+                    <Fan x="1080px" y="150px" label="ARM" status={data.ARM ?? 2} scale={1.2} />
 
-                    <Tank label={"SLUDGE HOLDING\nTANK"} subLabel={`Water Level: ${data.SludgeTankLevel ?? 0}%`} x="750px" y="310px" />
+                    <Tank label={"SLUDGE HOLDING\nTANK"} subLabel={`Water Level: ${data.SludgeTankLevel ?? "0n"}%`} x="750px" y="310px" />
 
                     <Tank
                         label="SBR Tank"
-                        subLabel={`Water Level: ${data.SBRTankLevel ?? 0}%`}
+                        subLabel={`Water Level: ${data.SBRTankLevel ?? "0n"}%`}
                         x="50px" y="480px"
                         specialLabel="DO2"
-                        indicatorValue={`${(data.DO2 ?? 0.0).toFixed(2)} mg/l`}
-                        indicatorColor="#0891b2"
+                        indicatorValue={`${parseStpVal(data.DO2).num.toFixed(2)} mg/l`}
+                        indicatorColor={parseStpVal(data.DO2).isError ? '#f97316' : '#0049ff'}
                         indicatorOffset={-10}
                         showBubbles={true}
                     />
-                    <Tank label="Filter Feed Tank" subLabel={`Water Level: ${data.FilterTankLevel ?? 0}%`} x="950px" y="480px" />
+                    <Tank label="Filter Feed Tank" subLabel={`Water Level: ${data.FilterTankLevel ?? "0n"}%`} x="950px" y="480px" />
 
                     {/* --- FANS --- */}
-                    <Fan x="1450px" y="550px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
-                    <Fan x="1650px" y="550px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
-                    <Fan x="1450px" y="670px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
-                    <Fan x="1650px" y="670px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
+                    <Fan x="1480px" y="580px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
+                    <Fan x="1680px" y="580px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
+                    <Fan x="1480px" y="720px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
+                    <Fan x="1680px" y="720px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
 
                     {/* --- CENTRAL BLOWER SYSTEM --- */}
                     <Fan id="B1" label="BLOWER 1" status={data.B1} x="620px" y="340px" />
@@ -768,7 +847,7 @@ const StpAutomation = ({ building }) => {
 
                     {/* --- SCALE & LEGEND --- */}
                     <div style={{
-                        position: 'absolute', left: 1400, top: 100, width: 400, height: 360,
+                        position: 'absolute', left: 1400, top: 100, width: 400, height: 410,
                         display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 10,
                         border: '2px solid #cbd5e1', borderRadius: '14px', padding: '20px',
                         backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
@@ -781,8 +860,24 @@ const StpAutomation = ({ building }) => {
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#991b1b' }}>DRAIN PIPELINE OF VALVE</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '15px', backgroundColor: '#0891b2', border: '2px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transform: 'scale(0.4)', transformOrigin: 'left center' }}></div>
-                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2' }}>DO SENSOR (in mg/l)</span>
+                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0049ff', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0049ff' }}>DO</div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0049ff' }}>DISSOLVED OXYGEN</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0891b2', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0891b2' }}>BAR</div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2' }}>PRESSURE SENSOR</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #c026d3', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#c026d3' }}>TSS</div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#c026d3' }}>TOTAL SUSPENDED SOLID</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #7c3aed', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#7c3aed' }}>TH</div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#7c3aed' }}>TOTAL HARDNESS</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #10b981', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#10b981' }}>HH:MM:SS</div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>VALVE TIMER</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ width: '24px', height: '24px', backgroundColor: '#22c55e', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>

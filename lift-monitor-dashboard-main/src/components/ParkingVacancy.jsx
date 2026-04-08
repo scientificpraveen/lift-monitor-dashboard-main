@@ -7,8 +7,9 @@ const ParkingVacancy = ({ building }) => {
     const [loading, setLoading] = useState(true);
 
     const fetchSlots = async () => {
+        if (!building) return;
         try {
-            const res = await fetch(`${API_BASE}/parking-slots`);
+            const res = await fetch(`${API_BASE}/parking-slots?building=${encodeURIComponent(building)}`);
             if (res.ok) {
                 const data = await res.json();
                 setSlots(data);
@@ -21,10 +22,11 @@ const ParkingVacancy = ({ building }) => {
     };
 
     useEffect(() => {
+        if (!building) return;
         fetchSlots();
         const interval = setInterval(fetchSlots, 2000); // Poll every 2 seconds
         return () => clearInterval(interval);
-    }, []);
+    }, [building]);
 
     const renderSlot = (slotId) => {
         const slotData = slots[slotId];

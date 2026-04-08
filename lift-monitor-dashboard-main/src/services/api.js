@@ -169,7 +169,11 @@ export const checkDuplicatePanelLog = async (date, time, building) => {
 
 export const createPanelLog = async (logData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/panel-logs`, {
+    let endpoint = '/panel-logs';
+    if (logData.panelType === 'HT') endpoint = '/panel-logs/ht';
+    else if (logData.panelType === 'LT') endpoint = '/panel-logs/lt';
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

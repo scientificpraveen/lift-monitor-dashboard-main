@@ -66,7 +66,16 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      let derivedPanelType = initialData.panelType;
+      const isHTEmpty = !initialData.htPanel || !initialData.htPanel.icFromTneb;
+      const isLTEmpty = !initialData.ltPanel || !initialData.ltPanel.incomer1;
+
+      if (derivedPanelType === "BOTH") {
+        if (isLTEmpty && !isHTEmpty) derivedPanelType = "HT";
+        if (isHTEmpty && !isLTEmpty) derivedPanelType = "LT";
+      }
+
+      setFormData({ ...initialData, panelType: derivedPanelType });
     } else {
       const accessibleBuildings = getAccessibleBuildings(buildings);
       const defaultBuilding = building || (accessibleBuildings.length > 0 ? accessibleBuildings[0] : buildings[0]);

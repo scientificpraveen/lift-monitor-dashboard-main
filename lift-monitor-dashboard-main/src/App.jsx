@@ -14,6 +14,9 @@ import { buildings } from "./config/buildings";
 import { fetchLiftData } from "./services/api";
 import { useAuth } from "./context/AuthContext";
 import { parseFloor } from "./utils/floorUtils";
+import LiftPanelConfigModal from "./components/LiftPanelConfigModal";
+import WhatsappConfigModal from "./components/WhatsappConfigModal";
+import { FaCog, FaPhone } from "react-icons/fa";
 import "./App.css";
 import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
@@ -28,11 +31,36 @@ const App = () => {
   const [liftData, setLiftData] = useState([]);
   const previousFloorsRef = useRef({});
   const liftHistoryRef = useRef({});
+  const acknowledgedAlarmsRef = useRef(new Set());
   const STATIONARY_THRESHOLD = 7;
   const [alerts, setAlerts] = useState([]);
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+  const [showLiftConfigModal, setShowLiftConfigModal] = useState(false);
 
   const handleCloseAlert = (index) => {
-    setAlerts((prev) => prev.filter((_, i) => i !== index));
+    setAlerts((prev) => {
+      const target = prev[index];
+      if (target) {
+        acknowledgedAlarmsRef.current.add(`${target.id}-${target.building}`);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const adminButtonStyle = {
+    background: 'linear-gradient(135deg, #a076f9 0%, #6b2eff 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '14px',
+    padding: '10px 20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   };
 
   // Reset building selection if new user logs in and previous building is restricted
@@ -135,22 +163,24 @@ const App = () => {
 
       setLiftData(flattenedData);
 
-      const newAlerts = flattenedData
-        .filter((lift) => lift.Alarm === "1")
-        .map((lift) => ({
-          id: lift.ID,
-          floor: lift.Fl,
-          building: lift.building,
-        }));
+      const currentAlarms = flattenedData.filter(l => l.Alarm === "1");
+      const currentAlarmKeys = new Set(currentAlarms.map(l => `${l.ID}-${l.building}`));
+
+      for (const key of acknowledgedAlarmsRef.current) {
+        if (!currentAlarmKeys.has(key)) {
+          acknowledgedAlarmsRef.current.delete(key);
+        }
+      }
 
       setAlerts((prevAlerts) => {
-        const existingKeys = new Set(
-          prevAlerts.map((a) => `${a.id}-${a.floor}-${a.building}`)
-        );
-        const uniqueNewAlerts = newAlerts.filter(
-          (a) => !existingKeys.has(`${a.id}-${a.floor}-${a.building}`)
-        );
-        return [...prevAlerts, ...uniqueNewAlerts];
+        const validPrevAlerts = prevAlerts.filter(a => currentAlarmKeys.has(`${a.id}-${a.building}`));
+        const existingKeys = new Set(validPrevAlerts.map(a => `${a.id}-${a.building}`));
+
+        const novelAlerts = currentAlarms
+          .filter(l => !existingKeys.has(`${l.ID}-${l.building}`) && !acknowledgedAlarmsRef.current.has(`${l.ID}-${l.building}`))
+          .map(l => ({ id: l.ID, floor: l.Fl, building: l.building }));
+
+        return [...validPrevAlerts, ...novelAlerts];
       });
     };
 
@@ -216,9 +246,21 @@ const App = () => {
                 <div>
                   <h2>LIFT STATUS</h2>
                   <span className="subtitle">
-                    Building Name: <strong>{selectedBuilding}</strong>
+                    Building Name: <strong>{selectedBuilding}</strong> ({visibleLifts.length} CONFIGURED)
                   </span>
                 </div>
+                {user?.role === 'admin' && (
+                  <div style={{ display: 'flex', gap: '15px' }}>
+                    <button className="base-btn action-btn" style={adminButtonStyle} onClick={() => setShowLiftConfigModal(true)}>
+                      <FaCog size={16} />
+                      UPDATE LIFT PANEL
+                    </button>
+                    <button className="base-btn action-btn" style={adminButtonStyle} onClick={() => setShowWhatsappModal(true)}>
+                      <FaPhone size={16} />
+                      UPDATE MOBILE NUMBER
+                    </button>
+                  </div>
+                )}
               </div>
               <div style={{
                 backgroundColor: 'white',
@@ -247,6 +289,8 @@ const App = () => {
             </div>
           )}
         </div>
+        <LiftPanelConfigModal isOpen={showLiftConfigModal} onClose={() => setShowLiftConfigModal(false)} building={selectedBuilding} />
+        <WhatsappConfigModal isOpen={showWhatsappModal} onClose={() => setShowWhatsappModal(false)} building={selectedBuilding} />
       </>
     </div>
   );

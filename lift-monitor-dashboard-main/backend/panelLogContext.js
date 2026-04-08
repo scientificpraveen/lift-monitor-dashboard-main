@@ -517,12 +517,79 @@ export const getPanelLogsByDate = async (date) => {
   });
 };
 
-export const createPanelLog = async (logData) => {
-  const { id, ...dataWithoutId } = logData;
+export const createPanelLog = async (logData, scope = 'BOTH') => {
+  const { id, ...data } = logData;
+  const now = new Date().toISOString();
+  const activeUser = data.lastUpdatedBy || "Unknown";
 
-  return await prisma.panelLog.create({
-    data: dataWithoutId,
+  if (scope === 'HT') data.ltPanel = null;
+  if (scope === 'LT') data.htPanel = null;
+
+  if (data.htPanel) {
+    data.htPanel._createdAt = now;
+    data.htPanel._createdBy = activeUser;
+    data.htPanel._updatedAt = now;
+    data.htPanel._updatedBy = activeUser;
+  }
+
+  if (data.ltPanel) {
+    data.ltPanel._createdAt = now;
+    data.ltPanel._createdBy = activeUser;
+    data.ltPanel._updatedAt = now;
+    data.ltPanel._updatedBy = activeUser;
+  }
+
+  const existingLog = await prisma.panelLog.findUnique({
+    where: {
+      building_date_time: {
+        building: data.building,
+        date: data.date,
+        time: data.time
+      }
+    }
   });
+
+  if (existingLog) {
+    const mergeData = { ...data };
+
+    if (scope === 'HT') {
+      mergeData.ltPanel = existingLog.ltPanel;
+      if (existingLog.htPanel && existingLog.htPanel._createdAt) {
+        mergeData.htPanel._createdAt = existingLog.htPanel._createdAt;
+        mergeData.htPanel._createdBy = existingLog.htPanel._createdBy;
+      }
+    }
+
+    if (scope === 'LT') {
+      mergeData.htPanel = existingLog.htPanel;
+      if (existingLog.ltPanel && existingLog.ltPanel._createdAt) {
+        mergeData.ltPanel._createdAt = existingLog.ltPanel._createdAt;
+        mergeData.ltPanel._createdBy = existingLog.ltPanel._createdBy;
+      }
+    }
+
+    if (!mergeData.shiftIncharge && existingLog.shiftIncharge) {
+      mergeData.shiftIncharge = existingLog.shiftIncharge;
+    }
+    if (!mergeData.powerFailure && existingLog.powerFailure) {
+      mergeData.powerFailure = existingLog.powerFailure;
+    }
+    if (!mergeData.remarks && existingLog.remarks) {
+      mergeData.remarks = existingLog.remarks;
+    }
+
+    // A physical time collision enforces dual-panel presence in the UI
+    mergeData.panelType = 'BOTH';
+
+    return await prisma.panelLog.update({
+      where: { id: existingLog.id },
+      data: mergeData
+    });
+  } else {
+    return await prisma.panelLog.create({
+      data
+    });
+  }
 };
 
 export const updatePanelLog = async (id, logData) => {
@@ -570,25 +637,27 @@ export const updatePanelLog = async (id, logData) => {
 
     const now = new Date().toISOString();
 
-    // Merge htPanel - keep existing if new data is empty
-    if (hasActualHTData(logData.htPanel)) {
+    // Merge htPanel - keep existing if new data is empty or if strictly updating LT
+    if (logData.panelType !== "LT" && hasActualHTData(logData.htPanel)) {
       updateData.htPanel = {
         ...logData.htPanel,
+        _createdAt: existingLog.htPanel?._createdAt || existingLog.createdAt.toISOString() || now,
+        _createdBy: existingLog.htPanel?._createdBy || existingLog.htPanel?._updatedBy || "Unknown",
         _updatedAt: now,
-        _updatedBy:
-          logData.lastUpdatedBy || existingLog.htPanel?._updatedBy || "Unknown",
+        _updatedBy: logData.lastUpdatedBy || existingLog.htPanel?._updatedBy || "Unknown",
       };
     } else if (existingLog.htPanel) {
       updateData.htPanel = existingLog.htPanel;
     }
 
-    // Merge ltPanel - keep existing if new data is empty
-    if (hasActualLTData(logData.ltPanel)) {
+    // Merge ltPanel - keep existing if new data is empty or if strictly updating HT
+    if (logData.panelType !== "HT" && hasActualLTData(logData.ltPanel)) {
       updateData.ltPanel = {
         ...logData.ltPanel,
+        _createdAt: existingLog.ltPanel?._createdAt || existingLog.createdAt.toISOString() || now,
+        _createdBy: existingLog.ltPanel?._createdBy || existingLog.ltPanel?._updatedBy || "Unknown",
         _updatedAt: now,
-        _updatedBy:
-          logData.lastUpdatedBy || existingLog.ltPanel?._updatedBy || "Unknown",
+        _updatedBy: logData.lastUpdatedBy || existingLog.ltPanel?._updatedBy || "Unknown",
       };
     } else if (existingLog.ltPanel) {
       updateData.ltPanel = existingLog.ltPanel;
@@ -690,7 +759,7 @@ export const deletePanelType = async (id, panelType) => {
       return { success: true, deleted: false };
     }
 
-    if (panelType === "LT") {
+    if (panelType === "LT" && hasHT) {
       await prisma.panelLog.update({
         where: { id: parseInt(id) },
         data: { ltPanel: null, panelType: "HT" },

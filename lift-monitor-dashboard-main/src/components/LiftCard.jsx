@@ -3,7 +3,7 @@ import './LiftCard.css';
 import { FaArrowUp, FaArrowDown, FaMinus } from 'react-icons/fa';
 
 const LiftCard = ({ lift }) => {
-  const { ID, Fl, Alarm, Door, direction } = lift;
+  const { ID, Fl, Alarm, Door, direction, isOffline } = lift;
   const isDoorOpen = Door === '1';
   const isAlarm = Alarm === '1';
 
@@ -23,12 +23,12 @@ const LiftCard = ({ lift }) => {
 
   return (
     <div className={`lift-card ${isAlarm ? 'alert' : ''}`}>
-      <div className="arrow">
+      <div className="arrow" style={{ color: isOffline ? '#f97316' : undefined }}>
         {renderDirectionIcon()}
       </div>
 
-      <div key={`door-${isDoorOpen}`} className={`circle ${isDoorOpen ? 'open' : ''}`}>
-        <span className="floor-number">{Fl}</span>
+      <div key={`door-${isDoorOpen}`} className={`circle ${isDoorOpen ? 'open' : ''} ${isOffline ? 'offline' : ''}`} style={isOffline ? { color: '#f97316' } : {}}>
+        <span className="floor-number" style={{ color: isOffline ? '#f97316' : undefined }}>{Fl}</span>
       </div>
 
       <div className="lift-id">Lift {ID}</div>

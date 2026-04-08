@@ -8,10 +8,11 @@ import { buildings, getBuildingConfig } from "../config/buildings";
 import { getAllTimeSlots } from "../utils/timeUtils";
 import { useAuth } from "../context/AuthContext";
 import PowerFailureModal from "./PowerFailureModal";
+import ShiftTimingModal from "./ShiftTimingModal";
+import axios from "axios";
 import "./PanelLogList.css";
 
-// API base URL for production/development
-const API_BASE_URL = import.meta.env.VITE_API_BASE || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
 
 const PanelLogList = ({
   onEdit,
@@ -41,6 +42,17 @@ const PanelLogList = ({
   const [remarksLogId, setRemarksLogId] = useState(null);
   const [remarksText, setRemarksText] = useState("");
   const [showRemarksModal, setShowRemarksModal] = useState(false);
+
+  const [shiftConfig, setShiftConfig] = useState(null);
+  const [showShiftModal, setShowShiftModal] = useState(false);
+
+  useEffect(() => {
+    if (filterBuilding) {
+      axios.get(`${API_BASE_URL}/shifts/config/${encodeURIComponent(filterBuilding)}`, { withCredentials: true })
+        .then(res => setShiftConfig(res.data))
+        .catch(err => console.error("Failed to load shift config", err));
+    }
+  }, [filterBuilding]);
 
   // Helper function to format date/time in IST explicitly
   const formatDateTime24hr = (dateString) => {
@@ -343,21 +355,35 @@ const PanelLogList = ({
     }
 
     const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    const formatter = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
+      hour: '2-digit', minute: '2-digit',
       hour12: false
     });
-    const hour = parseInt(formatter.format(now), 10);
+    const timeString = formatter.format(now);
+    const currentMins = parseInt(timeString.split(':')[0], 10) * 60 + parseInt(timeString.split(':')[1], 10);
+
+    const isTimeInShift = (startStr, endStr) => {
+      const [sh, sm] = startStr.split(':');
+      const [eh, em] = endStr.split(':');
+      const start = parseInt(sh) * 60 + parseInt(sm);
+      const end = parseInt(eh) * 60 + parseInt(em);
+      if (end < start) {
+        return currentMins >= start || currentMins <= end;
+      }
+      return currentMins >= start && currentMins <= end;
+    };
 
     let targetShift = '';
-    if (hour >= 7 && hour < 15) {
-      targetShift = 'aShift';
-    } else if (hour >= 15 && hour < 23) {
-      targetShift = 'bShift';
-    } else {
-      targetShift = 'cShift';
-    }
+    const config = shiftConfig || {
+      shiftAStart: '00:00', shiftAEnd: '07:59',
+      shiftBStart: '08:00', shiftBEnd: '15:59',
+      shiftCStart: '16:00', shiftCEnd: '23:59'
+    };
+
+    if (isTimeInShift(config.shiftAStart, config.shiftAEnd)) targetShift = 'aShift';
+    else if (isTimeInShift(config.shiftBStart, config.shiftBEnd)) targetShift = 'bShift';
+    else targetShift = 'cShift';
 
     try {
       // Update logs for this date, restricted to selected building if any
@@ -448,6 +474,11 @@ const PanelLogList = ({
           )}
         </div>
         <div className="header-buttons">
+          {isAdmin && filterBuilding && (
+            <button className="btn btn-secondary" onClick={() => setShowShiftModal(true)} style={{ marginRight: '10px' }}>
+              Update Shift Timing
+            </button>
+          )}
           {onCreateNew && (
             <button className="btn btn-primary" onClick={onCreateNew}>
               + Create New Entry
@@ -676,13 +707,8 @@ const PanelLogList = ({
                                       OUT GOING TO TR-{i}
                                     </th>
                                   ))}
-                                <th rowSpan="3">
-                                  LAST
-                                  <br />
-                                  UPDATED
-                                  <br />
-                                  BY
-                                </th>
+                                <th rowSpan="3">CREATED<br />BY</th>
+                                <th rowSpan="3">UPDATED<br />BY</th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
                                 {(canEditPanelLog() || canDeletePanelLog()) && <th rowSpan="3">ACTIONS</th>}
@@ -759,6 +785,7 @@ const PanelLogList = ({
                                       <td>-</td>
                                       <td>-</td>
                                       <td>-</td>
+                                      <td>-</td>
                                     </tr>
                                   );
                                 }
@@ -821,18 +848,16 @@ const PanelLogList = ({
                                         );
                                       })}
                                     <td>
-                                      {log.htPanel._updatedBy ||
-                                        log.lastUpdatedBy ||
-                                        "-"}
+                                      {log.htPanel?._createdBy || log.lastUpdatedBy || "-"}
+                                    </td>
+                                    <td>
+                                      {log.htPanel?._updatedBy || log.lastUpdatedBy || "-"}
                                     </td>
                                     <td>
                                       {formatDateTime24hr(log.createdAt)}
                                     </td>
                                     <td>
-                                      {formatDateTime24hr(
-                                        log.htPanel._updatedAt ||
-                                        log.updatedAt
-                                      )}
+                                      {formatDateTime24hr(log.htPanel._updatedAt || log.updatedAt)}
                                     </td>
                                     {(canEditPanelLog() || canDeletePanelLog()) && (
                                       <td>
@@ -890,13 +915,8 @@ const PanelLogList = ({
                                       Incomer -{i} (From -Tr-{i})
                                     </th>
                                   ))}
-                                <th rowSpan="3">
-                                  LAST
-                                  <br />
-                                  UPDATED
-                                  <br />
-                                  BY
-                                </th>
+                                <th rowSpan="3">CREATED<br />BY</th>
+                                <th rowSpan="3">UPDATED<br />BY</th>
                                 <th rowSpan="3">CREATED</th>
                                 <th rowSpan="3">UPDATED</th>
                                 {(canEditPanelLog() || canDeletePanelLog()) && <th rowSpan="3">ACTIONS</th>}
@@ -957,6 +977,7 @@ const PanelLogList = ({
                                       <td>-</td>
                                       <td>-</td>
                                       <td>-</td>
+                                      <td>-</td>
                                     </tr>
                                   );
                                 }
@@ -986,18 +1007,16 @@ const PanelLogList = ({
                                         );
                                       })}
                                     <td>
-                                      {log.ltPanel._updatedBy ||
-                                        log.lastUpdatedBy ||
-                                        "-"}
+                                      {log.ltPanel?._createdBy || log.lastUpdatedBy || "-"}
+                                    </td>
+                                    <td>
+                                      {log.ltPanel?._updatedBy || log.lastUpdatedBy || "-"}
                                     </td>
                                     <td>
                                       {formatDateTime24hr(log.createdAt)}
                                     </td>
                                     <td>
-                                      {formatDateTime24hr(
-                                        log.ltPanel._updatedAt ||
-                                        log.updatedAt
-                                      )}
+                                      {formatDateTime24hr(log.ltPanel._updatedAt || log.updatedAt)}
                                     </td>
                                     {(canEditPanelLog() || canDeletePanelLog()) && (
                                       <td>
@@ -1501,6 +1520,14 @@ const PanelLogList = ({
           </div>
         </div>
       )}
+
+      <ShiftTimingModal
+        isOpen={showShiftModal}
+        onClose={() => setShowShiftModal(false)}
+        building={filterBuilding}
+        initialConfig={shiftConfig}
+        onSave={(newConfig) => setShiftConfig(newConfig)}
+      />
     </div>
   );
 };

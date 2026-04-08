@@ -9,6 +9,7 @@ import { generateExcelReport, generatePDFReport } from "./exportService.js";
 import authRoutes from "./routes/auth.js";
 import serviceLogRoutes from "./routes/serviceLogs.js";
 import userRoutes from "./routes/users.js";
+import shiftRoutes from "./routes/shiftRoutes.js";
 import guardRoutes from "./routes/guardRoutes.js";
 import fireRoutes from "./routes/fireRoutes.js";
 import { authMiddleware } from "./middleware/auth.js";
@@ -34,7 +35,6 @@ import {
 } from "./services/emailQueue.js";
 import { PrismaClient } from "@prisma/client";
 import { getISTDateString, getISTTimeString } from "./utils/timeUtils.js";
-import * as whatsappService from "./services/whatsappService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +57,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/service-logs", serviceLogRoutes);
+app.use("/api/shifts", shiftRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/guard", guardRoutes);
 app.use("/api/fire", fireRoutes);
@@ -76,114 +77,107 @@ const buildings = [
   "PRESTIGE CYBER TOWERS",
 ];
 
-let liftData = {
-  "PRESTIGE POLYGON": [
-    { ID: "P1", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P2", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P3", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P4", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
-  ],
-  "PRESTIGE PALLADIUM": [
-    { ID: "P1", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P2", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P3", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P4", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
-  ],
-  "PRESTIGE METROPOLITAN": [
-    { ID: "P1", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P2", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P3", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P4", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
-  ],
-  "PRESTIGE COSMOPOLITAN": [
-    { ID: "P1", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P2", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P3", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P4", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
-  ],
-  "PRESTIGE CYBER TOWERS": [
-    { ID: "P1", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P2", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P3", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P4", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P5", Fl: "G", Alarm: "0", Door: "0" },
-    { ID: "P6", Fl: "G", Alarm: "0", Door: "0" },
-  ],
-};
+let liftData = {};
+
+async function initializeLiftData() {
+  try {
+    const configs = await prisma.buildingLiftConfig.findMany();
+    const configMap = new Map();
+    configs.forEach(c => configMap.set(c.building, c.panels));
+
+    buildings.forEach(b => {
+      const panels = configMap.get(b) || [];
+      liftData[b] = panels.map(id => ({ ID: id, Fl: "G", Alarm: "0", Door: "0", lastUpdated: Date.now() }));
+    });
+    console.log("Lift Data Synchronized with Postgres PostgreSQL Configs");
+  } catch (e) { console.error("Error loading Lift configs", e); }
+}
+initializeLiftData();
 
 // -- STP AUTOMATION STATE --
-let stpState = {
-  // Motors - Valid: 0 (Off), 1 (On), 2 (Trip)
+const generateStpState = () => ({
   M1: 2, M2: 2, M3: 2, M4: 2, M5: 2, M6: 2, M7: 2, M8: 2, M9: 2, M10: 2, M11: 2, M12: 2, M13: 2,
-  // Blowers/Fans - Valid: 0, 1, 2
   B1: 2, B2: 2, FAF1: 2, FAF2: 2, EF1: 2, EF2: 2,
-  // Valves (Solenoid) - Valid: 0, 1, 2
-  AirSolenoid: 2, ClarifierValve: 1, UV: 2, DosingPump: 2, ARM: 2,
-  // 5-Way Valves - Valid: 1 (Filter), 2 (Backwash), 3 (Rinse), 4 (Bypass Drain), 5 (Bypass), 6 (Service)
+  AirSolenoid: 2, WaterSolenoid: 2, ClarifierValve: 1, UV: 2, DosingPump: 2, ARM: 2,
   PSFValve: 6, ACFValve: 6,
-  // Tank Levels - Valid: 0-100
-  CollectionTankLevel: 0, SBRTankLevel: 0, SludgeTankLevel: 0, FilterTankLevel: 0, TreatedWaterTankLevel: 0, SoftwaterTankLevel: 0,
-  // Sensors - Valid: Float
-  InletPressure: 0.0, OutletPressure: 0.0,
-  InletPressure: 0.0, OutletPressure: 0.0,
-  DO1: 0.0, DO2: 0.0, SoftnerTH: 0.0, SBRTSS: 0.0, ClarifierTSS: 0.0,
-  // System Status
+  CollectionTankLevel: "0n", SBRTankLevel: "0n", SludgeTankLevel: "0n", FilterTankLevel: "0n", TreatedWaterTankLevel: "0n", SoftwaterTankLevel: "0n",
+  InletPressure: "0.0n", OutletPressure: "0.0n",
+  DO1: "0.0n", DO2: "0.0n", SoftnerTH: "0.0n", SBRTSS: "0.0n", ClarifierTSS: "0.0n",
+  ACFTime: "00:00:00n", PSFTime: "00:00:00n",
   deviceOnline: false
-};
+});
 
-// Keys categorization for validation
+let stpStates = {};
+
 const VALIDATION_RULES = {
   MOTORS: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12', 'M13'],
   BLOWERS_FANS: ['B1', 'B2', 'FAF1', 'FAF2', 'EF1', 'EF2'],
-  VALVES_SOLENOID: ['AirSolenoid', 'ClarifierValve', 'UV', 'DosingPump', 'ARM'],
+  VALVES_SOLENOID: ['AirSolenoid', 'WaterSolenoid', 'ClarifierValve', 'UV', 'DosingPump', 'ARM'],
   VALVES_5WAY: ['PSFValve', 'ACFValve'],
   SENSORS: ['InletPressure', 'OutletPressure', 'DO1', 'DO2', 'SoftnerTH', 'SBRTSS', 'ClarifierTSS'],
-  TANKS: ['CollectionTankLevel', 'SBRTankLevel', 'SludgeTankLevel', 'FilterTankLevel', 'TreatedWaterTankLevel', 'SoftwaterTankLevel']
+  TANKS: ['CollectionTankLevel', 'SBRTankLevel', 'SludgeTankLevel', 'FilterTankLevel', 'TreatedWaterTankLevel', 'SoftwaterTankLevel'],
+  VESSEL_TIMES: ['ACFTime', 'PSFTime']
 };
 
-// Helper: Process and validate updates
-// Helper: Process and validate updates
-const processStpData = (incomingData) => {
+const processStpData = (incomingData, building) => {
   if (!incomingData || typeof incomingData !== 'object') return {};
+  if (!stpStates[building]) stpStates[building] = generateStpState();
 
   const processed = {};
+  const currentState = stpStates[building];
 
   Object.keys(incomingData).forEach(key => {
-    // Safety: Ignore keys not in our state
-    if (!stpState.hasOwnProperty(key)) return;
+    if (!currentState.hasOwnProperty(key)) return;
 
     const val = incomingData[key];
 
-    // 1. SENSORS or TANKS (Expect Number/Float)
     if (VALIDATION_RULES.SENSORS.includes(key) || VALIDATION_RULES.TANKS.includes(key)) {
-      const num = parseFloat(val);
-      if (!isNaN(num)) {
-        stpState[key] = num;
-        processed[key] = num;
+      if (typeof val === 'string' && (val.endsWith('n') || val.endsWith('e'))) {
+        const typeStr = val.substring(0, val.length - 1);
+        const typeNum = parseFloat(typeStr);
+        if (!isNaN(typeNum)) {
+          if (VALIDATION_RULES.TANKS.includes(key)) {
+            if (typeNum >= 0 && typeNum <= 100) {
+              const roundedStr = `${Math.round(typeNum)}${val.slice(-1)}`;
+              currentState[key] = roundedStr;
+              processed[key] = roundedStr;
+            }
+          } else {
+            currentState[key] = val;
+            processed[key] = val;
+          }
+        }
+      } else if (typeof val === 'number') {
+        if (VALIDATION_RULES.TANKS.includes(key)) {
+          if (val >= 0 && val <= 100) {
+            const roundedVal = Math.round(val);
+            currentState[key] = `${roundedVal}n`;
+            processed[key] = `${roundedVal}n`;
+          }
+        } else {
+          currentState[key] = `${val}n`;
+          processed[key] = `${val}n`;
+        }
       }
     }
-    // 2. 5-WAY VALVES (Expect 0-6)
     else if (VALIDATION_RULES.VALVES_5WAY.includes(key)) {
       const intVal = parseInt(val);
       if ([0, 1, 2, 3, 4, 5, 6].includes(intVal)) {
-        stpState[key] = intVal;
+        currentState[key] = intVal;
         processed[key] = intVal;
       }
     }
-    // 3. STANDARD MOTORS/DEVICES (Expect 0-2)
     else if (VALIDATION_RULES.MOTORS.includes(key) || VALIDATION_RULES.BLOWERS_FANS.includes(key) || VALIDATION_RULES.VALVES_SOLENOID.includes(key)) {
       const intVal = parseInt(val);
       if ([0, 1, 2].includes(intVal)) {
-        stpState[key] = intVal;
+        currentState[key] = intVal;
         processed[key] = intVal;
+      }
+    }
+    else if (VALIDATION_RULES.VESSEL_TIMES.includes(key)) {
+      if (typeof val === 'string' && /^\d{2}:[0-5]\d:[0-5]\d[ne]$/.test(val)) {
+        currentState[key] = val;
+        processed[key] = val;
       }
     }
   });
@@ -206,7 +200,12 @@ const broadcastWS = (update) => {
 
 app.get("/api/lifts", (req, res) => {
   try {
-    res.json(liftData);
+    const now = Date.now();
+    const payload = {};
+    for (const b in liftData) {
+      payload[b] = liftData[b].map(l => ({ ...l, isOffline: now - (l.lastUpdated || now) > 60000 }));
+    }
+    res.json(payload);
   } catch (error) {
     console.error("Error fetching lift data:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -221,7 +220,9 @@ app.get("/api/lifts/:building", (req, res) => {
   try {
     const building = req.params.building.toUpperCase();
     if (liftData[building]) {
-      res.json({ [building]: liftData[building] });
+      const now = Date.now();
+      const payload = liftData[building].map(l => ({ ...l, isOffline: now - (l.lastUpdated || now) > 60000 }));
+      res.json({ [building]: payload });
     } else {
       res.status(404).json({ error: "Building not found" });
     }
@@ -253,91 +254,94 @@ app.post("/api/lifts", (req, res) => {
       return res.status(400).json({ error: "Invalid building name or format" });
     }
 
-    // WhatsApp Alarm Tracking hook (Evaluate 0 -> 1 transitions)
+    // Strict IoT Array Overwrite Parsing
     lifts.forEach(incomingLift => {
       const existingLift = liftData[buildingName].find(l => l.ID === incomingLift.ID);
       if (existingLift) {
-        if ((existingLift.Alarm === "0" || existingLift.Alarm === 0) && (incomingLift.Alarm === "1" || incomingLift.Alarm === 1)) {
-          console.log(`[ALARM DETECTED] Triggering WhatsApp alert for ${buildingName} - ${incomingLift.ID} on Floor ${incomingLift.Fl}`);
-          whatsappService.sendAlarmNotification(buildingName, incomingLift.ID, incomingLift.Fl);
-        }
+        existingLift.Fl = incomingLift.Fl ?? existingLift.Fl;
+        existingLift.Alarm = incomingLift.Alarm ?? existingLift.Alarm;
+        existingLift.Door = incomingLift.Door ?? existingLift.Door;
+        existingLift.lastUpdated = Date.now();
       }
     });
 
-    liftData[buildingName] = lifts;
+    broadcastWS({ [buildingName]: liftData[buildingName] });
 
-    broadcastWS({ [buildingName]: lifts });
-
-    res.json({ message: "Lift data updated", updated: buildingName });
+    res.json({ message: "Lift data successfully mapped", updated: buildingName });
   } catch (error) {
-    console.error("Error updating lift data:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error saving lift config:", error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
 // -- STP API ENDPOINTS --
-let lastStpUpdate = 0;
-
 app.get('/api/stp', (req, res) => {
-  res.json(stpState);
+  const building = req.query.building;
+  if (!building) return res.status(400).json({ error: "Building parameter required" });
+  if (!stpStates[building]) stpStates[building] = generateStpState();
+  res.json(stpStates[building]);
 });
 
 app.post('/api/update-stp', (req, res) => {
   const incomingData = req.body;
+  const building = incomingData.building;
+  if (!building) return res.status(400).json({ error: "Building parameter required" });
 
-  // Update Tracking Logic
-  lastStpUpdate = Date.now();
-  if (!stpState.deviceOnline) {
-    stpState.deviceOnline = true;
-  }
+  if (!stpStates[building]) stpStates[building] = generateStpState();
+  stpStates[building].deviceOnline = true;
+  stpStates[building].lastUpdated = Date.now();
 
-  const processed = processStpData(incomingData); // Updates stpState in place and returns changes
+  const processed = processStpData(incomingData, building);
 
-  // Broadcast via WS (Real-time update)
-  const message = JSON.stringify({ type: 'stpUpdate', data: stpState });
+  const message = JSON.stringify({ type: 'stpUpdate', building, data: stpStates[building] });
   wss.clients.forEach(client => {
     if (client.readyState === 1) client.send(message);
   });
 
-  console.log("STP Update Processed", Object.keys(processed));
-  res.json({ success: true, currentState: stpState, updated: processed });
+  res.json({ success: true, currentState: stpStates[building], updated: processed });
 });
 
 // -- PARKING SLOT VACANCY API --
-let parkingSlots = {
+const generateParkingState = () => ({
   P1: { value: 0, lastUpdated: Date.now() },
   P2: { value: 0, lastUpdated: Date.now() },
   P3: { value: 0, lastUpdated: Date.now() },
   P4: { value: 0, lastUpdated: Date.now() }
-};
-
-app.get('/api/parking-slots', (req, res) => {
-  res.json(parkingSlots);
 });
 
-app.post('/api/update-parking-slots/', (req, res) => {
+let parkingStates = {};
+
+app.get('/api/parking-slots', (req, res) => {
+  const building = req.query.building;
+  if (!building) return res.status(400).json({ error: "Building parameter required" });
+  if (!parkingStates[building]) parkingStates[building] = generateParkingState();
+  res.json(parkingStates[building]);
+});
+
+app.post('/api/update-parking-slots', (req, res) => {
   const incomingData = req.body;
+  const building = incomingData.building;
+  if (!building) return res.status(400).json({ error: "Building parameter required" });
+
   if (!incomingData || typeof incomingData !== 'object') {
     return res.status(400).json({ error: "Invalid data format" });
   }
 
+  if (!parkingStates[building]) parkingStates[building] = generateParkingState();
+  const currentSlots = parkingStates[building];
+
   let updated = false;
   Object.keys(incomingData).forEach(key => {
-    if (parkingSlots.hasOwnProperty(key)) {
+    if (currentSlots.hasOwnProperty(key)) {
       const val = parseInt(incomingData[key]);
-      // Only allow 0 (Vacant) or 1 (Occupied)
       if (val === 0 || val === 1) {
-        parkingSlots[key] = { value: val, lastUpdated: Date.now() };
+        currentSlots[key] = { value: val, lastUpdated: Date.now() };
         updated = true;
       }
     }
   });
 
-  if (updated) {
-    console.log("Parking Slots Updated:", parkingSlots);
-  }
-
-  res.json({ success: true, currentSlots: parkingSlots });
+  res.json({ success: true, currentSlots: parkingStates[building] });
 });
 
 app.get("/health", (req, res) => {
@@ -592,52 +596,45 @@ app.get("/api/panel-logs/:id", authMiddleware, async (req, res) => {
   }
 });
 
-app.post("/api/panel-logs", authMiddleware, async (req, res) => {
+// CORE API HANDLER FOR ISOLATED PANEL LOG POSTS
+const handlePanelLogCreate = (scope) => async (req, res) => {
   try {
     const logData = req.body;
     const userAssignedBuildings = req.user?.assignedBuildings || [];
 
     if (!logData.building) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields: building is required",
-      });
+      return res.status(400).json({ success: false, error: "Missing required fields: building is required" });
     }
 
-    // Auto-generate date and time (IST) if missing (for mobile)
     if (!logData.date || !logData.time) {
       if (!logData.date) logData.date = getISTDateString();
       if (!logData.time) logData.time = getISTTimeString();
     }
 
-    // Check if user has access to the building they're trying to create logs for
-    if (
-      userAssignedBuildings.length > 0 &&
-      !userAssignedBuildings.includes(logData.building)
-    ) {
-      return res.status(403).json({
-        success: false,
-        error:
-          "Access denied. You can only create logs for your assigned buildings",
-      });
+    if (userAssignedBuildings.length > 0 && !userAssignedBuildings.includes(logData.building)) {
+      return res.status(403).json({ success: false, error: "Access denied." });
     }
 
-    const newLog = await panelLogService.createPanelLog(logData);
+    const newLog = await panelLogService.createPanelLog(logData, scope);
 
     res.status(201).json({
       success: true,
-      message: "Panel log created successfully",
+      message: `${scope} Panel log created securely`,
       data: newLog,
     });
   } catch (error) {
-    console.error("Error creating panel log:", error);
+    console.error(`Error creating ${scope} panel log:`, error);
     res.status(500).json({
       success: false,
       error: "Internal server error",
       message: error.message,
     });
   }
-});
+};
+
+app.post("/api/panel-logs", authMiddleware, handlePanelLogCreate('BOTH'));
+app.post("/api/panel-logs/ht", authMiddleware, handlePanelLogCreate('HT'));
+app.post("/api/panel-logs/lt", authMiddleware, handlePanelLogCreate('LT'));
 
 app.put("/api/panel-logs/:id", authMiddleware, async (req, res) => {
   try {
@@ -1061,19 +1058,22 @@ server.listen(PORT, "0.0.0.0", async () => {
   // Start auto-entry scheduler
   startAutoEntryScheduler();
 
-  // Start STP Device Status Check (1 Minute Timeout)
+  // Start STP Device Status Check (1 Minute Timeout) per building
   setInterval(() => {
-    // If device is ONLINE and no update for > 60 seconds
-    if (stpState.deviceOnline && (Date.now() - lastStpUpdate > 60000)) {
-      console.log("STP Device Monitor: Device Offline (Timeout > 60s)");
-      stpState.deviceOnline = false;
+    const now = Date.now();
+    Object.keys(stpStates).forEach(building => {
+      const state = stpStates[building];
+      if (state.deviceOnline && state.lastUpdated && (now - state.lastUpdated > 60000)) {
+        console.log(`STP Device Monitor: Device Offline for ${building} (Timeout > 60s)`);
+        state.deviceOnline = false;
 
-      // Broadcast update to all clients
-      const message = JSON.stringify({ type: 'stpUpdate', data: stpState });
-      wss.clients.forEach(client => {
-        if (client.readyState === 1) client.send(message);
-      });
-    }
+        // Broadcast offline update strictly bound to this building
+        const message = JSON.stringify({ type: 'stpUpdate', building, data: state });
+        wss.clients.forEach(client => {
+          if (client.readyState === 1) client.send(message);
+        });
+      }
+    });
   }, 10000); // Check every 10 seconds
 
   // Initialize and start email scheduler & queue processor
@@ -1085,6 +1085,108 @@ server.listen(PORT, "0.0.0.0", async () => {
     console.log(
       "⚠️ Email scheduler not started - check BREVO_API_KEY environment variable"
     );
+  }
+});
+
+// --- LIFT DYNAMIC CONFIGURATION API ---
+app.get("/api/lifts/config/:building", authMiddleware, async (req, res) => {
+  try {
+    const building = req.params.building.toUpperCase();
+    res.json({ panels: liftData[building]?.map(l => l.ID) || [] });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/lifts/config/:building", authMiddleware, async (req, res) => {
+  try {
+    const building = req.params.building.toUpperCase();
+    const { panels } = req.body;
+
+    await prisma.buildingLiftConfig.upsert({
+      where: { building },
+      update: { panels: panels },
+      create: { building, panels: panels }
+    });
+
+    const oldData = liftData[building] || [];
+    liftData[building] = panels.map(id => {
+      const existing = oldData.find(l => l.ID === id);
+      return existing ? existing : { ID: id, Fl: "G", Alarm: "0", Door: "0", lastUpdated: Date.now() };
+    });
+
+    broadcastWS({ [building]: liftData[building] });
+    res.json({ success: true, panels });
+  } catch (error) {
+    console.error("Config save error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- DYNAMIC WHATSAPP NUMBER CONFIGURATION API ---
+app.get("/api/whatsapp-numbers/:building", authMiddleware, async (req, res) => {
+  try {
+    const building = req.params.building.toUpperCase();
+    const numbers = await prisma.buildingWhatsappNumber.findMany({ where: { building } });
+    res.json({ numbers: numbers.map(n => n.phoneNumber) });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/whatsapp-numbers/:building", authMiddleware, async (req, res) => {
+  try {
+    const building = req.params.building.toUpperCase();
+    const { numbers } = req.body;
+    await prisma.buildingWhatsappNumber.deleteMany({ where: { building } });
+
+    if (numbers && numbers.length > 0) {
+      const createData = numbers.map(phoneNumber => ({ building, phoneNumber }));
+      await prisma.buildingWhatsappNumber.createMany({ data: createData });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- GLOBAL EDGE IOT WHATSAPP ALARM ENDPOINT ---
+app.get("/api/whatsapp-alarms", async (req, res) => {
+  try {
+    const response = {};
+
+    // Fetch all numbers dynamically from PostgreSQL in one transaction
+    const allNumbers = await prisma.buildingWhatsappNumber.findMany();
+
+    // Map strictly across configured liftData objects loaded in RAM
+    for (const building of Object.keys(liftData)) {
+      // Filter exclusively for Lift targets emitting Alarm variables
+      const activeAlarms = liftData[building].filter(l => String(l.Alarm) === "1");
+
+      // Only append to the JSON block if the building mathematically tracks an active alarm
+      if (activeAlarms.length > 0) {
+        // Collect exact mobile paths isolated to this exact building object
+        const mobileNumbers = allNumbers
+          .filter(n => n.building === building)
+          .map(n => n.phoneNumber);
+
+        response[building] = {
+          Alarm: activeAlarms.map(l => ({
+            ID: l.ID,
+            Alarm: 1,
+            Fl: isNaN(parseInt(l.Fl)) ? l.Fl : parseInt(l.Fl),
+            Door: parseInt(l.Door) || 0
+          })),
+          "Mobile Number": [...new Set(mobileNumbers)]
+        };
+      }
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error("WhatsApp Edge API Error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

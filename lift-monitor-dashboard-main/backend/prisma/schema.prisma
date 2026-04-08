@@ -208,3 +208,31 @@ model FireLogEntry {
   @@index([building, timestamp])
   @@index([type])
 }
+
+model BuildingShiftConfig {
+  building    String   @id
+  shiftAStart String
+  shiftAEnd   String
+  shiftBStart String
+  shiftBEnd   String
+  shiftCStart String
+  shiftCEnd   String
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedBy   String?
+}
+
+// --- DYNAMIC LIFT CONFIGURATION ---
+model BuildingLiftConfig {
+  building    String   @id
+  panels      String[] @default(["P1", "P2", "P3", "P4", "P5", "P6"])
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model BuildingWhatsappNumber {
+  id          Int      @id @default(autoincrement())
+  building    String
+  phoneNumber String
+  createdAt   DateTime @default(now())
+  
+  @@index([building])
+}
