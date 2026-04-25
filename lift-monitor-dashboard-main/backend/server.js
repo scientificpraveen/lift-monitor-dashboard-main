@@ -33,12 +33,11 @@ import {
   getEmailQueueStatus,
   getRecentEmailJobs,
 } from "./services/emailQueue.js";
-import { PrismaClient } from "@prisma/client";
 import { getISTDateString, getISTTimeString } from "./utils/timeUtils.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const prisma = new PrismaClient();
+import prisma from './prismaClient.js';
 
 const defaultOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
@@ -1152,8 +1151,17 @@ app.post("/api/whatsapp-numbers/:building", authMiddleware, async (req, res) => 
 });
 
 // --- GLOBAL EDGE IOT WHATSAPP ALARM ENDPOINT ---
+
+let lastWhatsappPollingTime = 0;
+
+// Dedicated UI Tracker Endpoints
+app.get("/api/whatsapp-status", (req, res) => {
+  res.json({ lastHit: lastWhatsappPollingTime });
+});
+
 app.get("/api/whatsapp-alarms", async (req, res) => {
   try {
+    lastWhatsappPollingTime = Date.now();
     const response = {};
 
     // Fetch all numbers dynamically from PostgreSQL in one transaction

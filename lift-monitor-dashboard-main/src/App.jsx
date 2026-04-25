@@ -21,6 +21,8 @@ import "./App.css";
 import "./components/TopAlert.css";
 import TopAlert from "./components/TopAlert";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
+
 const App = () => {
   const { isAuthenticated, loading, getAccessibleBuildings, user } = useAuth();
   const [activePanel, setActivePanel] = useState(null); // null, 'service', 'panel', 'stp', or 'users'
@@ -36,6 +38,7 @@ const App = () => {
   const [alerts, setAlerts] = useState([]);
   const [showWhatsappModal, setShowWhatsappModal] = useState(false);
   const [showLiftConfigModal, setShowLiftConfigModal] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState(Date.now());
 
   const handleCloseAlert = (index) => {
     setAlerts((prev) => {
@@ -182,6 +185,15 @@ const App = () => {
 
         return [...validPrevAlerts, ...novelAlerts];
       });
+
+      // Synchronize Whatsapp Edge Connection Status seamlessly
+      try {
+        const wsRes = await fetch(`${API_BASE_URL}/whatsapp-status`);
+        if (wsRes.ok) {
+          const wData = await wsRes.json();
+          setWhatsappStatus(wData.lastHit);
+        }
+      } catch (e) { }
     };
 
     fetchData();
@@ -214,9 +226,9 @@ const App = () => {
     (lift) => lift.building === selectedBuilding
   );
 
-  const visibleAlerts = alerts.filter(
+  const visibleAlerts = activePanel === null ? alerts.filter(
     (alert) => alert.building === selectedBuilding
-  );
+  ) : [];
 
   return (
     <div className="app">
@@ -251,6 +263,24 @@ const App = () => {
                 </div>
                 {user?.role === 'admin' && (
                   <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', marginRight: '15px', gap: '8px',
+                      backgroundColor: 'white',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '9999px',
+                      padding: '6px 14px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}>
+                      <div style={{
+                        width: '10px', height: '10px', borderRadius: '50%',
+                        backgroundColor: (Date.now() - whatsappStatus) < 30000 ? '#22c55e' : '#ef4444',
+                        boxShadow: (Date.now() - whatsappStatus) < 30000 ? '0 0 10px #22c55e' : 'none',
+                        animation: (Date.now() - whatsappStatus) < 30000 ? 'pulse 2s infinite' : 'none'
+                      }}></div>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', letterSpacing: '0.5px' }}>
+                        {(Date.now() - whatsappStatus) < 30000 ? "ALARM NOTIFICATION ONLINE" : "ALARM NOTIFICATION OFFLINE"}
+                      </span>
+                    </div>
                     <button className="base-btn action-btn" style={adminButtonStyle} onClick={() => setShowLiftConfigModal(true)}>
                       <FaCog size={16} />
                       UPDATE LIFT PANEL

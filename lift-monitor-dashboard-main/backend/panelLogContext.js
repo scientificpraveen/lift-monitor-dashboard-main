@@ -554,18 +554,10 @@ export const createPanelLog = async (logData, scope = 'BOTH') => {
 
     if (scope === 'HT') {
       mergeData.ltPanel = existingLog.ltPanel;
-      if (existingLog.htPanel && existingLog.htPanel._createdAt) {
-        mergeData.htPanel._createdAt = existingLog.htPanel._createdAt;
-        mergeData.htPanel._createdBy = existingLog.htPanel._createdBy;
-      }
     }
 
     if (scope === 'LT') {
       mergeData.htPanel = existingLog.htPanel;
-      if (existingLog.ltPanel && existingLog.ltPanel._createdAt) {
-        mergeData.ltPanel._createdAt = existingLog.ltPanel._createdAt;
-        mergeData.ltPanel._createdBy = existingLog.ltPanel._createdBy;
-      }
     }
 
     if (!mergeData.shiftIncharge && existingLog.shiftIncharge) {
@@ -580,6 +572,9 @@ export const createPanelLog = async (logData, scope = 'BOTH') => {
 
     // A physical time collision enforces dual-panel presence in the UI
     mergeData.panelType = 'BOTH';
+
+    // Explicitly overwrite the top-level Prisma creation timestamp since this is technically a 'New Entry' takeover
+    mergeData.createdAt = new Date(now);
 
     return await prisma.panelLog.update({
       where: { id: existingLog.id },
@@ -641,11 +636,15 @@ export const updatePanelLog = async (id, logData) => {
     if (logData.panelType !== "LT" && hasActualHTData(logData.htPanel)) {
       updateData.htPanel = {
         ...logData.htPanel,
-        _createdAt: existingLog.htPanel?._createdAt || existingLog.createdAt.toISOString() || now,
-        _createdBy: existingLog.htPanel?._createdBy || existingLog.htPanel?._updatedBy || "Unknown",
         _updatedAt: now,
-        _updatedBy: logData.lastUpdatedBy || existingLog.htPanel?._updatedBy || "Unknown",
+        _updatedBy: logData.lastUpdatedBy || "Unknown",
       };
+
+      // Crucial Fix: Literally copy existing metadata explicitly so they aren't deleted
+      if ('_createdAt' in (existingLog.htPanel || {})) updateData.htPanel._createdAt = existingLog.htPanel._createdAt;
+      else updateData.htPanel._createdAt = existingLog.createdAt.toISOString() || now;
+
+      if ('_createdBy' in (existingLog.htPanel || {})) updateData.htPanel._createdBy = existingLog.htPanel._createdBy;
     } else if (existingLog.htPanel) {
       updateData.htPanel = existingLog.htPanel;
     }
@@ -654,11 +653,14 @@ export const updatePanelLog = async (id, logData) => {
     if (logData.panelType !== "HT" && hasActualLTData(logData.ltPanel)) {
       updateData.ltPanel = {
         ...logData.ltPanel,
-        _createdAt: existingLog.ltPanel?._createdAt || existingLog.createdAt.toISOString() || now,
-        _createdBy: existingLog.ltPanel?._createdBy || existingLog.ltPanel?._updatedBy || "Unknown",
         _updatedAt: now,
-        _updatedBy: logData.lastUpdatedBy || existingLog.ltPanel?._updatedBy || "Unknown",
+        _updatedBy: logData.lastUpdatedBy || "Unknown",
       };
+
+      if ('_createdAt' in (existingLog.ltPanel || {})) updateData.ltPanel._createdAt = existingLog.ltPanel._createdAt;
+      else updateData.ltPanel._createdAt = existingLog.createdAt.toISOString() || now;
+
+      if ('_createdBy' in (existingLog.ltPanel || {})) updateData.ltPanel._createdBy = existingLog.ltPanel._createdBy;
     } else if (existingLog.ltPanel) {
       updateData.ltPanel = existingLog.ltPanel;
     }

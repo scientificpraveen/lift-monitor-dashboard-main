@@ -1,10 +1,9 @@
 import nodemailer from "nodemailer";
-import { PrismaClient } from "@prisma/client";
-import { generateSingleBuildingPDF } from "../exportService.js";
+import { generatePDF } from "./panelExport.js";
 import { getISTDateString } from "../utils/timeUtils.js";
 import { EMAIL_CONFIG } from "../config/buildingEmails.js";
 
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 let emailTransporter = null;
 
@@ -244,10 +243,10 @@ export const sendDailyReports = async (date = null) => {
           continue;
         }
 
-        // Generate PDF for this building
+        // Generate PDF for this building using unified Master generator
         let pdfBuffer;
         try {
-          pdfBuffer = await generateSingleBuildingPDF(building, logs);
+          pdfBuffer = await generatePDF({ building, date: reportDate });
         } catch (pdfError) {
           console.error(
             `❌ Failed to generate PDF for ${building}:`,

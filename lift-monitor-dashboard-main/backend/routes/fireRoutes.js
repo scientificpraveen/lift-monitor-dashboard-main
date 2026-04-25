@@ -1,9 +1,8 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express from "express";
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 // --- Fire Data Mapping (Admin Only) ---
 

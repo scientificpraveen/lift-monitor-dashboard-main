@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 // List of buildings to create auto entries for
 const BUILDINGS = [
@@ -89,6 +88,10 @@ const createEmptyEntry = async (building, date, timeSlot) => {
           windingTemp: "",
           oilTemp: "",
         },
+        _createdAt: new Date().toISOString(),
+        _createdBy: "System",
+        _updatedAt: new Date().toISOString(),
+        _updatedBy: "System"
       },
       ltPanel: {
         incomer1: {
@@ -109,6 +112,10 @@ const createEmptyEntry = async (building, date, timeSlot) => {
           tap: "",
           kwh: "",
         },
+        _createdAt: new Date().toISOString(),
+        _createdBy: "System",
+        _updatedAt: new Date().toISOString(),
+        _updatedBy: "System"
       },
       powerFailure: [],
       shiftIncharge: null,

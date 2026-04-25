@@ -7,6 +7,8 @@ export const buildings = [
 ];
 
 export const getBuildingConfig = (buildingName) => {
+  const normalizedBuilding = (buildingName || "").toUpperCase().trim();
+
   // Default fallback
   const config = {
     hasTr3: true,
@@ -16,7 +18,7 @@ export const getBuildingConfig = (buildingName) => {
     hasLtTap: true,
   };
 
-  switch (buildingName) {
+  switch (normalizedBuilding) {
     case "PRESTIGE POLYGON":
       config.hasTr3 = true;
       config.hasInc3 = true;

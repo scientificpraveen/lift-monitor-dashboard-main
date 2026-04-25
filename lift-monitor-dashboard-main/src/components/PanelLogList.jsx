@@ -576,7 +576,7 @@ const PanelLogList = ({
           </select>
         </div>
 
-        {logs.length > 0 && isAdmin() && (
+        {logs.length > 0 && (
           <>
             <button className="btn btn-export" onClick={handleExportToExcel}>
               📊 Export XLSX
@@ -690,7 +690,7 @@ const PanelLogList = ({
                             <thead>
                               <tr>
                                 <th rowSpan="3">TIME (HRS)</th>
-                                <th rowSpan="3">I/C FROM <br />TNEB/DG</th>
+                                <th rowSpan="3">I/C FROM <br />TNEB/DG/<br />SOLAR</th>
                                 <th colSpan="6">MAIN INCOMER SUPPLY</th>
                                 {[1, 2, 3]
                                   .filter((i) => i < 3 || config.hasTr3)
@@ -738,7 +738,7 @@ const PanelLogList = ({
                                 <th>R</th>
                                 <th>Y</th>
                                 <th>B</th>
-                                <th>P.F</th>
+                                <th>PF</th>
                                 <th>HZ</th>
                                 {[1, 2, 3]
                                   .filter((i) => i < 3 || config.hasTr3)
@@ -848,13 +848,13 @@ const PanelLogList = ({
                                         );
                                       })}
                                     <td>
-                                      {log.htPanel?._createdBy || log.lastUpdatedBy || "-"}
+                                      {log.htPanel?._createdBy || "System"}
                                     </td>
                                     <td>
                                       {log.htPanel?._updatedBy || log.lastUpdatedBy || "-"}
                                     </td>
                                     <td>
-                                      {formatDateTime24hr(log.createdAt)}
+                                      {formatDateTime24hr(log.htPanel?._createdAt || log.createdAt)}
                                     </td>
                                     <td>
                                       {formatDateTime24hr(log.htPanel._updatedAt || log.updatedAt)}
@@ -905,6 +905,7 @@ const PanelLogList = ({
                             <thead>
                               <tr>
                                 <th rowSpan="3">Time (Hrs)</th>
+                                <th rowSpan="3">I/C FROM <br />TNEB/DG/<br />SOLAR</th>
                                 {[1, 2, 3]
                                   .filter((i) => i < 3 || config.hasInc3)
                                   .map((i) => (
@@ -959,6 +960,7 @@ const PanelLogList = ({
                                       <td>
                                         <strong>{slot}</strong>
                                       </td>
+                                      <td>-</td>
                                       {[1, 2, 3]
                                         .filter((i) => i < 3 || config.hasInc3)
                                         .map((i) => (
@@ -987,6 +989,7 @@ const PanelLogList = ({
                                     <td>
                                       <strong>{log.time}</strong>
                                     </td>
+                                    <td>{log.htPanel?.icFromTneb || "-"}</td>
                                     {[1, 2, 3]
                                       .filter((i) => i < 3 || config.hasInc3)
                                       .map((i) => {
@@ -1007,13 +1010,13 @@ const PanelLogList = ({
                                         );
                                       })}
                                     <td>
-                                      {log.ltPanel?._createdBy || log.lastUpdatedBy || "-"}
+                                      {log.ltPanel?._createdBy || "System"}
                                     </td>
                                     <td>
                                       {log.ltPanel?._updatedBy || log.lastUpdatedBy || "-"}
                                     </td>
                                     <td>
-                                      {formatDateTime24hr(log.createdAt)}
+                                      {formatDateTime24hr(log.ltPanel?._createdAt || log.createdAt)}
                                     </td>
                                     <td>
                                       {formatDateTime24hr(log.ltPanel._updatedAt || log.updatedAt)}
@@ -1051,12 +1054,13 @@ const PanelLogList = ({
                           </table>
                         </div>
                       </div>
-                    )}
+                    )
+                  }
 
                   {/* Separate Display Section for Shift, Remarks, and Power Failures */}
-                  <div className="separate-section">
+                  < div className="separate-section" >
                     {/* Shift Incharge Display */}
-                    <div className="shift-container">
+                    < div className="shift-container" >
                       <h4 className="section-title">Shift Incharge</h4>
                       <div className="section-content">
                         {dailyLogs.some((log) => log.shiftIncharge) ? (
@@ -1125,10 +1129,10 @@ const PanelLogList = ({
                       </div>
                     </div>
                   </div>
-                </div>
+                </div >
               );
             })}
-        </div>
+        </div >
       ) : (
         <div className="logs-grid">
           {logs.map((log) => (
@@ -1174,352 +1178,360 @@ const PanelLogList = ({
         </div>
       )}
 
-      {modalLog && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                {modalLog.building} -{" "}
-                {formatDateTime(modalLog.date, modalLog.time)}
-              </h2>
-              <button className="modal-close" onClick={closeModal}>
-                ×
-              </button>
-            </div>
+      {
+        modalLog && (
+          <div className="modal-overlay" onClick={closeModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>
+                  {modalLog.building} -{" "}
+                  {formatDateTime(modalLog.date, modalLog.time)}
+                </h2>
+                <button className="modal-close" onClick={closeModal}>
+                  ×
+                </button>
+              </div>
 
-            <div className="modal-panel-selector">
-              <label>Select Panel to View:</label>
-              <select
-                value={modalPanelType}
-                onChange={(e) => setModalPanelType(e.target.value)}
-                className="panel-selector"
-              >
-                {(modalLog.panelType === "BOTH" ||
-                  modalLog.panelType === "HT") && (
-                    <option value="HT">HT Panel Only</option>
+              <div className="modal-panel-selector">
+                <label>Select Panel to View:</label>
+                <select
+                  value={modalPanelType}
+                  onChange={(e) => setModalPanelType(e.target.value)}
+                  className="panel-selector"
+                >
+                  {(modalLog.panelType === "BOTH" ||
+                    modalLog.panelType === "HT") && (
+                      <option value="HT">HT Panel Only</option>
+                    )}
+                  {(modalLog.panelType === "BOTH" ||
+                    modalLog.panelType === "LT") && (
+                      <option value="LT">LT Panel Only</option>
+                    )}
+                  {modalLog.panelType === "BOTH" && (
+                    <option value="BOTH">Both Panels</option>
                   )}
-                {(modalLog.panelType === "BOTH" ||
-                  modalLog.panelType === "LT") && (
-                    <option value="LT">LT Panel Only</option>
-                  )}
-                {modalLog.panelType === "BOTH" && (
-                  <option value="BOTH">Both Panels</option>
-                )}
-              </select>
-            </div>
+                </select>
+              </div>
 
-            <div className="modal-body">
-              {(modalPanelType === "HT" || modalPanelType === "BOTH") &&
-                modalLog.htPanel && (
-                  <div className="ht-table-section">
-                    <h4>HT Panel</h4>
-                    <div className="table-scroll-container">
-                      <table className="panel-log-table">
-                        <thead>
-                          <tr>
-                            <th rowSpan="3">TIME (HRS)</th>
-                            <th rowSpan="3">I/C FROM <br />TNEB/DG</th>
-                            <th colSpan="6">MAIN INCOMER SUPPLY</th>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasTr3)
-                              .map((i) => (
-                                <th
-                                  key={`ht-modal-head-tr${i}`}
-                                  colSpan={
-                                    3 +
-                                    1 + // Wind Temp
-                                    (modalConfig.hasHtOilTemp ? 1 : 0) +
-                                    (modalConfig.hasHtTap ? 1 : 0)
-                                  }
-                                >
-                                  OUT GOING TO TR-{i}
-                                </th>
-                              ))}
-                            <th rowSpan="3">REMARK</th>
-                          </tr>
-                          <tr>
-                            <th rowSpan="2">VOLT (KV)</th>
-                            <th colSpan="5">CURRENT AMP</th>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasTr3)
-                              .map((i) => (
-                                <React.Fragment key={`ht-modal-sub-tr${i}`}>
-                                  <th colSpan="3">CURRENT AMP</th>
+              <div className="modal-body">
+                {(modalPanelType === "HT" || modalPanelType === "BOTH") &&
+                  modalLog.htPanel && (
+                    <div className="ht-table-section">
+                      <h4>HT Panel</h4>
+                      <div className="table-scroll-container">
+                        <table className="panel-log-table">
+                          <thead>
+                            <tr>
+                              <th rowSpan="3">TIME (HRS)</th>
+                              <th rowSpan="3">I/C FROM <br />TNEB/DG/<br />SOLAR</th>
+                              <th colSpan="6">MAIN INCOMER SUPPLY</th>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasTr3)
+                                .map((i) => (
                                   <th
+                                    key={`ht-modal-head-tr${i}`}
                                     colSpan={
-                                      1 + (modalConfig.hasHtOilTemp ? 1 : 0)
+                                      3 +
+                                      1 + // Wind Temp
+                                      (modalConfig.hasHtOilTemp ? 1 : 0) +
+                                      (modalConfig.hasHtTap ? 1 : 0)
                                     }
                                   >
-                                    TEMP
+                                    OUT GOING TO TR-{i}
                                   </th>
-                                  {modalConfig.hasHtTap && (
-                                    <th rowSpan="2">TAP NO.</th>
-                                  )}
-                                </React.Fragment>
-                              ))}
-                          </tr>
-                          <tr>
-                            <th>R</th>
-                            <th>Y</th>
-                            <th>B</th>
-                            <th>P.F</th>
-                            <th>HZ</th>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasTr3)
-                              .map((i) => (
-                                <React.Fragment key={`ht-modal-col-tr${i}`}>
-                                  <th>R</th>
-                                  <th>Y</th>
-                                  <th>B</th>
-                                  <th>Wind</th>
-                                  {modalConfig.hasHtOilTemp && <th>Oil</th>}
-                                </React.Fragment>
-                              ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{modalLog.time}</td>
-                            <td>
-                              {modalLog.htPanel.icFromTneb || "EB"}
-                            </td>
-                            <td>
-                              {modalLog.htPanel.voltageFromWreb?.volt || "-"}
-                            </td>
-                            <td>{modalLog.htPanel.currentAmp?.r || "-"}</td>
-                            <td>{modalLog.htPanel.currentAmp?.y || "-"}</td>
-                            <td>{modalLog.htPanel.currentAmp?.b || "-"}</td>
-                            <td>{modalLog.htPanel.currentAmp?.pf || "-"}</td>
-                            <td>{modalLog.htPanel.currentAmp?.hz || "-"}</td>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasTr3)
-                              .map((i) => {
-                                const tr = modalLog.htPanel[`outgoingTr${i}`];
-                                return (
-                                  <React.Fragment key={`ht-modal-data-tr${i}`}>
-                                    <td>{tr?.currentAmp?.r || "-"}</td>
-                                    <td>{tr?.currentAmp?.y || "-"}</td>
-                                    <td>{tr?.currentAmp?.b || "-"}</td>
-                                    <td>
-                                      {getSafeWindingTemp(tr?.windingTemp)}
-                                    </td>
-                                    {modalConfig.hasHtOilTemp && (
-                                      <td>{getSafeOilTemp(tr?.oilTemp)}</td>
-                                    )}
+                                ))}
+                              <th rowSpan="3">REMARK</th>
+                            </tr>
+                            <tr>
+                              <th rowSpan="2">VOLT (KV)</th>
+                              <th colSpan="5">CURRENT AMP</th>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasTr3)
+                                .map((i) => (
+                                  <React.Fragment key={`ht-modal-sub-tr${i}`}>
+                                    <th colSpan="3">CURRENT AMP</th>
+                                    <th
+                                      colSpan={
+                                        1 + (modalConfig.hasHtOilTemp ? 1 : 0)
+                                      }
+                                    >
+                                      TEMP
+                                    </th>
                                     {modalConfig.hasHtTap && (
-                                      <td>{tr?.tap || "-"}</td>
+                                      <th rowSpan="2">TAP NO.</th>
                                     )}
                                   </React.Fragment>
-                                );
-                              })}
-                            <td>{modalLog.remarks || "-"}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-              {(modalPanelType === "LT" || modalPanelType === "BOTH") &&
-                modalLog.ltPanel && (
-                  <div className="lt-table-section">
-                    <h4>LT Panel</h4>
-                    <div className="table-scroll-container">
-                      <table className="panel-log-table">
-                        <thead>
-                          <tr>
-                            <th rowSpan="3">Time (Hrs)</th>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasInc3)
-                              .map((i) => (
-                                <th
-                                  key={`lt-modal-head-inc${i}`}
-                                  colSpan={6 + 1 + (modalConfig.hasLtTap ? 1 : 0)}
-                                >
-                                  Incomer -{i} (From -Tr-{i})
-                                </th>
-                              ))}
-                          </tr>
-                          <tr>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasInc3)
-                              .map((i) => (
-                                <React.Fragment key={`lt-modal-sub-inc${i}`}>
-                                  <th colSpan="3">Voltage</th>
-                                  <th colSpan="3">Current Amp</th>
-                                  {modalConfig.hasLtTap && (
-                                    <th rowSpan="2">TAP No.</th>
-                                  )}
-                                  <th rowSpan="2">KWH</th>
-                                </React.Fragment>
-                              ))}
-                          </tr>
-                          <tr>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasInc3)
-                              .map((i) => (
-                                <React.Fragment key={`lt-modal-col-inc${i}`}>
-                                  <th>RY</th>
-                                  <th>YB</th>
-                                  <th>BR</th>
-                                  <th>R</th>
-                                  <th>Y</th>
-                                  <th>B</th>
-                                </React.Fragment>
-                              ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{modalLog.time}</td>
-                            {[1, 2, 3]
-                              .filter((i) => i < 3 || modalConfig.hasInc3)
-                              .map((i) => {
-                                const inc = modalLog.ltPanel[`incomer${i}`];
-                                return (
-                                  <React.Fragment key={`lt-modal-data-inc${i}`}>
-                                    <td>{inc?.voltage?.ry || "-"}</td>
-                                    <td>{inc?.voltage?.yb || "-"}</td>
-                                    <td>{inc?.voltage?.br || "-"}</td>
-                                    <td>{inc?.currentAmp?.r || "-"}</td>
-                                    <td>{inc?.currentAmp?.y || "-"}</td>
-                                    <td>{inc?.currentAmp?.b || "-"}</td>
-                                    {modalConfig.hasLtTap && (
-                                      <td>{inc?.tap || "-"}</td>
-                                    )}
-                                    <td>{inc?.kwh || "-"}</td>
+                                ))}
+                            </tr>
+                            <tr>
+                              <th>R</th>
+                              <th>Y</th>
+                              <th>B</th>
+                              <th>PF</th>
+                              <th>HZ</th>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasTr3)
+                                .map((i) => (
+                                  <React.Fragment key={`ht-modal-col-tr${i}`}>
+                                    <th>R</th>
+                                    <th>Y</th>
+                                    <th>B</th>
+                                    <th>Wind</th>
+                                    {modalConfig.hasHtOilTemp && <th>Oil</th>}
                                   </React.Fragment>
-                                );
-                              })}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-              <div className="modal-metadata">
-                <div>
-                  <strong>Shift Incharge:</strong>
-                  {modalLog.shiftIncharge?.aShift?.name &&
-                    <div>A: {modalLog.shiftIncharge.aShift.name}</div>}
-                  {modalLog.shiftIncharge?.bShift?.name &&
-                    <div>B: {modalLog.shiftIncharge.bShift.name}</div>}
-                  {modalLog.shiftIncharge?.cShift?.name &&
-                    <div>C: {modalLog.shiftIncharge.cShift.name}</div>}
-                  {!modalLog.shiftIncharge?.aShift?.name &&
-                    !modalLog.shiftIncharge?.bShift?.name &&
-                    !modalLog.shiftIncharge?.cShift?.name &&
-                    <div>-</div>}
-                </div>
-
-                {/* Shift Incharge Verification History */}
-                {modalLog.shiftInchargeHistory &&
-                  modalLog.shiftInchargeHistory.length > 0 && (
-                    <div className="verification-history">
-                      <p>
-                        <strong>Verification History:</strong>
-                      </p>
-                      <ul className="history-list">
-                        {modalLog.shiftInchargeHistory.map((record, index) => (
-                          <li key={index} className="history-item">
-                            <span className="history-name">
-                              {record.verifiedBy}
-                            </span>
-                            <span className="history-time">
-                              {new Date(record.verifiedAt).toLocaleString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                                ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>{modalLog.time}</td>
+                              <td>
+                                {modalLog.htPanel.icFromTneb || "EB"}
+                              </td>
+                              <td>
+                                {modalLog.htPanel.voltageFromWreb?.volt || "-"}
+                              </td>
+                              <td>{modalLog.htPanel.currentAmp?.r || "-"}</td>
+                              <td>{modalLog.htPanel.currentAmp?.y || "-"}</td>
+                              <td>{modalLog.htPanel.currentAmp?.b || "-"}</td>
+                              <td>{modalLog.htPanel.currentAmp?.pf || "-"}</td>
+                              <td>{modalLog.htPanel.currentAmp?.hz || "-"}</td>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasTr3)
+                                .map((i) => {
+                                  const tr = modalLog.htPanel[`outgoingTr${i}`];
+                                  return (
+                                    <React.Fragment key={`ht-modal-data-tr${i}`}>
+                                      <td>{tr?.currentAmp?.r || "-"}</td>
+                                      <td>{tr?.currentAmp?.y || "-"}</td>
+                                      <td>{tr?.currentAmp?.b || "-"}</td>
+                                      <td>
+                                        {getSafeWindingTemp(tr?.windingTemp)}
+                                      </td>
+                                      {modalConfig.hasHtOilTemp && (
+                                        <td>{getSafeOilTemp(tr?.oilTemp)}</td>
+                                      )}
+                                      {modalConfig.hasHtTap && (
+                                        <td>{tr?.tap || "-"}</td>
+                                      )}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              <td>{modalLog.remarks || "-"}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
 
-                <p>
-                  <strong>Power Failure:</strong>
-                  {modalLog.powerFailure?.fromHrs &&
-                    modalLog.powerFailure?.toHrs
-                    ? `${modalLog.powerFailure.fromHrs} to ${modalLog.powerFailure.toHrs
-                    }${modalLog.powerFailure.reason
-                      ? ` (${modalLog.powerFailure.reason})`
-                      : ""
-                    }`
-                    : "-"}
-                </p>
-                {modalLog.remarks && (
+                {(modalPanelType === "LT" || modalPanelType === "BOTH") &&
+                  modalLog.ltPanel && (
+                    <div className="lt-table-section">
+                      <h4>LT Panel</h4>
+                      <div className="table-scroll-container">
+                        <table className="panel-log-table">
+                          <thead>
+                            <tr>
+                              <th rowSpan="3">Time (Hrs)</th>
+                              <th rowSpan="3">I/C FROM <br />TNEB/DG/<br />SOLAR</th>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasInc3)
+                                .map((i) => (
+                                  <th
+                                    key={`lt-modal-head-inc${i}`}
+                                    colSpan={6 + 1 + (modalConfig.hasLtTap ? 1 : 0)}
+                                  >
+                                    Incomer -{i} (From -Tr-{i})
+                                  </th>
+                                ))}
+                            </tr>
+                            <tr>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasInc3)
+                                .map((i) => (
+                                  <React.Fragment key={`lt-modal-sub-inc${i}`}>
+                                    <th colSpan="3">Voltage</th>
+                                    <th colSpan="3">Current Amp</th>
+                                    {modalConfig.hasLtTap && (
+                                      <th rowSpan="2">TAP No.</th>
+                                    )}
+                                    <th rowSpan="2">KWH</th>
+                                  </React.Fragment>
+                                ))}
+                            </tr>
+                            <tr>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasInc3)
+                                .map((i) => (
+                                  <React.Fragment key={`lt-modal-col-inc${i}`}>
+                                    <th>RY</th>
+                                    <th>YB</th>
+                                    <th>BR</th>
+                                    <th>R</th>
+                                    <th>Y</th>
+                                    <th>B</th>
+                                  </React.Fragment>
+                                ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>{modalLog.time}</td>
+                              <td>{modalLog.htPanel?.icFromTneb || "-"}</td>
+                              {[1, 2, 3]
+                                .filter((i) => i < 3 || modalConfig.hasInc3)
+                                .map((i) => {
+                                  const inc = modalLog.ltPanel[`incomer${i}`];
+                                  return (
+                                    <React.Fragment key={`lt-modal-data-inc${i}`}>
+                                      <td>{inc?.voltage?.ry || "-"}</td>
+                                      <td>{inc?.voltage?.yb || "-"}</td>
+                                      <td>{inc?.voltage?.br || "-"}</td>
+                                      <td>{inc?.currentAmp?.r || "-"}</td>
+                                      <td>{inc?.currentAmp?.y || "-"}</td>
+                                      <td>{inc?.currentAmp?.b || "-"}</td>
+                                      {modalConfig.hasLtTap && (
+                                        <td>{inc?.tap || "-"}</td>
+                                      )}
+                                      <td>{inc?.kwh || "-"}</td>
+                                    </React.Fragment>
+                                  );
+                                })}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                <div className="modal-metadata">
+                  <div>
+                    <strong>Shift Incharge:</strong>
+                    {modalLog.shiftIncharge?.aShift?.name &&
+                      <div>A: {modalLog.shiftIncharge.aShift.name}</div>}
+                    {modalLog.shiftIncharge?.bShift?.name &&
+                      <div>B: {modalLog.shiftIncharge.bShift.name}</div>}
+                    {modalLog.shiftIncharge?.cShift?.name &&
+                      <div>C: {modalLog.shiftIncharge.cShift.name}</div>}
+                    {!modalLog.shiftIncharge?.aShift?.name &&
+                      !modalLog.shiftIncharge?.bShift?.name &&
+                      !modalLog.shiftIncharge?.cShift?.name &&
+                      <div>-</div>}
+                  </div>
+
+                  {/* Shift Incharge Verification History */}
+                  {modalLog.shiftInchargeHistory &&
+                    modalLog.shiftInchargeHistory.length > 0 && (
+                      <div className="verification-history">
+                        <p>
+                          <strong>Verification History:</strong>
+                        </p>
+                        <ul className="history-list">
+                          {modalLog.shiftInchargeHistory.map((record, index) => (
+                            <li key={index} className="history-item">
+                              <span className="history-name">
+                                {record.verifiedBy}
+                              </span>
+                              <span className="history-time">
+                                {new Date(record.verifiedAt).toLocaleString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                   <p>
-                    <strong>Remarks:</strong> {modalLog.remarks}
+                    <strong>Power Failure:</strong>
+                    {modalLog.powerFailure?.fromHrs &&
+                      modalLog.powerFailure?.toHrs
+                      ? `${modalLog.powerFailure.fromHrs} to ${modalLog.powerFailure.toHrs
+                      }${modalLog.powerFailure.reason
+                        ? ` (${modalLog.powerFailure.reason})`
+                        : ""
+                      }`
+                      : "-"}
                   </p>
-                )}
-                {modalLog.engineerSignature && (
-                  <p>
-                    <strong>Engineer Signature:</strong>{" "}
-                    {modalLog.engineerSignature}
-                  </p>
-                )}
+                  {modalLog.remarks && (
+                    <p>
+                      <strong>Remarks:</strong> {modalLog.remarks}
+                    </p>
+                  )}
+                  {modalLog.engineerSignature && (
+                    <p>
+                      <strong>Engineer Signature:</strong>{" "}
+                      {modalLog.engineerSignature}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
-      {showPowerFailureModal && powerFailureLog && (
-        <PowerFailureModal
-          logId={powerFailureLog.id}
-          initialFailures={
-            Array.isArray(powerFailureLog.powerFailure)
-              ? powerFailureLog.powerFailure
-              : powerFailureLog.powerFailure
-                ? [powerFailureLog.powerFailure]
-                : []
-          }
-          onSave={handleSavePowerFailures}
-          onCancel={handleClosePowerFailureModal}
-        />
-      )}
+      {
+        showPowerFailureModal && powerFailureLog && (
+          <PowerFailureModal
+            logId={powerFailureLog.id}
+            initialFailures={
+              Array.isArray(powerFailureLog.powerFailure)
+                ? powerFailureLog.powerFailure
+                : powerFailureLog.powerFailure
+                  ? [powerFailureLog.powerFailure]
+                  : []
+            }
+            onSave={handleSavePowerFailures}
+            onCancel={handleClosePowerFailureModal}
+          />
+        )
+      }
 
-      {showRemarksModal && (
-        <div className="modal-overlay">
-          <div className="modal-content remarks-modal">
-            <div className="modal-header">
-              <h2>Add Remarks</h2>
-              <button className="modal-close" onClick={handleCloseRemarksModal}>
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <textarea
-                value={remarksText}
-                onChange={(e) => setRemarksText(e.target.value)}
-                placeholder="Enter remarks here..."
-                rows="6"
-                className="remarks-textarea"
-              />
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-primary" onClick={handleSaveRemarks}>
-                Save Remarks
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleCloseRemarksModal}
-              >
-                Cancel
-              </button>
+      {
+        showRemarksModal && (
+          <div className="modal-overlay">
+            <div className="modal-content remarks-modal">
+              <div className="modal-header">
+                <h2>Add Remarks</h2>
+                <button className="modal-close" onClick={handleCloseRemarksModal}>
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <textarea
+                  value={remarksText}
+                  onChange={(e) => setRemarksText(e.target.value)}
+                  placeholder="Enter remarks here..."
+                  rows="6"
+                  className="remarks-textarea"
+                />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-primary" onClick={handleSaveRemarks}>
+                  Save Remarks
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleCloseRemarksModal}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <ShiftTimingModal
         isOpen={showShiftModal}
@@ -1528,7 +1540,7 @@ const PanelLogList = ({
         initialConfig={shiftConfig}
         onSave={(newConfig) => setShiftConfig(newConfig)}
       />
-    </div>
+    </div >
   );
 };
 

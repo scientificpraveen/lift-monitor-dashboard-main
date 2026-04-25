@@ -109,7 +109,7 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
     const config = getBuildingConfig(formData.building);
 
     // Validate HT Panel if present
-    if (formData.panelType === "HT" || formData.panelType === "BOTH") {
+    if ((formData.panelType === "HT" || formData.panelType === "BOTH") && formData.htPanel.icFromTneb === "EB") {
       const ht = formData.htPanel;
       if (!ht.voltageFromWreb.volt) return "HT Panel Voltage is required";
       if (
@@ -259,6 +259,28 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
             </div>
 
             <div className="form-group">
+              <label>Incoming Supply (I/C) *</label>
+              <select
+                value={formData.htPanel.icFromTneb}
+                onChange={(e) =>
+                  handleInputChange(
+                    "htPanel",
+                    "icFromTneb",
+                    null,
+                    null,
+                    e.target.value
+                  )
+                }
+                disabled={!!initialData}
+                style={!!initialData ? { background: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" } : {}}
+              >
+                <option value="EB">EB</option>
+                <option value="DG">DG</option>
+                <option value="Solar">Solar</option>
+              </select>
+            </div>
+
+            <div className="form-group">
               <label>Time Slot (Auto-calculated) ⏰</label>
               <input
                 type="text"
@@ -296,293 +318,278 @@ const PanelLogForm = ({ initialData = null, building, onSubmit, onCancel }) => {
           <div className="form-section">
             <h3>HT Panel - Main Incomer Supply</h3>
 
-            <div className="subsection">
-              <h4>I/C From TNEB/DG</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Source</label>
-                  <select
-                    value={formData.htPanel.icFromTneb}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "icFromTneb",
-                        null,
-                        null,
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="EB">EB</option>
-                    <option value="DG">DG</option>
-                    <option value="SOLAR">SOLAR</option>
-                  </select>
-                </div>
+            {formData.htPanel.icFromTneb !== "EB" ? (
+              <div style={{ padding: '30px', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', borderRadius: '6px', textAlign: 'center', marginTop: '10px' }}>
+                <strong style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>HT Panel Bypassed</strong>
+                <span>HT values are safely excluded when {formData.htPanel.icFromTneb} is selected.</span>
               </div>
-            </div>
-
-            <div className="subsection">
-              <h4>Volt (kv)</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Voltage (kV) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.voltageFromWreb.volt}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "voltageFromWreb",
-                        "volt",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    placeholder="Enter voltage in kV"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="subsection">
-              <h4>Current Amp</h4>
-              <div className="form-row compact-row">
-                <div className="form-group compact-group">
-                  <label>R *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.currentAmp.r}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "currentAmp",
-                        "r",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group compact-group">
-                  <label>Y *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.currentAmp.y}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "currentAmp",
-                        "y",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group compact-group">
-                  <label>B *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.currentAmp.b}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "currentAmp",
-                        "b",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group compact-group">
-                  <label>PF *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.currentAmp.pf}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "currentAmp",
-                        "pf",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group compact-group">
-                  <label>Hz *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.htPanel.currentAmp.hz}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "htPanel",
-                        "currentAmp",
-                        "hz",
-                        null,
-                        e.target.value
-                      )
-                    }
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {["outgoingTr1", "outgoingTr2", "outgoingTr3"]
-              .filter((tr, index) => index < 2 || config.hasTr3)
-              .map((tr, index) => (
-                <div key={tr} className="subsection">
-                  <h4>Outgoing to Tr-{index + 1}</h4>
-                  <div className="transformer-readings">
-                    <div className="reading-group">
-                      <label>Current Amp</label>
-                      <div className="form-row compact-row">
-                        <div className="form-group compact-group">
-                          <label>R *</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.htPanel[tr].currentAmp.r}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "htPanel",
-                                tr,
-                                "currentAmp",
-                                "r",
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
-                        </div>
-                        <div className="form-group compact-group">
-                          <label>Y *</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.htPanel[tr].currentAmp.y}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "htPanel",
-                                tr,
-                                "currentAmp",
-                                "y",
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
-                        </div>
-                        <div className="form-group compact-group">
-                          <label>B *</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.htPanel[tr].currentAmp.b}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "htPanel",
-                                tr,
-                                "currentAmp",
-                                "b",
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
-                        </div>
-                      </div>
+            ) : (
+              <div>
+                <div className="subsection">
+                  <h4>Volt (kv)</h4>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Voltage (kV) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.voltageFromWreb.volt}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "voltageFromWreb",
+                            "volt",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        placeholder="Enter voltage in kV"
+                        required
+                      />
                     </div>
-
-                    <div className="reading-group">
-                      <label>Winding Temp</label>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>Temperature (°C) *</label>
-                          <input
-                            type="text"
-                            value={formData.htPanel[tr].windingTemp}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "htPanel",
-                                tr,
-                                "windingTemp",
-                                null,
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {config.hasHtOilTemp && (
-                      <div className="reading-group">
-                        <label>Oil Temperature</label>
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>Temperature (°C) *</label>
-                            <input
-                              type="text"
-                              value={formData.htPanel[tr].oilTemp}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "htPanel",
-                                  tr,
-                                  "oilTemp",
-                                  null,
-                                  e.target.value
-                                )
-                              }
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {config.hasHtTap && (
-                      <div className="reading-group">
-                        <label>TAP Position</label>
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>TAP No. *</label>
-                            <input
-                              type="number"
-                              value={formData.htPanel[tr].tap || ""}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "htPanel",
-                                  tr,
-                                  "tap",
-                                  null,
-                                  e.target.value
-                                )
-                              }
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
-              ))}
+
+                <div className="subsection">
+                  <h4>Current Amp</h4>
+                  <div className="form-row compact-row">
+                    <div className="form-group compact-group">
+                      <label>R *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.currentAmp.r}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "currentAmp",
+                            "r",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-group compact-group">
+                      <label>Y *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.currentAmp.y}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "currentAmp",
+                            "y",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-group compact-group">
+                      <label>B *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.currentAmp.b}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "currentAmp",
+                            "b",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-group compact-group">
+                      <label>PF *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.currentAmp.pf}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "currentAmp",
+                            "pf",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-group compact-group">
+                      <label>Hz *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.htPanel.currentAmp.hz}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "htPanel",
+                            "currentAmp",
+                            "hz",
+                            null,
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {["outgoingTr1", "outgoingTr2", "outgoingTr3"]
+                  .filter((tr, index) => index < 2 || config.hasTr3)
+                  .map((tr, index) => (
+                    <div key={tr} className="subsection">
+                      <h4>Outgoing to Tr-{index + 1}</h4>
+                      <div className="transformer-readings">
+                        <div className="reading-group">
+                          <label>Current Amp</label>
+                          <div className="form-row compact-row">
+                            <div className="form-group compact-group">
+                              <label>R *</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={formData.htPanel[tr].currentAmp.r}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "htPanel",
+                                    tr,
+                                    "currentAmp",
+                                    "r",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+                            </div>
+                            <div className="form-group compact-group">
+                              <label>Y *</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={formData.htPanel[tr].currentAmp.y}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "htPanel",
+                                    tr,
+                                    "currentAmp",
+                                    "y",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+                            </div>
+                            <div className="form-group compact-group">
+                              <label>B *</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={formData.htPanel[tr].currentAmp.b}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "htPanel",
+                                    tr,
+                                    "currentAmp",
+                                    "b",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="reading-group">
+                          <label>Winding Temp</label>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Temperature*</label>
+                              <input
+                                type="text"
+                                value={formData.htPanel[tr].windingTemp}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "htPanel",
+                                    tr,
+                                    "windingTemp",
+                                    null,
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {config.hasHtOilTemp && (
+                          <div className="reading-group">
+                            <label>Oil Temperature</label>
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Temperature*</label>
+                                <input
+                                  type="text"
+                                  value={formData.htPanel[tr].oilTemp}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      "htPanel",
+                                      tr,
+                                      "oilTemp",
+                                      null,
+                                      e.target.value
+                                    )
+                                  }
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {config.hasHtTap && (
+                          <div className="reading-group">
+                            <label>TAP Position</label>
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>TAP No. *</label>
+                                <input
+                                  type="number"
+                                  value={formData.htPanel[tr].tap || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      "htPanel",
+                                      tr,
+                                      "tap",
+                                      null,
+                                      e.target.value
+                                    )
+                                  }
+                                  required
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+              </div>
+            )}
           </div>
         )}
 

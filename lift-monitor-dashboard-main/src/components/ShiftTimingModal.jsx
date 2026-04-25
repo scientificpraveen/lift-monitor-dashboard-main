@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:3001/api";
 
 const ShiftTimingModal = ({ isOpen, onClose, building, initialConfig, onSave }) => {
+    const { isAdmin } = useAuth();
     const [formData, setFormData] = useState({
         shiftAStart: '00:00', shiftAEnd: '07:59',
         shiftBStart: '08:00', shiftBEnd: '15:59',
@@ -94,11 +96,11 @@ const ShiftTimingModal = ({ isOpen, onClose, building, initialConfig, onSave }) 
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>Start Time</label>
-                            <input type="time" name="shiftAStart" value={formData.shiftAStart} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftAStart" value={formData.shiftAStart} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>End Time</label>
-                            <input type="time" name="shiftAEnd" value={formData.shiftAEnd} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftAEnd" value={formData.shiftAEnd} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                     </div>
                 </div>
@@ -108,11 +110,11 @@ const ShiftTimingModal = ({ isOpen, onClose, building, initialConfig, onSave }) 
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>Start Time</label>
-                            <input type="time" name="shiftBStart" value={formData.shiftBStart} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftBStart" value={formData.shiftBStart} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>End Time</label>
-                            <input type="time" name="shiftBEnd" value={formData.shiftBEnd} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftBEnd" value={formData.shiftBEnd} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                     </div>
                 </div>
@@ -122,18 +124,20 @@ const ShiftTimingModal = ({ isOpen, onClose, building, initialConfig, onSave }) 
                     <div style={{ display: 'flex', gap: '15px' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>Start Time</label>
-                            <input type="time" name="shiftCStart" value={formData.shiftCStart} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftCStart" value={formData.shiftCStart} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>End Time</label>
-                            <input type="time" name="shiftCEnd" value={formData.shiftCEnd} onChange={handleChange} required className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                            <input type="time" name="shiftCEnd" value={formData.shiftCEnd} onChange={handleChange} required disabled={!(isAdmin && isAdmin())} className="form-control" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                     </div>
                 </div>
 
                 <div className="modal-actions" style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     <button className="btn btn-secondary" onClick={onClose} disabled={loading} style={{ borderRadius: '6px', padding: '8px 16px' }}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleSubmit} disabled={loading} style={{ borderRadius: '6px', padding: '8px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none' }}>{loading ? 'Saving...' : 'Submit Update'}</button>
+                    {isAdmin && isAdmin() && (
+                        <button className="btn btn-primary" onClick={handleSubmit} disabled={loading} style={{ borderRadius: '6px', padding: '8px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none' }}>{loading ? 'Saving...' : 'Submit Update'}</button>
+                    )}
                 </div>
             </div>
         </div>

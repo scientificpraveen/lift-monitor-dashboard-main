@@ -1,10 +1,9 @@
 import express from "express";
-import { PrismaClient } from "@prisma/client";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth.js";
 import { getISTDateString, getISTTimeString } from "../utils/timeUtils.js";
 
 const router = express.Router();
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 router.use(optionalAuthMiddleware);
 

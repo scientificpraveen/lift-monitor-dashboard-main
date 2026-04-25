@@ -31,7 +31,7 @@ const LiftCard = ({ lift }) => {
         <span className="floor-number" style={{ color: isOffline ? '#f97316' : undefined }}>{Fl}</span>
       </div>
 
-      <div className="lift-id">Lift {ID}</div>
+      <div className="lift-id">{ID}</div>
     </div>
   );
 };

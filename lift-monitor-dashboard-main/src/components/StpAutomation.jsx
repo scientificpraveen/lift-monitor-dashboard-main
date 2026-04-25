@@ -6,7 +6,7 @@ const API_URL = `${API_BASE}/stp`;
 
 // --- VISUAL COMPONENTS (INLINE STYLES FOR RELIABILITY) ---
 
-export const parseStpVal = (val) => {
+const parseStpVal = (val) => {
     if (typeof val === 'string') {
         const floatData = parseFloat(val.substring(0, val.length - 1));
         return {
@@ -688,25 +688,26 @@ const StpAutomation = ({ building }) => {
                     {/* 2. TREATED WATER TANK */}
                     <Tank label={"TREATED WATER\nTANK"} subLabel={`Water Level: ${data.TreatedWaterTankLevel ?? "0n"}%`} x="340px" y="1180px" />
 
-                    <Pipe points="M 520 1250 L 620 1250" isFlowing={data.M12 === 1} width="8" />
+                    <Pipe points="M 520 1250 L 610 1250" isFlowing={data.M12 === 1} width="8" />
 
-                    <Motor id="M12" label={"FLUSHING\nPUMP"} status={data.M12} x="600px" y="1230px" />
+                    <Motor id="M12" label={"FLUSHING\nPUMP"} status={data.M12} x="590px" y="1230px" />
 
-                    <Pipe points="M 670 1250 L 800 1250" isFlowing={data.M12 === 1} width="8" />
+                    <Pipe points="M 650 1250 L 740 1250" isFlowing={data.M12 === 1} width="8" />
 
-                    <Pipe points="M 730 1250 L 730 1150" isFlowing={data.M12 === 1} width="8" />
-                    <StaticArrow x="730px" y="1180px" rotate={-90} />
-                    <div style={{ position: 'absolute', left: 700, top: 1120, fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>TO FLUSH</div>
+                    <Pipe points="M 690 1250 L 690 1150" isFlowing={data.M12 === 1} width="8" />
+                    <StaticArrow x="690px" y="1160px" rotate={-90} />
+                    <div style={{ position: 'absolute', left: 660, top: 1120, fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>TO FLUSH</div>
 
-                    <CylindricalVessel label="SOFTENER" x={800} y={1180} width="120px" height="170px" showPorts={false} />
+                    <Motor id="V" label={"WATER\nSOLENOID"} status={data.WaterSolenoid ?? 2} x="720px" y="1226px" />
 
-                    <Pipe points="M 920 1250 L 1020 1250" isFlowing={data.M12 === 1} width="8" />
-                    <Pipe points="M 1070 1250 L 1140 1250" isFlowing={data.M12 === 1 && data.WaterSolenoid === 1} width="8" />
+                    <Pipe points="M 790 1250 L 850 1250" isFlowing={data.M12 === 1 && data.WaterSolenoid === 1} width="8" />
 
-                    <StaticArrow x="920px" y="1210px" rotate={-45} color="#7c3aed" />
-                    <MonitorBox x={950} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${parseStpVal(data.SoftnerTH).num.toFixed(2)} mg/l`} isError={parseStpVal(data.SoftnerTH).isError} color="#7c3aed" />
+                    <CylindricalVessel label="SOFTENER" x={850} y={1180} width="120px" height="170px" showPorts={false} />
 
-                    <Motor id="V" label={"WATER\nSOLENOID"} status={data.WaterSolenoid ?? 2} x="1000px" y="1226px" />
+                    <Pipe points="M 970 1250 L 1140 1250" isFlowing={data.M12 === 1 && data.WaterSolenoid === 1} width="8" />
+
+                    <StaticArrow x="970px" y="1210px" rotate={-45} color="#7c3aed" />
+                    <MonitorBox x={1000} y={1120} label={"SOFTWATER\nTOTAL\nHARDNESS"} value={`${parseStpVal(data.SoftnerTH).num.toFixed(2)} mg/l`} isError={parseStpVal(data.SoftnerTH).isError} color="#7c3aed" />
 
                     <Tank label={"SOFT WATER\nTANK"} subLabel={`Water Level: ${data.SoftwaterTankLevel ?? "0n"}%`} x="1140px" y="1190px" />
 
@@ -761,8 +762,8 @@ const StpAutomation = ({ building }) => {
 
                     {/* Treated Water Tank to Cooling Tower Arrows */}
                     <StaticArrow x="550px" y="1250px" rotate={0} />
-                    <StaticArrow x="750px" y="1250px" rotate={0} />
-                    <StaticArrow x="950px" y="1250px" rotate={0} />
+                    <StaticArrow x="700px" y="1250px" rotate={0} />
+                    <StaticArrow x="810px" y="1250px" rotate={0} />
                     <StaticArrow x="1090px" y="1250px" rotate={0} />
                     <StaticArrow x="1350px" y="1250px" rotate={0} />
 
@@ -816,10 +817,10 @@ const StpAutomation = ({ building }) => {
                     <Tank label="Filter Feed Tank" subLabel={`Water Level: ${data.FilterTankLevel ?? "0n"}%`} x="950px" y="480px" />
 
                     {/* --- FANS --- */}
-                    <Fan x="1480px" y="580px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
-                    <Fan x="1680px" y="580px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
-                    <Fan x="1480px" y="720px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
-                    <Fan x="1680px" y="720px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
+                    <Fan x="1480px" y="660px" label={"FRESH AIR\nFAN 1"} status={data.FAF1} />
+                    <Fan x="1700px" y="660px" label={"FRESH AIR\nFAN 2"} status={data.FAF2} />
+                    <Fan x="1480px" y="790px" label={"EXHAUST\nFAN 1"} status={data.EF1} />
+                    <Fan x="1700px" y="790px" label={"EXHAUST\nFAN 2"} status={data.EF2} />
 
                     {/* --- CENTRAL BLOWER SYSTEM --- */}
                     <Fan id="B1" label="BLOWER 1" status={data.B1} x="620px" y="340px" />
@@ -847,56 +848,48 @@ const StpAutomation = ({ building }) => {
 
                     {/* --- SCALE & LEGEND --- */}
                     <div style={{
-                        position: 'absolute', left: 1400, top: 100, width: 400, height: 410,
+                        position: 'absolute', left: 1400, top: 100, width: 450, height: 480,
                         display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 10,
                         border: '2px solid #cbd5e1', borderRadius: '14px', padding: '20px',
                         backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ fontSize: '18px', fontWeight: '900', color: '#334155', textAlign: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '8px' }}>SCALE</div>
 
+                        <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', gap: '14px 10px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '14px', height: '14px', backgroundColor: '#f97316', borderRadius: '50%', animation: 'pulse 1s infinite', border: '2px solid #ea580c' }}></div></div>
+                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#ea580c' }}>MALFUNCTIONING</span>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '60px', height: '8px', backgroundColor: '#ef4444', borderRadius: '4px' }}></div>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '60px', height: '8px', backgroundColor: '#ef4444', borderRadius: '4px' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#991b1b' }}>DRAIN PIPELINE OF VALVE</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0049ff', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0049ff' }}>DO</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0049ff', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0049ff' }}>DO</div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0049ff' }}>DISSOLVED OXYGEN</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0891b2', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0891b2' }}>BAR</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #0891b2', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#0891b2' }}>BAR</div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2' }}>PRESSURE SENSOR</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #c026d3', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#c026d3' }}>TSS</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #c026d3', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#c026d3' }}>TSS</div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#c026d3' }}>TOTAL SUSPENDED SOLID</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #7c3aed', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#7c3aed' }}>TH</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #7c3aed', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#7c3aed' }}>TH</div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#7c3aed' }}>TOTAL HARDNESS</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #10b981', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#10b981' }}>HH:MM:SS</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ padding: '2px 8px', borderRadius: '4px', border: '2px solid #10b981', backgroundColor: 'white', fontSize: '11px', fontWeight: '900', color: '#10b981' }}>HH:MM:SS</div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>VALVE TIMER</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '24px', height: '24px', backgroundColor: '#22c55e', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '24px', height: '24px', backgroundColor: '#22c55e', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#166534' }}>FILTER SERVICE VALVE MODE</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '24px', height: '24px', backgroundColor: '#3b82f6', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '24px', height: '24px', backgroundColor: '#3b82f6', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e40af' }}>BACKWASH VALVE MODE</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '24px', height: '24px', backgroundColor: '#a855f7', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '24px', height: '24px', backgroundColor: '#a855f7', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#6b21a8' }}>RINSE VALVE MODE</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '24px', height: '24px', backgroundColor: '#eab308', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '24px', height: '24px', backgroundColor: '#eab308', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#854d0e' }}>BYPASS-DRAIN VALVE MODE</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '24px', height: '24px', backgroundColor: '#06b6d4', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: '24px', height: '24px', backgroundColor: '#06b6d4', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)' }}></div></div>
                             <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0891b2' }}>BYPASS VALVE MODE</span>
                         </div>
                     </div>

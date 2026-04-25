@@ -1,10 +1,9 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express from "express";
 import { authMiddleware } from '../middleware/auth.js';
 import bcrypt from 'bcryptjs';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 // Get Guard Touring Logs
 router.get('/logs', authMiddleware, async (req, res) => {

@@ -11,6 +11,8 @@ const getSafeTemp = (temp) => {
 };
 
 export const getBuildingConfig = (buildingName) => {
+  const normalizedBuilding = (buildingName || "").toUpperCase().trim();
+
   const config = {
     hasTr3: true,
     hasInc3: true,
@@ -19,7 +21,7 @@ export const getBuildingConfig = (buildingName) => {
     hasLtTap: true,
   };
 
-  switch (buildingName) {
+  switch (normalizedBuilding) {
     case "PRESTIGE POLYGON":
       break;
     case "PRESTIGE PALLADIUM":
@@ -95,7 +97,7 @@ export const generateExcel = async (filters) => {
         merges.push({ s: { r: row, c: 0 }, e: { r: row, c: totalHtCols - 1 } });
         row++;
 
-        const row1 = ['Time (Hrs)', 'I/C From TNEB', 'Main Incomer Supply', '', '', '', '', ''];
+        const row1 = ['Time (Hrs)', 'I/C FROM TNEB/DG/SOLAR', 'Main Incomer Supply', '', '', '', '', ''];
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasTr3) {
             row1.push(`Out Going to Tr-${i}`);
@@ -202,12 +204,12 @@ export const generateExcel = async (filters) => {
 
         const incCols = 6 + 1 + (config.hasLtTap ? 1 : 0);
         const totalIncs = config.hasInc3 ? 3 : 2;
-        const totalLtCols = 1 + (totalIncs * incCols);
+        const totalLtCols = 2 + (totalIncs * incCols);
 
         merges.push({ s: { r: row, c: 0 }, e: { r: row, c: totalLtCols - 1 } });
         row++;
 
-        const row1 = ['Time (Hrs)'];
+        const row1 = ['Time (Hrs)', 'I/C FROM TNEB/DG/SOLAR'];
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasInc3) {
             row1.push(`Incomer-${i} (From Tr-${i})`);
@@ -217,8 +219,9 @@ export const generateExcel = async (filters) => {
         sheetData.push(row1);
 
         merges.push({ s: { r: row, c: 0 }, e: { r: row + 2, c: 0 } }); // Time
+        merges.push({ s: { r: row, c: 1 }, e: { r: row + 2, c: 1 } }); // I/C
 
-        let currentCol = 1;
+        let currentCol = 2;
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasInc3) {
             merges.push({ s: { r: row, c: currentCol }, e: { r: row, c: currentCol + incCols - 1 } });
@@ -227,8 +230,8 @@ export const generateExcel = async (filters) => {
         });
         row++;
 
-        const row2 = [''];
-        currentCol = 1;
+        const row2 = ['', ''];
+        currentCol = 2;
 
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasInc3) {
@@ -261,7 +264,7 @@ export const generateExcel = async (filters) => {
         sheetData.push(row2);
         row++;
 
-        const row3 = [''];
+        const row3 = ['', ''];
         [1, 2, 3].forEach(i => {
           if (i < 3 || config.hasInc3) {
             row3.push('RY', 'YB', 'BR', 'R', 'Y', 'B');
@@ -273,7 +276,7 @@ export const generateExcel = async (filters) => {
         row++;
 
         ltLogs.forEach(log => {
-          const dataRow = [log.time];
+          const dataRow = [log.time, log.htPanel?.icFromTneb || '-'];
 
           [1, 2, 3].forEach(i => {
             if (i < 3 || config.hasInc3) {
@@ -301,8 +304,21 @@ export const generateExcel = async (filters) => {
       // Shift Incharge
       sheetData.push(['SHIFT INCHARGE']);
       row++;
-      sheetData.push(['Name:', firstLog?.shiftIncharge || '-']);
-      row++;
+      const s = firstLog?.shiftIncharge;
+      let hasShifts = false;
+      if (s) {
+        if (s.aShift?.name) { sheetData.push(!hasShifts ? ['Name:', `A: ${s.aShift.name}`] : ['', `A: ${s.aShift.name}`]); hasShifts = true; row++; }
+        if (s.bShift?.name) { sheetData.push(!hasShifts ? ['Name:', `B: ${s.bShift.name}`] : ['', `B: ${s.bShift.name}`]); hasShifts = true; row++; }
+        if (s.cShift?.name) { sheetData.push(!hasShifts ? ['Name:', `C: ${s.cShift.name}`] : ['', `C: ${s.cShift.name}`]); hasShifts = true; row++; }
+
+        if (!hasShifts) {
+          sheetData.push(['Name:', typeof s === 'string' ? s : (s.name || '-')]);
+          row++;
+        }
+      } else {
+        sheetData.push(['Name:', '-']);
+        row++;
+      }
 
       sheetData.push([]);
       row++;
@@ -417,15 +433,17 @@ export const generatePDF = async (filters) => {
         const firstLog = dateLogs[0];
         const config = getBuildingConfig(firstLog?.building || filters?.building || 'PRESTIGE POLYGON');
 
+        // Global PDF Layout Grid Definitions
+        const cellH = 10;
+        const timeW = 28;
+        const icW = 35;
+
         const htLogs = dateLogs.filter(log => log.htPanel);
         if (htLogs.length > 0) {
           doc.fontSize(10).font('Helvetica-Bold').text('HT PANEL', startX, yPos);
           yPos += 15;
 
           // Draw HT Table - optimized for landscape A4
-          const cellH = 10;
-          const timeW = 28;
-          const icW = 22;
           const smallW = 18;
           const trW = 22; // Smaller width for transformer boxes to fit on page
           const totalTrs = config.hasTr3 ? 3 : 2;
@@ -440,7 +458,8 @@ export const generatePDF = async (filters) => {
           x += timeW;
 
           doc.rect(x, yPos, icW, cellH * 3.35).stroke();
-          doc.text('I/C\nFrom\nTNEB', x + 1, yPos + cellH + 3, { width: icW - 2, align: 'center', fontSize: 5 });
+          doc.fontSize(4).text('I/C\nFrom\nTNEB/\nDG/SOLAR', x + 1, yPos + cellH - 2, { width: icW - 2, align: 'center' });
+          doc.fontSize(5); // reset font size
           x += icW;
 
           // Main Incomer Supply (matching height)
@@ -473,7 +492,7 @@ export const generatePDF = async (filters) => {
             // Temperatures heading
             const tempCols = config.hasHtOilTemp ? 2 : 1;
             doc.rect(x + trW * 3, yPos + cellH * 1.35, trW * tempCols, cellH).stroke();
-            doc.text(config.hasHtOilTemp ? 'Temp (\u00b0C)' : 'Wind', x + trW * 3 + 1, yPos + cellH * 1.35 + 2, { width: trW * tempCols - 2, align: 'center', fontSize: 4 });
+            doc.text(config.hasHtOilTemp ? 'Temp' : 'Wind', x + trW * 3 + 1, yPos + cellH * 1.35 + 2, { width: trW * tempCols - 2, align: 'center', fontSize: 4 });
 
             if (config.hasHtTap) {
               doc.rect(x + trW * (3 + tempCols), yPos + cellH * 1.35, trW, cellH * 2).stroke();
@@ -556,6 +575,7 @@ export const generatePDF = async (filters) => {
           yPos += 15;
 
           const totalIncs = config.hasInc3 ? 3 : 2;
+          const tinyW = 16;
           const incColCount = 6 + (config.hasLtTap ? 1 : 0) + 1; // Voltage(3)+CurrentAmp(3)+optional TAP+KWH
           const incW = tinyW * incColCount;
           let x = startX;
@@ -565,6 +585,11 @@ export const generatePDF = async (filters) => {
           doc.rect(x, yPos, timeW, cellH * 3).stroke();
           doc.text('Time\n(Hrs)', x + 2, yPos + cellH, { width: timeW - 4, align: 'center' });
           x += timeW;
+
+          doc.rect(x, yPos, icW, cellH * 3).stroke();
+          doc.fontSize(3.5).text('I/C\nFrom\nTNEB/\nDG/SOLAR', x + 1, yPos + cellH - 3, { width: icW - 2, align: 'center' });
+          doc.fontSize(6); // reset font size
+          x += icW;
 
           for (let ii = 1; ii <= totalIncs; ii++) {
             doc.rect(x, yPos, incW, cellH).stroke();
@@ -606,6 +631,10 @@ export const generatePDF = async (filters) => {
             doc.text(log.time, x + 2, yPos + 3, { width: timeW - 4, align: 'center' });
             x += timeW;
 
+            doc.rect(x, yPos, icW, cellH).stroke();
+            doc.text(log.htPanel?.icFromTneb || '-', x + 1, yPos + 3, { width: icW - 2, align: 'center' });
+            x += icW;
+
             for (let ii = 1; ii <= totalIncs; ii++) {
               const inc = log.ltPanel[`incomer${ii}`];
               ['ry', 'yb', 'br'].forEach(ph => {
@@ -645,8 +674,25 @@ export const generatePDF = async (filters) => {
         yPos += 12;
 
         doc.fontSize(9).font('Helvetica');
-        doc.text(firstLog?.shiftIncharge || '-', startX + 10, yPos);
-        yPos += 15;
+        let shiftInchargeText = '-';
+        if (firstLog?.shiftIncharge) {
+          const s = firstLog.shiftIncharge;
+          const shifts = [];
+          if (s.aShift?.name) shifts.push(`A: ${s.aShift.name}`);
+          if (s.bShift?.name) shifts.push(`B: ${s.bShift.name}`);
+          if (s.cShift?.name) shifts.push(`C: ${s.cShift.name}`);
+
+          if (shifts.length > 0) {
+            shiftInchargeText = shifts.join('\n');
+          } else if (typeof s === 'string') {
+            shiftInchargeText = s;
+          } else if (s.name) {
+            shiftInchargeText = s.name;
+          }
+        }
+        doc.text(shiftInchargeText, startX + 10, yPos);
+        const lineCount = shiftInchargeText.split('\n').length;
+        yPos += Math.max(15, lineCount * 12 + 10);
 
         // Remarks Section
         doc.fontSize(10).font('Helvetica-Bold').text('REMARKS', startX, yPos);

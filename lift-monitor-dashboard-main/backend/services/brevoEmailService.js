@@ -3,10 +3,9 @@ import {
   SendSmtpEmail,
   TransactionalEmailsApiApiKeys,
 } from "@getbrevo/brevo";
-import { PrismaClient } from "@prisma/client";
 import { EMAIL_CONFIG } from "../config/buildingEmails.js";
 
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 let emailClient = null;
 

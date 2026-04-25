@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import { generateSingleBuildingPDF } from "../exportService.js";
 import {
   sendEmailWithPDF,
@@ -6,7 +5,7 @@ import {
 } from "./brevoEmailService.js";
 import { BUILDING_ADMIN_EMAILS } from "../config/buildingEmails.js";
 
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 let queueProcessor = null;
 let isProcessing = false;

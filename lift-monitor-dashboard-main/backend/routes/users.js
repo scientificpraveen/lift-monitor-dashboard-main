@@ -1,10 +1,9 @@
-import express from "express";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
+import express from "express";
 import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
-const prisma = new PrismaClient();
+import prisma from '../prismaClient.js';
 
 // Middleware to check if user is admin
 const adminMiddleware = async (req, res, next) => {
