@@ -1,4 +1,4 @@
-import { generateSingleBuildingPDF } from "../exportService.js";
+import { generatePDF } from "./panelExport.js";
 import {
   sendEmailWithPDF,
   generateEmailTemplate,
@@ -94,10 +94,10 @@ const processEmailQueue = async () => {
 
         // Generate PDF regardless of whether logs exist
         console.log(`📄 Generating PDF for ${job.building}...`);
-        const pdfPromise = generateSingleBuildingPDF(
-          job.building,
-          logs.length > 0 ? logs : []
-        );
+        const pdfPromise = generatePDF({
+          building: job.building,
+          date: job.date
+        });
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(
             () => reject(new Error("PDF generation timeout")),

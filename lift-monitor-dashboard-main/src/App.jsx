@@ -38,7 +38,8 @@ const App = () => {
   const [alerts, setAlerts] = useState([]);
   const [showWhatsappModal, setShowWhatsappModal] = useState(false);
   const [showLiftConfigModal, setShowLiftConfigModal] = useState(false);
-  const [whatsappStatus, setWhatsappStatus] = useState(Date.now());
+  const [whatsappStatus, setWhatsappStatus] = useState(0);
+  const [renderTick, setRenderTick] = useState(0);
 
   const handleCloseAlert = (index) => {
     setAlerts((prev) => {
@@ -193,6 +194,7 @@ const App = () => {
           const wData = await wsRes.json();
           setWhatsappStatus(wData.lastHit);
         }
+        setRenderTick(t => t + 1);
       } catch (e) { }
     };
 
@@ -277,7 +279,7 @@ const App = () => {
                         boxShadow: (Date.now() - whatsappStatus) < 30000 ? '0 0 10px #22c55e' : 'none',
                         animation: (Date.now() - whatsappStatus) < 30000 ? 'pulse 2s infinite' : 'none'
                       }}></div>
-                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#1e3a8a', letterSpacing: '0.5px' }}>
                         {(Date.now() - whatsappStatus) < 30000 ? "ALARM NOTIFICATION ONLINE" : "ALARM NOTIFICATION OFFLINE"}
                       </span>
                     </div>
